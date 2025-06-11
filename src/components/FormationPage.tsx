@@ -1,9 +1,9 @@
-
 import { useState } from 'react';
 import { ArrowLeft, Send, Paperclip, Mic, Play, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
+import VideoPlayer from './VideoPlayer';
 
 interface Lesson {
   id: string;
@@ -60,6 +60,33 @@ const FormationPage = () => {
     { id: '2', user: 'Prof. Ahmed', message: 'Excellent question ! Regardez attentivement ma bouche dans la vidéo...', time: '14:32', isTeacher: true },
     { id: '3', user: 'Fatima M.', message: 'Merci pour cette explication claire !', time: '14:35', isTeacher: false }
   ];
+
+  const lessonData = {
+    id: selectedLesson?.id || '',
+    title: selectedLesson?.title || '',
+    duration: selectedLesson?.duration || '',
+    instructor: {
+      name: 'Professeur Ahmed',
+      avatar: '/placeholder.svg',
+      subscribers: 1250,
+      isSubscribed: false
+    },
+    stats: {
+      likes: 89,
+      dislikes: 3,
+      views: 2340
+    },
+    description: `Cette leçon couvre les bases fondamentales de la récitation coranique. 
+
+Vous apprendrez :
+- Les règles de base de la prononciation
+- L'importance de la respiration
+- Les erreurs courantes à éviter
+- Des exercices pratiques
+
+Durée recommandée d'étude : 30 minutes
+Niveau : Débutant`
+  };
 
   const handleSendMessage = () => {
     if (message.trim()) {
@@ -142,19 +169,15 @@ const FormationPage = () => {
       <div className="flex-1 flex flex-col">
         {selectedLesson ? (
           <>
-            {/* Video Section */}
-            <div className="bg-black aspect-video flex items-center justify-center">
-              <div className="text-center text-white">
-                <Play className="w-16 h-16 mx-auto mb-4 opacity-70" />
-                <p className="text-lg font-medium">{selectedLesson.title}</p>
-                <p className="text-sm opacity-70">Durée: {selectedLesson.duration}</p>
-              </div>
+            {/* Video Section with YouTube-style player */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <VideoPlayer lesson={lessonData} />
             </div>
 
             {/* Chat Section */}
-            <div className="flex-1 flex flex-col">
+            <div className="border-t border-border">
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              <div className="h-48 overflow-y-auto p-4 space-y-3">
                 {messages.map((msg) => (
                   <div key={msg.id} className={`flex ${msg.isTeacher ? 'justify-start' : 'justify-start'}`}>
                     <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${

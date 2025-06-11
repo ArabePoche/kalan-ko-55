@@ -1,320 +1,186 @@
-
 import { useState } from 'react';
-import { Plus, Video, BookOpen, Upload, Users, BarChart3, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Video, BookOpen, Users, Eye, ThumbsUp, ThumbsDown } from 'lucide-react';
+
+interface Video {
+  id: string;
+  title: string;
+  instructor: string;
+  duration: string;
+  likes: number;
+  dislikes: number;
+  views: number;
+  status: 'pending' | 'published' | 'rejected';
+}
+
+interface Formation {
+  id: string;
+  title: string;
+  instructor: string;
+  lessons: number;
+  students: number;
+  status: 'active' | 'draft' | 'archived';
+}
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'videos' | 'formations' | 'students'>('overview');
+  const [activeTab, setActiveTab] = useState('overview');
 
-  const stats = {
-    totalStudents: 1243,
-    totalFormations: 15,
-    totalVideos: 128,
-    revenue: 15420
-  };
-
-  const recentVideos = [
-    { id: '1', title: 'Introduction au Coran', views: 245, likes: 32, date: '2024-03-10' },
-    { id: '2', title: 'Alphabet arabe', views: 189, likes: 28, date: '2024-03-09' },
-    { id: '3', title: 'Première sourate', views: 156, likes: 24, date: '2024-03-08' }
+  const stats = [
+    { label: 'Vidéos', value: 124, icon: Video },
+    { label: 'Formations', value: 32, icon: BookOpen },
+    { label: 'Utilisateurs', value: 2345, icon: Users }
   ];
 
-  const formations = [
-    { id: '1', title: 'Formation Coran Complet', students: 342, revenue: 8540, status: 'Actif' },
-    { id: '2', title: 'Sciences Islamiques', students: 189, revenue: 4720, status: 'Actif' },
-    { id: '3', title: 'Langue Arabe', students: 156, revenue: 2160, status: 'Brouillon' }
+  const videos: Video[] = [
+    { id: '1', title: 'Formation Coran - Niveau Débutant', instructor: 'Professeur Ahmed', duration: '2h 30m', likes: 1234, dislikes: 123, views: 12345, status: 'published' },
+    { id: '2', title: 'Les bases de la langue arabe', instructor: 'Professeur Fatima', duration: '1h 45m', likes: 876, dislikes: 56, views: 8765, status: 'pending' }
   ];
 
-  const tabs = [
-    { id: 'overview', label: 'Vue d\'ensemble', icon: BarChart3 },
-    { id: 'videos', label: 'Vidéos', icon: Video },
-    { id: 'formations', label: 'Formations', icon: BookOpen },
-    { id: 'students', label: 'Étudiants', icon: Users },
+  const formations: Formation[] = [
+    { id: '1', title: 'Formation Coran Complète', instructor: 'Professeur Ahmed', lessons: 20, students: 567, status: 'active' },
+    { id: '2', title: 'Grammaire Arabe Avancée', instructor: 'Professeur Fatima', lessons: 15, students: 345, status: 'draft' }
+  ];
+
+  const users = [
+    { id: '1', name: 'Ahmed Hassan', email: 'ahmed@email.com', courses: 3, status: 'active' },
+    { id: '2', name: 'Fatima Al-Zahra', email: 'fatima@email.com', courses: 1, status: 'pending' }
   ];
 
   return (
-    <div className="max-w-6xl mx-auto bg-background min-h-screen p-4">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard Admin</h1>
-        <p className="text-muted-foreground">Gérez vos contenus et formations</p>
+    <div className="max-w-7xl mx-auto p-6 bg-background min-h-screen">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">Tableau de Bord</h1>
+        <p className="text-muted-foreground">Suivez l'activité de votre plateforme</p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex bg-secondary rounded-lg p-1 mb-6">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors flex-1 justify-center ${
-                activeTab === tab.id
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span className="font-medium">{tab.label}</span>
-            </button>
-          );
-        })}
+      {/* Overview Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {stats.map((stat) => (
+          <Card key={stat.label}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
+              <stat.icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stat.value}</div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* Content */}
-      {activeTab === 'overview' && (
-        <div className="space-y-6">
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Étudiants</p>
-                    <p className="text-2xl font-bold text-foreground">{stats.totalStudents}</p>
-                  </div>
-                  <Users className="w-8 h-8 text-primary" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Formations</p>
-                    <p className="text-2xl font-bold text-foreground">{stats.totalFormations}</p>
-                  </div>
-                  <BookOpen className="w-8 h-8 text-primary" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Vidéos</p>
-                    <p className="text-2xl font-bold text-foreground">{stats.totalVideos}</p>
-                  </div>
-                  <Video className="w-8 h-8 text-primary" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Revenus</p>
-                    <p className="text-2xl font-bold text-foreground">{stats.revenue}€</p>
-                  </div>
-                  <BarChart3 className="w-8 h-8 text-primary" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+      <Tabs value={activeTab} onValueChange={activeTab} className="mt-8">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
+          <TabsTrigger value="videos">Vidéos</TabsTrigger>
+          <TabsTrigger value="formations">Formations</TabsTrigger>
+          <TabsTrigger value="users">Utilisateurs</TabsTrigger>
+        </TabsList>
 
-          {/* Recent Activity */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Vidéos récentes</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {recentVideos.map((video) => (
-                  <div key={video.id} className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-foreground">{video.title}</p>
-                      <p className="text-sm text-muted-foreground">{video.views} vues • {video.likes} likes</p>
-                    </div>
-                    <span className="text-xs text-muted-foreground">{video.date}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+        <TabsContent value="overview" className="space-y-6">
+          <h3 className="text-xl font-semibold">Statistiques Générales</h3>
+          <p>Ici, vous pouvez voir un aperçu rapide de l'activité de votre plateforme.</p>
+        </TabsContent>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Formations populaires</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {formations.slice(0, 3).map((formation) => (
-                  <div key={formation.id} className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-foreground">{formation.title}</p>
-                      <p className="text-sm text-muted-foreground">{formation.students} étudiants</p>
-                    </div>
-                    <span className="text-sm font-medium text-primary">{formation.revenue}€</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'videos' && (
-        <div className="space-y-6">
+        <TabsContent value="videos" className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-foreground">Gestion des Vidéos</h2>
+            <h3 className="text-xl font-semibold">Gestion des Vidéos</h3>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Ajouter une vidéo
+              Nouvelle vidéo
             </Button>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Uploader une nouvelle vidéo</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Titre de la vidéo</label>
-                <Input placeholder="Ex: Introduction au Coran" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Description</label>
-                <Input placeholder="Description de la vidéo..." />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Fichier vidéo</label>
-                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
-                  <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">Glissez votre vidéo ici ou cliquez pour sélectionner</p>
-                  <Button variant="outline" className="mt-2">Choisir un fichier</Button>
-                </div>
-              </div>
-              <Button className="w-full">Publier la vidéo</Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Mes Vidéos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentVideos.map((video) => (
-                  <div key={video.id} className="flex items-center justify-between p-4 border border-border rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-16 h-16 bg-secondary rounded-lg flex items-center justify-center">
-                        <Video className="w-6 h-6 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-foreground">{video.title}</h3>
-                        <p className="text-sm text-muted-foreground">{video.views} vues • {video.likes} likes</p>
-                        <p className="text-xs text-muted-foreground">{video.date}</p>
-                      </div>
+          <div className="grid gap-4">
+            {videos.map((video) => (
+              <Card key={video.id}>
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h4 className="font-semibold">{video.title}</h4>
+                      <p className="text-sm text-muted-foreground">{video.instructor}</p>
+                      <p className="text-sm">{video.duration}</p>
                     </div>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">Modifier</Button>
-                      <Button variant="outline" size="sm">Supprimer</Button>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant={video.status === 'published' ? 'default' : 'secondary'}>
+                        {video.status}
+                      </Badge>
+                      <Button variant="outline" size="sm">Voir détails</Button>
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
 
-      {activeTab === 'formations' && (
-        <div className="space-y-6">
+        <TabsContent value="formations" className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-foreground">Gestion des Formations</h2>
+            <h3 className="text-xl font-semibold">Gestion des Formations</h3>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
               Nouvelle formation
             </Button>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Créer une nouvelle formation</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Titre de la formation</label>
-                  <Input placeholder="Ex: Formation Coran Complet" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Prix (€)</label>
-                  <Input placeholder="49.99" type="number" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Description</label>
-                <Input placeholder="Description de la formation..." />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Nombre de niveaux</label>
-                <Input placeholder="3" type="number" />
-              </div>
-              <Button className="w-full">Créer la formation</Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Mes Formations</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {formations.map((formation) => (
-                  <div key={formation.id} className="flex items-center justify-between p-4 border border-border rounded-lg">
+          <div className="grid gap-4">
+            {formations.map((formation) => (
+              <Card key={formation.id}>
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-center">
                     <div>
-                      <h3 className="font-medium text-foreground">{formation.title}</h3>
-                      <p className="text-sm text-muted-foreground">{formation.students} étudiants • {formation.revenue}€ de revenus</p>
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        formation.status === 'Actif' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
+                      <h4 className="font-semibold">{formation.title}</h4>
+                      <p className="text-sm text-muted-foreground">{formation.instructor}</p>
+                      <p className="text-sm">{formation.lessons} leçons, {formation.students} étudiants</p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant={formation.status === 'active' ? 'default' : 'secondary'}>
                         {formation.status}
-                      </span>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">Modifier</Button>
-                      <Button variant="outline" size="sm">Gérer les niveaux</Button>
+                      </Badge>
+                      <Button variant="outline" size="sm">Voir détails</Button>
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
 
-      {activeTab === 'students' && (
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold text-foreground">Gestion des Étudiants</h2>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Étudiants récents</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {['Ahmed Benali', 'Fatima Chahid', 'Omar Benjelloun'].map((student, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 border border-border rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                        <User className="w-5 h-5 text-primary-foreground" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-foreground">{student}</h3>
-                        <p className="text-sm text-muted-foreground">Inscrit il y a {index + 1} jour(s)</p>
-                      </div>
+        <TabsContent value="users" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xl font-semibold">Gestion des Utilisateurs</h3>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Nouvel utilisateur
+            </Button>
+          </div>
+
+          <div className="grid gap-4">
+            {users.map((user) => (
+              <Card key={user.id}>
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h4 className="font-semibold">{user.name}</h4>
+                      <p className="text-sm text-muted-foreground">{user.email}</p>
+                      <p className="text-sm">{user.courses} cours inscrits</p>
                     </div>
-                    <Button variant="outline" size="sm">Voir profil</Button>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
+                        {user.status}
+                      </Badge>
+                      <Button variant="outline" size="sm">Voir détails</Button>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

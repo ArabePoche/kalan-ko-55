@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import FormationPage from "./components/FormationPage";
 import AdminDashboard from "./components/AdminDashboard";
+import FeedbackSystem from "./components/FeedbackSystem";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/formation/:id" element={<FormationPage />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/feedback" element={<FeedbackSystem />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
