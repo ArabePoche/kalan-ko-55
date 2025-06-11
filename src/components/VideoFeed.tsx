@@ -1,7 +1,7 @@
-
 import { useState, useRef, useEffect } from 'react';
-import { Heart, MessageCircle, Share, ShoppingCart } from 'lucide-react';
+import { Heart, MessageCircle, Share, ShoppingCart, Flag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 interface Video {
   id: string;
@@ -46,6 +46,7 @@ const VideoFeed = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [videos] = useState(mockVideos);
   const containerRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   const handleScroll = () => {
     if (containerRef.current) {
@@ -63,6 +64,11 @@ const VideoFeed = () => {
       return () => container.removeEventListener('scroll', handleScroll);
     }
   }, []);
+
+  const handleFeedback = (videoId: string) => {
+    console.log('Feedback pour la vidéo:', videoId);
+    navigate('/admin/feedback');
+  };
 
   return (
     <div 
@@ -126,6 +132,16 @@ const VideoFeed = () => {
                     <MessageCircle className="w-6 h-6" />
                   </div>
                   <span className="text-xs mt-1">{video.comments}</span>
+                </button>
+
+                <button 
+                  className="flex flex-col items-center"
+                  onClick={() => handleFeedback(video.id)}
+                >
+                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                    <Flag className="w-6 h-6" />
+                  </div>
+                  <span className="text-xs mt-1">Feedback</span>
                 </button>
 
                 <button className="flex flex-col items-center">

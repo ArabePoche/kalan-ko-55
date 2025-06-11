@@ -1,6 +1,6 @@
-
-import { Heart, MessageCircle, Share, MoreHorizontal } from 'lucide-react';
+import { Heart, MessageCircle, Share, MoreHorizontal, Flag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 interface Post {
   id: string;
@@ -39,6 +39,13 @@ const mockPosts: Post[] = [
 ];
 
 const PostsFeed = () => {
+  const navigate = useNavigate();
+
+  const handleFeedback = (postId: string) => {
+    console.log('Feedback pour le post:', postId);
+    navigate('/admin/feedback');
+  };
+
   return (
     <div className="max-w-md mx-auto bg-background min-h-screen">
       <div className="space-y-4 p-4">
@@ -89,6 +96,13 @@ const PostsFeed = () => {
                 <button className="flex items-center space-x-2 text-muted-foreground hover:text-primary transition-colors">
                   <MessageCircle className="w-5 h-5" />
                   <span className="text-sm">{post.comments}</span>
+                </button>
+                <button 
+                  className="flex items-center space-x-2 text-muted-foreground hover:text-primary transition-colors"
+                  onClick={() => handleFeedback(post.id)}
+                >
+                  <Flag className="w-5 h-5" />
+                  <span className="text-sm">Feedback</span>
                 </button>
                 <button className="flex items-center space-x-2 text-muted-foreground hover:text-primary transition-colors">
                   <Share className="w-5 h-5" />
