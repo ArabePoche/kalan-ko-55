@@ -1,12 +1,47 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import { useState } from 'react';
+import BottomNavigation from '@/components/BottomNavigation';
+import HomePage from '@/components/HomePage';
+import ShopPage from '@/components/ShopPage';
+import CoursesPage from '@/components/CoursesPage';
 
 const Index = () => {
+  const [activeTab, setActiveTab] = useState('home');
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'home':
+        return <HomePage />;
+      case 'shop':
+        return <ShopPage />;
+      case 'courses':
+        return <CoursesPage />;
+      case 'notifications':
+        return (
+          <div className="flex items-center justify-center h-screen">
+            <p className="text-muted-foreground">Notifications - En développement</p>
+          </div>
+        );
+      case 'profile':
+        return (
+          <div className="flex items-center justify-center h-screen">
+            <p className="text-muted-foreground">Profil - En développement</p>
+          </div>
+        );
+      default:
+        return <HomePage />;
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-background">
+      {/* Main Content */}
+      <div className="pb-20">
+        {renderContent()}
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );
 };
