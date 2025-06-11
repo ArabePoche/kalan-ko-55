@@ -1,8 +1,11 @@
 
 import { BookOpen, Play, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 const CoursesPage = () => {
+  const navigate = useNavigate();
+
   const myCourses = [
     {
       id: '1',
@@ -13,6 +16,10 @@ const CoursesPage = () => {
       image: '/placeholder.svg'
     }
   ];
+
+  const handleContinueCourse = (courseId: string) => {
+    navigate(`/formation/${courseId}`);
+  };
 
   return (
     <div className="max-w-md mx-auto bg-background min-h-screen">
@@ -46,7 +53,10 @@ const CoursesPage = () => {
                     ></div>
                   </div>
                 </div>
-                <Button className="w-full">
+                <Button 
+                  className="w-full"
+                  onClick={() => handleContinueCourse(course.id)}
+                >
                   <Play className="w-4 h-4 mr-2" />
                   Continuer
                 </Button>
@@ -58,7 +68,7 @@ const CoursesPage = () => {
             <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">Aucun cours</h3>
             <p className="text-muted-foreground mb-4">Vous n'avez pas encore de formations</p>
-            <Button>Découvrir la boutique</Button>
+            <Button onClick={() => navigate('/shop')}>Découvrir la boutique</Button>
           </div>
         )}
       </div>

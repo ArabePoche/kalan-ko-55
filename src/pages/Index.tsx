@@ -4,6 +4,7 @@ import BottomNavigation from '@/components/BottomNavigation';
 import HomePage from '@/components/HomePage';
 import ShopPage from '@/components/ShopPage';
 import CoursesPage from '@/components/CoursesPage';
+import ProfilePage from '@/components/ProfilePage';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
@@ -23,11 +24,7 @@ const Index = () => {
           </div>
         );
       case 'profile':
-        return (
-          <div className="flex items-center justify-center h-screen">
-            <p className="text-muted-foreground">Profil - En développement</p>
-          </div>
-        );
+        return <ProfilePage />;
       default:
         return <HomePage />;
     }
