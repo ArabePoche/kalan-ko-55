@@ -1,11 +1,10 @@
-
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { 
   Play, 
   MessageCircle,
@@ -14,7 +13,10 @@ import {
   Paperclip,
   Camera,
   Mic,
-  MicOff
+  MicOff,
+  Phone,
+  Video,
+  Pause
 } from 'lucide-react';
 
 interface VideoPlayerProps {
@@ -42,6 +44,7 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
   const [privateMessage, setPrivateMessage] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [privateChatMessages, setPrivateChatMessages] = useState([
     {
@@ -50,7 +53,8 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
       message: 'Bonjour, j\'ai une question sur cette leçon',
       time: '14:30',
       isStudent: true,
-      type: 'text'
+      type: 'text',
+      avatar: '/placeholder.svg'
     },
     {
       id: '2',
@@ -58,7 +62,26 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
       message: 'Bonjour ! Je suis là pour vous aider. Quelle est votre question ?',
       time: '14:32',
       isStudent: false,
-      type: 'text'
+      type: 'text',
+      avatar: '/placeholder.svg'
+    },
+    {
+      id: '3',
+      user: 'Vous',
+      message: '🎵 Message vocal (0:03)',
+      time: '14:35',
+      isStudent: true,
+      type: 'voice',
+      avatar: '/placeholder.svg'
+    },
+    {
+      id: '4',
+      user: 'Prof. Ahmed',
+      message: 'Excellente prononciation ! Continuez comme ça.',
+      time: '14:37',
+      isStudent: false,
+      type: 'text',
+      avatar: '/placeholder.svg'
     }
   ]);
 
@@ -104,7 +127,8 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
         message: privateMessage,
         time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
         isStudent: true,
-        type: 'text'
+        type: 'text',
+        avatar: '/placeholder.svg'
       };
       setPrivateChatMessages([...privateChatMessages, newMessage]);
       setPrivateMessage('');
@@ -117,7 +141,8 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
           message: 'J\'ai bien reçu votre message. Je vais vous répondre dès que possible.',
           time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
           isStudent: false,
-          type: 'text'
+          type: 'text',
+          avatar: '/placeholder.svg'
         };
         setPrivateChatMessages(prev => [...prev, response]);
       }, 2000);
@@ -142,7 +167,8 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
         message: `📎 ${file.name}`,
         time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
         isStudent: true,
-        type: 'file'
+        type: 'file',
+        avatar: '/placeholder.svg'
       };
       setPrivateChatMessages([...privateChatMessages, newMessage]);
     }
@@ -161,13 +187,31 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
           message: '🎵 Message vocal (0:03)',
           time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
           isStudent: true,
-          type: 'voice'
+          type: 'voice',
+          avatar: '/placeholder.svg'
         };
         setPrivateChatMessages(prev => [...prev, newMessage]);
       }, 3000);
     } else {
       setIsRecording(false);
     }
+  };
+
+  const handleVoicePlay = (messageId: string) => {
+    if (playingVoiceId === messageId) {
+      setPlayingVoiceId(null);
+    } else {
+      setPlayingVoiceId(messageId);
+      // Simulate playing for 3 seconds
+      setTimeout(() => {
+        setPlayingVoiceId(null);
+      }, 3000);
+    }
+  };
+
+  const handleCall = (type: 'voice' | 'video') => {
+    console.log(`Initiating ${type} call with teacher`);
+    // Here you would implement the actual call functionality
   };
 
   return (
@@ -252,42 +296,99 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
 
         <TabsContent value="chat" className="space-y-4">
           <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                  <MessageCircle className="w-5 h-5 text-primary-foreground" />
+            <CardHeader className="pb-3 bg-[#25d366]/5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-[#25d366] rounded-full flex items-center justify-center">
+                    <MessageCircle className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Chat avec les Professeurs</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Posez vos questions, les professeurs vous répondront
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-lg">Chat avec les Professeurs</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Posez vos questions, les professeurs vous répondront
-                  </p>
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => handleCall('voice')}
+                    className="text-[#25d366] hover:bg-[#25d366]/10"
+                  >
+                    <Phone className="w-4 h-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => handleCall('video')}
+                    className="text-[#25d366] hover:bg-[#25d366]/10"
+                  >
+                    <Video className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Messages du chat - Style WhatsApp */}
-              <div className="h-80 overflow-y-auto bg-muted/30 rounded-lg p-4 space-y-3">
+              {/* Messages du chat - Style WhatsApp avec avatars */}
+              <div className="h-80 overflow-y-auto bg-[#efeae2] rounded-lg p-4 space-y-3">
                 {privateChatMessages.map((msg) => (
-                  <div key={msg.id} className={`flex ${msg.isStudent ? 'justify-end' : 'justify-start'}`}>
+                  <div key={msg.id} className={`flex ${msg.isStudent ? 'justify-end' : 'justify-start'} items-end space-x-2`}>
+                    {!msg.isStudent && (
+                      <Avatar className="w-8 h-8">
+                        <AvatarImage src={msg.avatar} />
+                        <AvatarFallback>{msg.user.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                    )}
+                    
                     <div className={`max-w-xs px-4 py-2 rounded-lg relative ${
                       msg.isStudent 
-                        ? 'bg-primary text-primary-foreground rounded-br-sm' 
-                        : 'bg-background text-foreground border rounded-bl-sm'
+                        ? 'bg-[#dcf8c6] text-foreground rounded-br-sm' 
+                        : 'bg-white text-foreground border rounded-bl-sm shadow-sm'
                     }`}>
                       {!msg.isStudent && (
-                        <p className="text-xs font-medium mb-1 text-primary">{msg.user}</p>
+                        <p className="text-xs font-medium mb-1 text-[#25d366]">{msg.user}</p>
                       )}
-                      <p className="text-sm break-words">{msg.message}</p>
+                      
+                      {msg.type === 'voice' ? (
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleVoicePlay(msg.id)}
+                            className="p-1 h-auto"
+                          >
+                            {playingVoiceId === msg.id ? (
+                              <Pause className="w-4 h-4" />
+                            ) : (
+                              <Play className="w-4 h-4" />
+                            )}
+                          </Button>
+                          <div className="flex-1 bg-muted/50 rounded h-2 relative">
+                            <div className="bg-[#25d366] h-full rounded w-1/3"></div>
+                          </div>
+                          <span className="text-xs">0:03</span>
+                        </div>
+                      ) : (
+                        <p className="text-sm break-words">{msg.message}</p>
+                      )}
+                      
                       <p className="text-xs opacity-70 mt-1 text-right">{msg.time}</p>
                       
                       {/* Petite flèche style WhatsApp */}
                       <div className={`absolute top-0 w-0 h-0 ${
                         msg.isStudent 
-                          ? 'right-0 border-l-8 border-l-primary border-t-8 border-t-transparent' 
-                          : 'left-0 border-r-8 border-r-background border-t-8 border-t-transparent'
+                          ? 'right-0 border-l-8 border-l-[#dcf8c6] border-t-8 border-t-transparent' 
+                          : 'left-0 border-r-8 border-r-white border-t-8 border-t-transparent'
                       }`} />
                     </div>
+                    
+                    {msg.isStudent && (
+                      <Avatar className="w-8 h-8">
+                        <AvatarImage src={msg.avatar} />
+                        <AvatarFallback>V</AvatarFallback>
+                      </Avatar>
+                    )}
                   </div>
                 ))}
               </div>
@@ -367,7 +468,7 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
                     <Button 
                       size="sm" 
                       onClick={handleSendPrivateMessage}
-                      className="rounded-full p-2 h-auto w-10"
+                      className="rounded-full p-2 h-auto w-10 bg-[#25d366] hover:bg-[#25d366]/90"
                     >
                       <Send className="w-4 h-4" />
                     </Button>
@@ -376,7 +477,7 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
                       variant={isRecording ? "destructive" : "default"}
                       size="sm" 
                       onClick={handleVoiceRecord}
-                      className="rounded-full p-2 h-auto w-10"
+                      className={`rounded-full p-2 h-auto w-10 ${!isRecording ? 'bg-[#25d366] hover:bg-[#25d366]/90' : ''}`}
                     >
                       {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                     </Button>
@@ -407,7 +508,7 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
                             className="w-8 h-8 rounded-full"
                           />
                           <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-background ${
-                            teacher.status === 'en ligne' ? 'bg-green-500' : 'bg-gray-400'
+                            teacher.status === 'en ligne' ? 'bg-[#25d366]' : 'bg-gray-400'
                           }`} />
                         </div>
                         <div>
