@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import FormationPage from "./components/FormationPage";
 import AdminDashboard from "./components/AdminDashboard";
 import FeedbackSystem from "./components/FeedbackSystem";
+import OrderPage from "./components/OrderPage";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/formation/:id" element={<FormationPage />} />
+          <Route path="/order/:videoId" element={<OrderPage />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/feedback" element={<FeedbackSystem />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

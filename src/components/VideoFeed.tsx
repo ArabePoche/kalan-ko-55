@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { Heart, MessageCircle, Share, ShoppingCart, Flag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -70,6 +71,10 @@ const VideoFeed = () => {
     navigate('/admin/feedback');
   };
 
+  const handleBuyClick = (videoId: string) => {
+    navigate(`/order/${videoId}`);
+  };
+
   return (
     <div 
       ref={containerRef}
@@ -111,6 +116,7 @@ const VideoFeed = () => {
                   <Button 
                     className="bg-primary text-primary-foreground hover:bg-primary/90"
                     size="sm"
+                    onClick={() => handleBuyClick(video.id)}
                   >
                     <ShoppingCart className="w-4 h-4 mr-2" />
                     Acheter - {video.price}€
