@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +9,12 @@ import { Input } from '@/components/ui/input';
 import { 
   Play, 
   MessageCircle,
-  Send
+  Send,
+  Smile,
+  Paperclip,
+  Camera,
+  Mic,
+  MicOff
 } from 'lucide-react';
 
 interface VideoPlayerProps {
@@ -35,20 +40,25 @@ interface VideoPlayerProps {
 const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
   const [comment, setComment] = useState('');
   const [privateMessage, setPrivateMessage] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [privateChatMessages, setPrivateChatMessages] = useState([
     {
       id: '1',
       user: 'Vous',
       message: 'Bonjour, j\'ai une question sur cette leçon',
       time: '14:30',
-      isStudent: true
+      isStudent: true,
+      type: 'text'
     },
     {
       id: '2',
       user: 'Prof. Ahmed',
       message: 'Bonjour ! Je suis là pour vous aider. Quelle est votre question ?',
       time: '14:32',
-      isStudent: false
+      isStudent: false,
+      type: 'text'
     }
   ]);
 
@@ -77,6 +87,8 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
     { id: '3', name: 'Prof. Aisha', status: 'en ligne', subject: 'Langue arabe', avatar: '/placeholder.svg' }
   ];
 
+  const emojis = ['😊', '😂', '❤️', '👍', '👎', '😍', '😢', '😮', '😡', '🤔', '👏', '🙏'];
+
   const handleSendComment = () => {
     if (comment.trim()) {
       console.log('Nouveau commentaire:', comment);
@@ -91,7 +103,8 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
         user: 'Vous',
         message: privateMessage,
         time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-        isStudent: true
+        isStudent: true,
+        type: 'text'
       };
       setPrivateChatMessages([...privateChatMessages, newMessage]);
       setPrivateMessage('');
@@ -103,10 +116,57 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
           user: 'Prof. Ahmed',
           message: 'J\'ai bien reçu votre message. Je vais vous répondre dès que possible.',
           time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-          isStudent: false
+          isStudent: false,
+          type: 'text'
         };
         setPrivateChatMessages(prev => [...prev, response]);
       }, 2000);
+    }
+  };
+
+  const handleEmojiSelect = (emoji: string) => {
+    setPrivateMessage(prev => prev + emoji);
+    setShowEmojiPicker(false);
+  };
+
+  const handleFileAttachment = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const newMessage = {
+        id: Date.now().toString(),
+        user: 'Vous',
+        message: `📎 ${file.name}`,
+        time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        isStudent: true,
+        type: 'file'
+      };
+      setPrivateChatMessages([...privateChatMessages, newMessage]);
+    }
+  };
+
+  const handleVoiceRecord = () => {
+    if (!isRecording) {
+      setIsRecording(true);
+      console.log('Début de l\'enregistrement vocal');
+      // Simuler l'arrêt de l'enregistrement après 3 secondes
+      setTimeout(() => {
+        setIsRecording(false);
+        const newMessage = {
+          id: Date.now().toString(),
+          user: 'Vous',
+          message: '🎵 Message vocal (0:03)',
+          time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+          isStudent: true,
+          type: 'voice'
+        };
+        setPrivateChatMessages(prev => [...prev, newMessage]);
+      }, 3000);
+    } else {
+      setIsRecording(false);
     }
   };
 
@@ -192,42 +252,145 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
 
         <TabsContent value="chat" className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Chat Privé avec les Professeurs</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Posez vos questions, les professeurs de cette formation vous répondront
-              </p>
+            <CardHeader className="pb-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                  <MessageCircle className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Chat avec les Professeurs</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Posez vos questions, les professeurs vous répondront
+                  </p>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Messages du chat */}
-              <div className="h-64 overflow-y-auto border rounded-lg p-4 space-y-3">
+              {/* Messages du chat - Style WhatsApp */}
+              <div className="h-80 overflow-y-auto bg-muted/30 rounded-lg p-4 space-y-3">
                 {privateChatMessages.map((msg) => (
                   <div key={msg.id} className={`flex ${msg.isStudent ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-xs px-3 py-2 rounded-lg ${
+                    <div className={`max-w-xs px-4 py-2 rounded-lg relative ${
                       msg.isStudent 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'bg-secondary text-foreground'
+                        ? 'bg-primary text-primary-foreground rounded-br-sm' 
+                        : 'bg-background text-foreground border rounded-bl-sm'
                     }`}>
-                      <p className="text-xs font-medium mb-1">{msg.user}</p>
-                      <p className="text-sm">{msg.message}</p>
-                      <p className="text-xs opacity-70 mt-1">{msg.time}</p>
+                      {!msg.isStudent && (
+                        <p className="text-xs font-medium mb-1 text-primary">{msg.user}</p>
+                      )}
+                      <p className="text-sm break-words">{msg.message}</p>
+                      <p className="text-xs opacity-70 mt-1 text-right">{msg.time}</p>
+                      
+                      {/* Petite flèche style WhatsApp */}
+                      <div className={`absolute top-0 w-0 h-0 ${
+                        msg.isStudent 
+                          ? 'right-0 border-l-8 border-l-primary border-t-8 border-t-transparent' 
+                          : 'left-0 border-r-8 border-r-background border-t-8 border-t-transparent'
+                      }`} />
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* Input pour nouveau message */}
-              <div className="flex items-center space-x-2">
-                <Input
-                  placeholder="Posez votre question aux professeurs..."
-                  value={privateMessage}
-                  onChange={(e) => setPrivateMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendPrivateMessage()}
-                  className="flex-1"
+              {/* Zone de saisie style WhatsApp */}
+              <div className="space-y-3">
+                {/* Sélecteur d'émojis */}
+                {showEmojiPicker && (
+                  <div className="bg-background border rounded-lg p-3">
+                    <div className="grid grid-cols-6 gap-2">
+                      {emojis.map((emoji, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleEmojiSelect(emoji)}
+                          className="p-2 hover:bg-muted rounded text-lg"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Input avec boutons style WhatsApp */}
+                <div className="flex items-end space-x-2 bg-background border rounded-full px-4 py-2">
+                  {/* Bouton émojis */}
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    className="rounded-full p-2 h-auto"
+                  >
+                    <Smile className="w-5 h-5" />
+                  </Button>
+
+                  {/* Zone de texte */}
+                  <div className="flex-1">
+                    <textarea
+                      placeholder="Tapez votre message..."
+                      value={privateMessage}
+                      onChange={(e) => setPrivateMessage(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendPrivateMessage())}
+                      className="w-full resize-none border-none outline-none bg-transparent max-h-20 min-h-6 py-1"
+                      rows={1}
+                      style={{ 
+                        height: 'auto',
+                        minHeight: '24px'
+                      }}
+                      onInput={(e) => {
+                        const target = e.target as HTMLTextAreaElement;
+                        target.style.height = 'auto';
+                        target.style.height = target.scrollHeight + 'px';
+                      }}
+                    />
+                  </div>
+
+                  {/* Bouton pièce jointe / caméra */}
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={handleFileAttachment}
+                    className="rounded-full p-2 h-auto"
+                  >
+                    <Paperclip className="w-5 h-5" />
+                  </Button>
+
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="rounded-full p-2 h-auto"
+                  >
+                    <Camera className="w-5 h-5" />
+                  </Button>
+
+                  {/* Bouton dynamique : Envoyer ou Vocal */}
+                  {privateMessage.trim() ? (
+                    <Button 
+                      size="sm" 
+                      onClick={handleSendPrivateMessage}
+                      className="rounded-full p-2 h-auto w-10"
+                    >
+                      <Send className="w-4 h-4" />
+                    </Button>
+                  ) : (
+                    <Button 
+                      variant={isRecording ? "destructive" : "default"}
+                      size="sm" 
+                      onClick={handleVoiceRecord}
+                      className="rounded-full p-2 h-auto w-10"
+                    >
+                      {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                    </Button>
+                  )}
+                </div>
+
+                {/* Input caché pour les fichiers */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,video/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
                 />
-                <Button size="sm" onClick={handleSendPrivateMessage} disabled={!privateMessage.trim()}>
-                  <Send className="w-4 h-4" />
-                </Button>
               </div>
 
               {/* Professeurs disponibles */}
@@ -235,7 +398,7 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
                 <h4 className="text-sm font-medium mb-3">Professeurs de cette formation</h4>
                 <div className="space-y-2">
                   {availableTeachers.map((teacher) => (
-                    <div key={teacher.id} className="flex items-center justify-between p-2 border rounded-lg">
+                    <div key={teacher.id} className="flex items-center justify-between p-2 border rounded-lg hover:bg-muted/50 transition-colors">
                       <div className="flex items-center space-x-3">
                         <div className="relative">
                           <img 
