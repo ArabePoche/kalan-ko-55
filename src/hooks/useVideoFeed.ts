@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,6 +38,14 @@ export const useVideoFeed = () => {
             console.error('Error syncing comments count for video:', video.id, error);
           }
           
+          // Sync likes count to ensure it's accurate
+          let likesCount = video.likes_count || 0;
+          try {
+            likesCount = await videoService.syncLikesCount(video.id);
+          } catch (error) {
+            console.error('Error syncing likes count for video:', video.id, error);
+          }
+          
           return {
             id: video.id,
             title: video.title,
@@ -44,7 +53,7 @@ export const useVideoFeed = () => {
             video_url: video.video_url || '',
             thumbnail_url: video.thumbnail_url || '/placeholder.svg',
             video_type: video.video_type,
-            likes_count: video.likes_count || 0,
+            likes_count: likesCount,
             comments_count: commentsCount,
             views_count: video.views_count || 0,
             author: {
