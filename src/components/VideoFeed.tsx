@@ -1,36 +1,14 @@
 
 import { useState, useRef, useEffect } from 'react';
-import { Heart, MessageCircle, Share, ShoppingCart, Flag, Users } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useVideoLikes } from '@/hooks/useVideoLikes';
+import { useVideoPlayback } from '@/hooks/useVideoPlayback';
+import { Video } from '@/types/video';
+import VideoItem from './video/VideoItem';
 import VideoComments from './VideoComments';
-
-interface Video {
-  id: string;
-  title: string;
-  description: string;
-  video_url: string;
-  thumbnail_url: string;
-  video_type: 'promo' | 'educational' | 'testimonial';
-  likes_count: number;
-  comments_count: number;
-  views_count: number;
-  author: {
-    id: string;
-    first_name: string;
-    last_name: string;
-    username: string;
-  };
-  product?: {
-    id: string;
-    price: number;
-  };
-  isLiked?: boolean;
-}
 
 const VideoFeed = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
@@ -39,11 +17,11 @@ const VideoFeed = () => {
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [currentVideoId, setCurrentVideoId] = useState<string>('');
   const containerRef = useRef<HTMLDivElement>(null);
-  const iframeRefs = useRef<(HTMLIFrameElement | null)[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   const { toggleLike, checkIfLiked } = useVideoLikes();
+  const { iframeRefs, updateVideoPlayback } = useVideoPlayback(currentVideoIndex, videos);
 
   useEffect(() => {
     fetchVideos();
@@ -103,21 +81,6 @@ const VideoFeed = () => {
     }
   };
 
-  // Helper function to pause all videos except the current one
-  const updateVideoPlayback = (currentIndex: number) => {
-    iframeRefs.current.forEach((iframe, index) => {
-      if (iframe) {
-        if (index === currentIndex) {
-          // Play current video
-          iframe.contentWindow?.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-        } else {
-          // Pause other videos
-          iframe.contentWindow?.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-        }
-      }
-    });
-  };
-
   const handleScroll = () => {
     if (containerRef.current) {
       const scrollTop = containerRef.current.scrollTop;
@@ -138,13 +101,6 @@ const VideoFeed = () => {
       return () => container.removeEventListener('scroll', handleScroll);
     }
   }, [currentVideoIndex]);
-
-  // Update playback when videos load
-  useEffect(() => {
-    if (videos.length > 0) {
-      setTimeout(() => updateVideoPlayback(currentVideoIndex), 1000);
-    }
-  }, [videos, currentVideoIndex]);
 
   const handleLike = async (videoId: string) => {
     const newLikedState = await toggleLike(videoId);
@@ -203,13 +159,6 @@ const VideoFeed = () => {
     navigate(`/formation/${videoId}`);
   };
 
-  // Helper function to extract YouTube video ID
-  const getYouTubeVideoId = (url: string) => {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : null;
-  };
-
   if (loading) {
     return (
       <div className="h-screen bg-black flex items-center justify-center">
@@ -244,125 +193,19 @@ const VideoFeed = () => {
           `}
         </style>
         
-        {videos.map((video, index) => {
-          const youtubeId = getYouTubeVideoId(video.video_url);
-          
-          return (
-            <div
-              key={video.id}
-              className="relative h-screen w-full snap-start bg-black overflow-hidden"
-            >
-              {/* Video Background - Vertical Format */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="relative w-full h-full max-w-[400px] mx-auto">
-                  {youtubeId ? (
-                    <iframe
-                      ref={(el) => (iframeRefs.current[index] = el)}
-                      src={`https://www.youtube.com/embed/${youtubeId}?enablejsapi=1&mute=0&controls=0&loop=1&playlist=${youtubeId}&rel=0&showinfo=0&modestbranding=1`}
-                      className="w-full h-full object-cover rounded-lg"
-                      allow="autoplay; encrypted-media"
-                      allowFullScreen
-                      frameBorder="0"
-                    />
-                  ) : (
-                    <img 
-                      src={video.thumbnail_url} 
-                      alt={video.title}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 rounded-lg" />
-                </div>
-              </div>
-
-              {/* Content Overlay */}
-              <div className="absolute inset-0 flex">
-                
-                {/* Left side - Video info */}
-                <div className="flex-1 flex flex-col justify-end p-4 pb-20 text-white z-10 max-w-[calc(100%-80px)]">
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-bold">
-                          {video.author.first_name?.charAt(0) || video.author.username?.charAt(0) || 'U'}
-                        </span>
-                      </div>
-                      <span className="text-sm font-medium">
-                        @{video.author.username || `${video.author.first_name} ${video.author.last_name}`.trim()}
-                      </span>
-                    </div>
-                    
-                    <h3 className="text-lg font-bold leading-tight">{video.title}</h3>
-                    <p className="text-sm text-gray-200 line-clamp-2">{video.description}</p>
-                    
-                    {video.video_type === 'promo' && video.product && (
-                      <Button 
-                        className="bg-primary text-primary-foreground hover:bg-primary/90 w-fit"
-                        size="sm"
-                        onClick={() => handleBuyClick(video.id)}
-                      >
-                        <ShoppingCart className="w-4 h-4 mr-2" />
-                        Voir la formation - {video.product.price}€
-                      </Button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Right side - Action Buttons */}
-                <div className="w-16 flex flex-col justify-end items-center pb-20 space-y-6 z-10">
-                  <button 
-                    className="flex flex-col items-center"
-                    onClick={() => handleLike(video.id)}
-                  >
-                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                      <Heart className={`w-6 h-6 ${video.isLiked ? 'text-red-500 fill-current' : 'text-white'}`} />
-                    </div>
-                    <span className="text-xs text-white mt-1 font-medium">
-                      {video.likes_count > 999 ? `${(video.likes_count/1000).toFixed(1)}k` : video.likes_count}
-                    </span>
-                  </button>
-
-                  <button 
-                    className="flex flex-col items-center"
-                    onClick={() => handleComment(video.id)}
-                  >
-                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                      <MessageCircle className="w-6 h-6 text-white" />
-                    </div>
-                    <span className="text-xs text-white mt-1 font-medium">{video.comments_count}</span>
-                  </button>
-
-                  <button className="flex flex-col items-center">
-                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                      <Users className="w-6 h-6 text-white" />
-                    </div>
-                    <span className="text-xs text-white mt-1 font-medium">{video.views_count}</span>
-                  </button>
-
-                  <button 
-                    className="flex flex-col items-center"
-                    onClick={() => handleFeedback(video.id)}
-                  >
-                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                      <Flag className="w-6 h-6 text-white" />
-                    </div>
-                    <span className="text-xs text-white mt-1 font-medium">Report</span>
-                  </button>
-
-                  <button 
-                    className="flex flex-col items-center"
-                    onClick={() => handleShare(video.id)}
-                  >
-                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                      <Share className="w-6 h-6 text-white" />
-                    </div>
-                    <span className="text-xs text-white mt-1 font-medium">Share</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {videos.map((video, index) => (
+          <VideoItem
+            key={video.id}
+            video={video}
+            index={index}
+            iframeRef={(el) => (iframeRefs.current[index] = el)}
+            onLike={handleLike}
+            onComment={handleComment}
+            onShare={handleShare}
+            onFeedback={handleFeedback}
+            onBuyClick={handleBuyClick}
+          />
+        ))}
       </div>
 
       {/* Comments Modal */}
