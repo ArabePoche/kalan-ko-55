@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useVideoComments } from '@/hooks/useVideoComments';
@@ -10,9 +9,15 @@ interface VideoCommentsProps {
   isOpen: boolean;
   onClose: () => void;
   videoId: string;
+  onCommentAdded?: () => void;
 }
 
-const VideoComments: React.FC<VideoCommentsProps> = ({ isOpen, onClose, videoId }) => {
+const VideoComments: React.FC<VideoCommentsProps> = ({ 
+  isOpen, 
+  onClose, 
+  videoId, 
+  onCommentAdded 
+}) => {
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
@@ -23,6 +28,8 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ isOpen, onClose, videoId 
       const success = await addComment(newComment);
       if (success) {
         setNewComment('');
+        // Call the callback to update the parent component's state
+        onCommentAdded?.();
       }
     }
   };

@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -134,6 +135,20 @@ const VideoFeed = () => {
     setCommentsOpen(true);
   };
 
+  const handleCommentAdded = () => {
+    // Update the comments count for the current video
+    setVideos(prevVideos => 
+      prevVideos.map(video => 
+        video.id === currentVideoId 
+          ? { 
+              ...video, 
+              comments_count: video.comments_count + 1
+            }
+          : video
+      )
+    );
+  };
+
   const handleShare = (videoId: string) => {
     console.log('Partage de la vidéo:', videoId);
     if (navigator.share) {
@@ -212,6 +227,7 @@ const VideoFeed = () => {
         isOpen={commentsOpen}
         onClose={() => setCommentsOpen(false)}
         videoId={currentVideoId}
+        onCommentAdded={handleCommentAdded}
       />
     </>
   );
