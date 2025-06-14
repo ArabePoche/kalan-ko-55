@@ -1,40 +1,36 @@
-import { useState } from 'react';
+
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
-import HomePage from '@/components/HomePage';
-import ShopPage from '@/components/ShopPage';
-import CoursesPage from '@/components/CoursesPage';
-import ProfilePage from '@/components/ProfilePage';
-import NotificationsFeed from '@/components/NotificationsFeed';
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState('home');
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'home':
-        return <HomePage />;
-      case 'shop':
-        return <ShopPage />;
-      case 'courses':
-        return <CoursesPage />;
-      case 'notifications':
-        return <NotificationsFeed />;
-      case 'profile':
-        return <ProfilePage />;
-      default:
-        return <HomePage />;
-    }
+  const getActiveTabFromPath = () => {
+    const path = location.pathname;
+    if (path.startsWith('/shop')) return 'shop';
+    if (path.startsWith('/courses')) return 'courses';
+    if (path.startsWith('/notifications')) return 'notifications';
+    if (path.startsWith('/profile')) return 'profile';
+    return 'home';
+  };
+
+  const activeTab = getActiveTabFromPath();
+
+  const handleTabChange = (tab: string) => {
+    const path = tab === 'home' ? '/' : `/${tab}`;
+    navigate(path);
   };
 
   return (
     <div className="min-h-screen bg-background">
       {/* Main Content */}
       <div className="pb-20">
-        {renderContent()}
+        <Outlet />
       </div>
 
       {/* Bottom Navigation */}
-      <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+      <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
     </div>
   );
 };

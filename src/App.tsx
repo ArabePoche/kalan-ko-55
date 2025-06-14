@@ -14,6 +14,11 @@ import Cart from "./components/Cart";
 import CheckoutPage from "./components/CheckoutPage";
 import { AuthProvider } from "./contexts/AuthProvider";
 import AuthPage from "./pages/AuthPage";
+import HomePage from "./components/HomePage";
+import ShopPage from "./components/ShopPage";
+import CoursesPage from "./components/CoursesPage";
+import NotificationsFeed from "./components/NotificationsFeed";
+import ProfilePage from "./components/ProfilePage";
 
 const queryClient = new QueryClient();
 
@@ -25,7 +30,14 @@ const App = () => (
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route element={<Index />}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/shop" element={<ShopPage />} />
+              <Route path="/courses" element={<CoursesPage />} />
+              <Route path="/notifications" element={<NotificationsFeed />} />
+              <Route path="/profile" element={<ProfilePage />} />
+            </Route>
+
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/formation/:id" element={<FormationPage />} />
             <Route path="/order/:videoId" element={<OrderPage />} />
