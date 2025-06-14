@@ -21,6 +21,7 @@ export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, userInitials }:
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true);
+      console.log('Starting avatar upload...');
 
       if (!event.target.files || event.target.files.length === 0) {
         throw new Error('Vous devez sélectionner une image à télécharger.');
@@ -31,6 +32,7 @@ export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, userInitials }:
       }
 
       const file = event.target.files[0];
+      console.log('Selected file:', file.name, file.type, file.size);
       
       // Validate file type
       if (!file.type.startsWith('image/')) {
@@ -47,12 +49,28 @@ export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, userInitials }:
 
       console.log('Uploading file to path:', filePath);
 
+      // Check if avatars bucket exists
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+      console.log('Available buckets:', buckets);
+      
+      if (bucketsError) {
+        console.error('Error checking buckets:', bucketsError);
+        throw new Error('Erreur lors de la vérification du stockage.');
+      }
+
+      const avatarsBucket = buckets?.find(bucket => bucket.name === 'avatars');
+      if (!avatarsBucket) {
+        console.error('Avatars bucket not found');
+        throw new Error('Le stockage pour les avatars n\'est pas configuré. Contactez l\'administrateur.');
+      }
+
       // First, delete any existing avatar for this user
       const { data: existingFiles } = await supabase.storage
         .from('avatars')
         .list(user.id);
 
       if (existingFiles && existingFiles.length > 0) {
+        console.log('Deleting existing files:', existingFiles);
         for (const existingFile of existingFiles) {
           await supabase.storage
             .from('avatars')
@@ -108,10 +126,20 @@ export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, userInitials }:
     }
   };
 
+  const handleButtonClick = () => {
+    console.log('Avatar upload button clicked');
+    document.getElementById('avatar-upload')?.click();
+  };
+
+  const handleAvatarClick = () => {
+    console.log('Avatar clicked');
+    document.getElementById('avatar-upload')?.click();
+  };
+
   return (
     <div className="flex flex-col items-center space-y-4">
       <div className="relative">
-        <Avatar className="w-24 h-24">
+        <Avatar className="w-24 h-24 cursor-pointer" onClick={handleAvatarClick}>
           <AvatarImage src={currentAvatarUrl || undefined} />
           <AvatarFallback>{userInitials}</AvatarFallback>
         </Avatar>
@@ -120,7 +148,7 @@ export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, userInitials }:
           variant="secondary"
           className="absolute -bottom-2 -right-2 rounded-full"
           disabled={uploading}
-          onClick={() => document.getElementById('avatar-upload')?.click()}
+          onClick={handleAvatarClick}
         >
           {uploading ? (
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
@@ -137,11 +165,12 @@ export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, userInitials }:
         onChange={uploadAvatar}
         disabled={uploading}
         className="hidden"
+        multiple={false}
       />
       
       <Button
         variant="outline"
-        onClick={() => document.getElementById('avatar-upload')?.click()}
+        onClick={handleButtonClick}
         disabled={uploading}
         className="w-full"
       >
