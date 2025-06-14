@@ -1,8 +1,9 @@
 
-import React from 'react';
-import { Send } from 'lucide-react';
+import React, { useState } from 'react';
+import { Send, Smile } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAuth } from '@/contexts/AuthProvider';
 
 interface CommentInputProps {
@@ -13,6 +14,13 @@ interface CommentInputProps {
   maxLength?: number;
 }
 
+const commonEmojis = [
+  '😀', '😁', '😂', '🤣', '😊', '😍', '🥰', '😘', '😉', '😎',
+  '🤔', '😮', '😯', '😱', '😭', '😢', '😤', '😡', '🥺', '😴',
+  '👍', '👎', '👏', '🙌', '👌', '✌️', '🤞', '🤝', '💪', '🔥',
+  '❤️', '💕', '💖', '💯', '✨', '🎉', '🎊', '🚀', '⚡', '💎'
+];
+
 export const CommentInput: React.FC<CommentInputProps> = ({
   value,
   onChange,
@@ -21,12 +29,18 @@ export const CommentInput: React.FC<CommentInputProps> = ({
   maxLength = 500
 }) => {
   const { user } = useAuth();
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       onSubmit();
     }
+  };
+
+  const handleEmojiSelect = (emoji: string) => {
+    onChange(value + emoji);
+    setIsEmojiPickerOpen(false);
   };
 
   const getInitials = () => {
@@ -47,14 +61,43 @@ export const CommentInput: React.FC<CommentInputProps> = ({
         </span>
       </div>
       <div className="flex-1">
-        <Textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder={placeholder}
-          className="min-h-[60px] resize-none border-gray-200 focus:border-primary"
-          maxLength={maxLength}
-        />
+        <div className="relative">
+          <Textarea
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder={placeholder}
+            className="min-h-[60px] resize-none border-gray-200 focus:border-primary pr-10"
+            maxLength={maxLength}
+          />
+          <Popover open={isEmojiPickerOpen} onOpenChange={setIsEmojiPickerOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-2 top-2 h-8 w-8 p-0 hover:bg-gray-100"
+              >
+                <Smile className="w-4 h-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-2" align="end">
+              <div className="grid grid-cols-10 gap-1">
+                {commonEmojis.map((emoji, index) => (
+                  <Button
+                    key={index}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 hover:bg-gray-100"
+                    onClick={() => handleEmojiSelect(emoji)}
+                  >
+                    {emoji}
+                  </Button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
         <div className="flex items-center justify-between mt-2">
           <span className="text-xs text-gray-400">
             {value.length}/{maxLength}
