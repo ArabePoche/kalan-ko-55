@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from 'react';
-import { Heart, MessageCircle, Share, ShoppingCart, Flag } from 'lucide-react';
+import { Heart, MessageCircle, Share, ShoppingCart, Flag, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,6 +15,7 @@ interface Video {
   price?: number;
   likes: number;
   comments: number;
+  students: number;
 }
 
 const mockVideos: Video[] = [
@@ -28,7 +29,8 @@ const mockVideos: Video[] = [
     isPromo: true,
     price: 49.99,
     likes: 1234,
-    comments: 89
+    comments: 89,
+    students: 245
   },
   {
     id: '2',
@@ -39,7 +41,8 @@ const mockVideos: Video[] = [
     thumbnail: '/placeholder.svg',
     isPromo: false,
     likes: 856,
-    comments: 45
+    comments: 45,
+    students: 189
   }
 ];
 
@@ -78,43 +81,51 @@ const VideoFeed = () => {
   return (
     <div 
       ref={containerRef}
-      className="h-screen overflow-y-scroll snap-y snap-mandatory"
+      className="h-screen overflow-y-scroll snap-y snap-mandatory bg-black"
       style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
     >
+      <style jsx>{`
+        div::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+      
       {videos.map((video, index) => (
         <div
           key={video.id}
-          className="relative h-screen w-full flex items-center justify-center snap-start bg-black"
+          className="relative h-screen w-full snap-start bg-black overflow-hidden"
         >
-          {/* Video Background */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30">
-            <img 
-              src={video.thumbnail} 
-              alt={video.title}
-              className="w-full h-full object-cover"
-            />
+          {/* Video Background - Vertical Format */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="relative w-full h-full max-w-[400px] mx-auto">
+              <img 
+                src={video.thumbnail} 
+                alt={video.title}
+                className="w-full h-full object-cover rounded-lg"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 rounded-lg" />
+            </div>
           </div>
 
           {/* Content Overlay */}
-          <div className="absolute inset-0 flex flex-col justify-between p-4 text-white z-10">
+          <div className="absolute inset-0 flex">
             
-            {/* Top section - could show live indicator or other info */}
-            <div className="flex justify-between items-start">
-              <div></div>
-            </div>
-
-            {/* Bottom section - video info and actions */}
-            <div className="flex justify-between items-end">
-              
-              {/* Video Info */}
-              <div className="flex-1 mr-4">
-                <h3 className="text-lg font-bold mb-1">{video.title}</h3>
-                <p className="text-sm text-gray-200 mb-1">@{video.author}</p>
-                <p className="text-sm text-gray-300 mb-3 line-clamp-2">{video.description}</p>
+            {/* Left side - Video info */}
+            <div className="flex-1 flex flex-col justify-end p-4 pb-20 text-white z-10 max-w-[calc(100%-80px)]">
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-bold">{video.author.charAt(0)}</span>
+                  </div>
+                  <span className="text-sm font-medium">@{video.author}</span>
+                </div>
+                
+                <h3 className="text-lg font-bold leading-tight">{video.title}</h3>
+                <p className="text-sm text-gray-200 line-clamp-2">{video.description}</p>
                 
                 {video.isPromo && (
                   <Button 
-                    className="bg-primary text-primary-foreground hover:bg-primary/90"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 w-fit"
                     size="sm"
                     onClick={() => handleBuyClick(video.id)}
                   >
@@ -123,40 +134,49 @@ const VideoFeed = () => {
                   </Button>
                 )}
               </div>
+            </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col items-center space-y-4">
-                <button className="flex flex-col items-center">
-                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                    <Heart className="w-6 h-6" />
-                  </div>
-                  <span className="text-xs mt-1">{video.likes}</span>
-                </button>
+            {/* Right side - Action Buttons */}
+            <div className="w-16 flex flex-col justify-end items-center pb-20 space-y-6 z-10">
+              <button className="flex flex-col items-center">
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                  <Heart className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-xs text-white mt-1 font-medium">
+                  {video.likes > 999 ? `${(video.likes/1000).toFixed(1)}k` : video.likes}
+                </span>
+              </button>
 
-                <button className="flex flex-col items-center">
-                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                    <MessageCircle className="w-6 h-6" />
-                  </div>
-                  <span className="text-xs mt-1">{video.comments}</span>
-                </button>
+              <button className="flex flex-col items-center">
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                  <MessageCircle className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-xs text-white mt-1 font-medium">{video.comments}</span>
+              </button>
 
-                <button 
-                  className="flex flex-col items-center"
-                  onClick={() => handleFeedback(video.id)}
-                >
-                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                    <Flag className="w-6 h-6" />
-                  </div>
-                  <span className="text-xs mt-1">Feedback</span>
-                </button>
+              <button className="flex flex-col items-center">
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-xs text-white mt-1 font-medium">{video.students}</span>
+              </button>
 
-                <button className="flex flex-col items-center">
-                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                    <Share className="w-6 h-6" />
-                  </div>
-                  <span className="text-xs mt-1">Partager</span>
-                </button>
-              </div>
+              <button 
+                className="flex flex-col items-center"
+                onClick={() => handleFeedback(video.id)}
+              >
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                  <Flag className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-xs text-white mt-1 font-medium">Report</span>
+              </button>
+
+              <button className="flex flex-col items-center">
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                  <Share className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-xs text-white mt-1 font-medium">Share</span>
+              </button>
             </div>
           </div>
         </div>
