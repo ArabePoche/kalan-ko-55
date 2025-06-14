@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Send, Heart, MessageCircle } from 'lucide-react';
+import { X, Send, Heart, MessageCircle, Reply } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -16,7 +16,9 @@ interface VideoCommentsProps {
 
 const VideoComments: React.FC<VideoCommentsProps> = ({ isOpen, onClose, videoId }) => {
   const [newComment, setNewComment] = useState('');
-  const { comments, loading, addComment, toggleCommentLike } = useVideoComments(videoId);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const { comments, loading, addComment, addReply, toggleCommentLike } = useVideoComments(videoId);
 
   const handleSendComment = async () => {
     if (newComment.trim()) {
@@ -27,10 +29,27 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ isOpen, onClose, videoId 
     }
   };
 
+  const handleSendReply = async (parentCommentId: string) => {
+    if (replyText.trim()) {
+      const success = await addReply(parentCommentId, replyText);
+      if (success) {
+        setReplyText('');
+        setReplyingTo(null);
+      }
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendComment();
+    }
+  };
+
+  const handleReplyKeyPress = (e: React.KeyboardEvent, parentCommentId: string) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendReply(parentCommentId);
     }
   };
 
@@ -99,37 +118,129 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ isOpen, onClose, videoId 
           ) : (
             <div className="space-y-4">
               {comments.map((comment) => (
-                <div key={comment.id} className="flex space-x-3">
-                  <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-xs font-bold">
-                      {getInitials(comment)}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-semibold text-gray-900">
-                        {getDisplayName(comment)}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {formatTimeAgo(comment.created_at)}
+                <div key={comment.id} className="space-y-3">
+                  {/* Main Comment */}
+                  <div className="flex space-x-3">
+                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-bold">
+                        {getInitials(comment)}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-900 mt-1">{comment.content}</p>
-                    <div className="flex items-center space-x-4 mt-2">
-                      <button 
-                        className="flex items-center space-x-1 text-xs text-gray-500 hover:text-red-500 transition-colors"
-                        onClick={() => toggleCommentLike(comment.id)}
-                      >
-                        <Heart 
-                          className={`w-3 h-3 ${comment.isLiked ? 'text-red-500 fill-current' : ''}`} 
-                        />
-                        <span>{comment.likes_count}</span>
-                      </button>
-                      <button className="text-xs text-gray-500 hover:text-gray-700 transition-colors">
-                        Répondre
-                      </button>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-semibold text-gray-900">
+                          {getDisplayName(comment)}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {formatTimeAgo(comment.created_at)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-900 mt-1">{comment.content}</p>
+                      <div className="flex items-center space-x-4 mt-2">
+                        <button 
+                          className="flex items-center space-x-1 text-xs text-gray-500 hover:text-red-500 transition-colors"
+                          onClick={() => toggleCommentLike(comment.id)}
+                        >
+                          <Heart 
+                            className={`w-3 h-3 ${comment.isLiked ? 'text-red-500 fill-current' : ''}`} 
+                          />
+                          <span>{comment.likes_count}</span>
+                        </button>
+                        <button 
+                          className="flex items-center space-x-1 text-xs text-gray-500 hover:text-blue-500 transition-colors"
+                          onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                        >
+                          <Reply className="w-3 h-3" />
+                          <span>Répondre</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Reply Input */}
+                  {replyingTo === comment.id && (
+                    <div className="ml-11 mt-3">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-xs font-bold text-primary">V</span>
+                        </div>
+                        <div className="flex-1">
+                          <Textarea
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            onKeyPress={(e) => handleReplyKeyPress(e, comment.id)}
+                            placeholder="Écrivez votre réponse..."
+                            className="min-h-[50px] resize-none border-gray-200 focus:border-primary text-sm"
+                            maxLength={500}
+                          />
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-xs text-gray-400">
+                              {replyText.length}/500
+                            </span>
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setReplyingTo(null);
+                                  setReplyText('');
+                                }}
+                                className="text-xs"
+                              >
+                                Annuler
+                              </Button>
+                              <Button
+                                onClick={() => handleSendReply(comment.id)}
+                                disabled={!replyText.trim()}
+                                size="sm"
+                                className="text-xs px-3"
+                              >
+                                <Send className="w-3 h-3 mr-1" />
+                                Répondre
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Replies */}
+                  {comment.replies && comment.replies.length > 0 && (
+                    <div className="ml-11 space-y-3">
+                      {comment.replies.map((reply) => (
+                        <div key={reply.id} className="flex space-x-3">
+                          <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-bold">
+                              {getInitials(reply)}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm font-semibold text-gray-900">
+                                {getDisplayName(reply)}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {formatTimeAgo(reply.created_at)}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-900 mt-1">{reply.content}</p>
+                            <div className="flex items-center space-x-4 mt-2">
+                              <button 
+                                className="flex items-center space-x-1 text-xs text-gray-500 hover:text-red-500 transition-colors"
+                                onClick={() => toggleCommentLike(reply.id)}
+                              >
+                                <Heart 
+                                  className={`w-3 h-3 ${reply.isLiked ? 'text-red-500 fill-current' : ''}`} 
+                                />
+                                <span>{reply.likes_count}</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
