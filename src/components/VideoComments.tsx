@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { X, Send, Heart, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useVideoComments } from '@/hooks/useVideoComments';
 import { formatDistanceToNow } from 'date-fns';
@@ -24,6 +24,13 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ isOpen, onClose, videoId 
       if (success) {
         setNewComment('');
       }
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendComment();
     }
   };
 
@@ -56,9 +63,9 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ isOpen, onClose, videoId 
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-      <div className="bg-white w-full h-[70vh] rounded-t-3xl flex flex-col">
+      <div className="bg-white w-full h-[80vh] rounded-t-3xl flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center justify-between p-4 border-b bg-white">
           <div className="flex items-center space-x-2">
             <MessageCircle className="w-5 h-5 text-gray-600" />
             <span className="text-lg font-semibold">
@@ -129,28 +136,37 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ isOpen, onClose, videoId 
           )}
         </ScrollArea>
 
-        {/* Comment Input */}
-        <div className="p-4 border-t bg-gray-50">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-              <span className="text-xs font-bold">V</span>
-            </div>
-            <div className="flex-1 flex items-center space-x-2">
-              <Input
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Ajouter un commentaire..."
-                className="flex-1 border-none bg-white rounded-full px-4 py-2"
-                onKeyPress={(e) => e.key === 'Enter' && handleSendComment()}
-                maxLength={500}
-              />
-              <Button
-                onClick={handleSendComment}
-                disabled={!newComment.trim()}
-                className="rounded-full w-8 h-8 p-0 bg-primary hover:bg-primary/90"
-              >
-                <Send className="w-4 h-4" />
-              </Button>
+        {/* Comment Input - Fixed at bottom */}
+        <div className="p-4 border-t bg-white">
+          <div className="space-y-3">
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-xs font-bold text-primary">V</span>
+              </div>
+              <div className="flex-1">
+                <Textarea
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Écrivez votre commentaire..."
+                  className="min-h-[60px] resize-none border-gray-200 focus:border-primary"
+                  maxLength={500}
+                />
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-gray-400">
+                    {newComment.length}/500
+                  </span>
+                  <Button
+                    onClick={handleSendComment}
+                    disabled={!newComment.trim()}
+                    size="sm"
+                    className="px-4"
+                  >
+                    <Send className="w-4 h-4 mr-1" />
+                    Publier
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
