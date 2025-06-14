@@ -16,9 +16,9 @@ const ShopPage = () => {
       id: product.id,
       title: product.title,
       price: product.price,
-      instructor: product.instructor || 'Instructeur',
-      image: product.image_url || '/placeholder.svg',
-      type: product.product_type
+      instructor: product.instructor,
+      image: product.image,
+      type: product.type
     });
     
     toast({

@@ -17,11 +17,14 @@ export interface Product {
   rating: number;
   students_count: number;
   is_active: boolean;
-  instructor?: {
-    first_name?: string;
-    last_name?: string;
-    username?: string;
-  };
+  
+  // Properties from mapping
+  instructor: string;
+  image: string;
+  originalPrice?: number;
+  type: 'formation' | 'article' | 'service';
+  students: number;
+  discount?: string;
 }
 
 export const useProducts = (categoryFilter?: string) => {
