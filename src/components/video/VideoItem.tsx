@@ -123,7 +123,7 @@ const VideoItem = forwardRef<HTMLDivElement, VideoItemProps>(({
               <span className="text-xs">Partager</span>
             </Button>
 
-            {video.product_id && (
+            {video.product && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -143,7 +143,8 @@ const VideoItem = forwardRef<HTMLDivElement, VideoItemProps>(({
         <div className="absolute top-4 left-4">
           <Badge variant="secondary" className="bg-black/50 text-white">
             {video.video_type === 'educational' ? 'Éducatif' : 
-             video.video_type === 'promotional' ? 'Promotionnel' : 
+             video.video_type === 'promo' ? 'Promotionnel' : 
+             video.video_type === 'testimonial' ? 'Témoignage' :
              video.video_type}
           </Badge>
         </div>

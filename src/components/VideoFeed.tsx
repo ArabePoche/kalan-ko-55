@@ -14,7 +14,7 @@ const VideoFeed = () => {
   
   const { videos, loading, updateVideoLike, updateVideoCommentCount } = useVideoFeed();
   const { iframeRefs, updateVideoPlayback } = useVideoPlayback(currentVideoIndex, videos);
-  const { handleLike, handleShare, handleFeedback, handleBuyClick } = useVideoActions(updateVideoLike);
+  const { handleLike, handleShare, handleBuyClick } = useVideoActions(updateVideoLike);
 
   const handleScroll = () => {
     if (containerRef.current) {
@@ -40,6 +40,11 @@ const VideoFeed = () => {
   const handleComment = (videoId: string) => {
     setCurrentVideoId(videoId);
     setCommentsOpen(true);
+  };
+
+  const handleFeedback = (videoId: string) => {
+    // Cette fonction peut rester simple car le feedback est géré directement dans VideoItem
+    console.log('Feedback pour la vidéo:', videoId);
   };
 
   const handleCommentAdded = () => {
