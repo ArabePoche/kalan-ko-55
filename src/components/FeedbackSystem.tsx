@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { ThumbsUp, ThumbsDown, Eye, MessageCircle, User } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Eye, MessageCircle, User, BarChart3, Clock, TrendingUp, AlertTriangle } from 'lucide-react';
 
 interface FeedbackItem {
   id: string;
@@ -21,6 +21,41 @@ interface FeedbackItem {
     reviewedAt: string;
   };
 }
+
+interface FeedbackStats {
+  totalSubmissions: number;
+  pendingReview: number;
+  approvedToday: number;
+  rejectedToday: number;
+  averageReviewTime: string;
+  approvalRate: number;
+  expertActivity: {
+    name: string;
+    reviews: number;
+  }[];
+  contentTypeBreakdown: {
+    videos: number;
+    posts: number;
+  };
+}
+
+const mockFeedbackStats: FeedbackStats = {
+  totalSubmissions: 157,
+  pendingReview: 12,
+  approvedToday: 8,
+  rejectedToday: 2,
+  averageReviewTime: "2.5h",
+  approvalRate: 78.5,
+  expertActivity: [
+    { name: "Dr. Hassan", reviews: 34 },
+    { name: "Dr. Fatima", reviews: 28 },
+    { name: "Prof. Ahmed", reviews: 19 }
+  ],
+  contentTypeBreakdown: {
+    videos: 89,
+    posts: 68
+  }
+};
 
 const mockFeedbackItems: FeedbackItem[] = [
   {
@@ -70,10 +105,125 @@ const FeedbackSystem = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6">
       <div className="mb-6">
         <h2 className="text-2xl font-bold">Système de Feedback</h2>
         <p className="text-muted-foreground">Modération et validation des contenus</p>
+      </div>
+
+      {/* Statistiques Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Soumissions</p>
+                <p className="text-2xl font-bold">{mockFeedbackStats.totalSubmissions}</p>
+              </div>
+              <BarChart3 className="h-8 w-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">En Attente</p>
+                <p className="text-2xl font-bold text-yellow-600">{mockFeedbackStats.pendingReview}</p>
+              </div>
+              <Clock className="h-8 w-8 text-yellow-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Taux d'Approbation</p>
+                <p className="text-2xl font-bold text-green-600">{mockFeedbackStats.approvalRate}%</p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Temps Moyen</p>
+                <p className="text-2xl font-bold">{mockFeedbackStats.averageReviewTime}</p>
+              </div>
+              <AlertTriangle className="h-8 w-8 text-orange-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Statistiques Détaillées */}
+      <div className="grid lg:grid-cols-3 gap-6 mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5" />
+              Activité des Experts
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {mockFeedbackStats.expertActivity.map((expert, index) => (
+              <div key={index} className="flex justify-between items-center">
+                <span className="font-medium">{expert.name}</span>
+                <Badge variant="outline">{expert.reviews} révisions</Badge>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Révisions Aujourd'hui</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="flex items-center gap-2">
+                <ThumbsUp className="w-4 h-4 text-green-500" />
+                Approuvés
+              </span>
+              <span className="font-bold text-green-600">{mockFeedbackStats.approvedToday}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="flex items-center gap-2">
+                <ThumbsDown className="w-4 h-4 text-red-500" />
+                Rejetés
+              </span>
+              <span className="font-bold text-red-600">{mockFeedbackStats.rejectedToday}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Types de Contenu</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="flex items-center gap-2">
+                <Eye className="w-4 h-4" />
+                Vidéos
+              </span>
+              <span className="font-bold">{mockFeedbackStats.contentTypeBreakdown.videos}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="flex items-center gap-2">
+                <MessageCircle className="w-4 h-4" />
+                Publications
+              </span>
+              <span className="font-bold">{mockFeedbackStats.contentTypeBreakdown.posts}</span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
