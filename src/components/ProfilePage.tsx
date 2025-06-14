@@ -8,10 +8,22 @@ import NotificationsFeed from "./NotificationsFeed";
 import { useAuth } from '@/contexts/AuthProvider';
 import { useProfile } from '@/hooks/useProfile';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Edit } from 'lucide-react';
+import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { EditProfileForm } from './EditProfileForm';
 
 const ProfilePage = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const { data: profile, isLoading: profileLoading } = useProfile();
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const isLoading = authLoading || profileLoading;
 
@@ -49,6 +61,29 @@ const ProfilePage = () => {
       </div>
     );
   }
+
+  if (!profile) {
+     return (
+      <div className="p-4 space-y-4">
+        <div className="flex items-center space-x-4">
+          <Skeleton className="h-24 w-24 rounded-full" />
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+        </div>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-1/3" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full mt-2" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   
   return (
     <div className="p-4 md:p-6 lg:p-8">
@@ -61,7 +96,24 @@ const ProfilePage = () => {
           <h1 className="text-2xl font-bold">{profile?.first_name} {profile?.last_name}</h1>
           <p className="text-muted-foreground">@{profile?.username || user.email}</p>
         </div>
-        <div className="md:ml-auto">
+        <div className="flex gap-2 md:ml-auto">
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Edit className="mr-2 h-4 w-4" />
+                Modifier
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Modifier le profil</DialogTitle>
+                <DialogDescription>
+                  Mettez à jour vos informations. Cliquez sur enregistrer lorsque vous avez terminé.
+                </DialogDescription>
+              </DialogHeader>
+              <EditProfileForm profile={profile} onSuccess={() => setIsEditDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
           <Button onClick={signOut} variant="outline">Se déconnecter</Button>
         </div>
       </div>
