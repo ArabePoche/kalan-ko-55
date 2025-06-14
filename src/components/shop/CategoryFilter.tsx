@@ -1,18 +1,27 @@
 
 import { Button } from '@/components/ui/button';
-
-interface Category {
-  id: string;
-  label: string;
-}
+import { useCategories } from '@/hooks/useCategories';
 
 interface CategoryFilterProps {
-  categories: Category[];
   selectedCategory: string;
   onCategoryChange: (categoryId: string) => void;
 }
 
-const CategoryFilter = ({ categories, selectedCategory, onCategoryChange }: CategoryFilterProps) => {
+const CategoryFilter = ({ selectedCategory, onCategoryChange }: CategoryFilterProps) => {
+  const { data: categories = [], isLoading } = useCategories();
+
+  if (isLoading) {
+    return (
+      <div className="p-4 bg-[#37475A] text-white">
+        <div className="flex space-x-4">
+          <div className="animate-pulse bg-white/20 h-8 w-20 rounded"></div>
+          <div className="animate-pulse bg-white/20 h-8 w-24 rounded"></div>
+          <div className="animate-pulse bg-white/20 h-8 w-16 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 bg-[#37475A] text-white">
       <div className="flex space-x-4 overflow-x-auto">
@@ -21,9 +30,9 @@ const CategoryFilter = ({ categories, selectedCategory, onCategoryChange }: Cate
             key={category.id}
             variant="ghost" 
             size="sm" 
-            onClick={() => onCategoryChange(category.id)}
+            onClick={() => onCategoryChange(category.name)}
             className={`text-white whitespace-nowrap ${
-              selectedCategory === category.id 
+              selectedCategory === category.name 
                 ? 'bg-white/20 text-white font-semibold' 
                 : 'hover:bg-white/10'
             }`}

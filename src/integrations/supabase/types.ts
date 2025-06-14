@@ -9,7 +9,506 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      cart_items: {
+        Row: {
+          added_at: string | null
+          id: string
+          product_id: string | null
+          quantity: number | null
+          user_id: string | null
+        }
+        Insert: {
+          added_at?: string | null
+          id?: string
+          product_id?: string | null
+          quantity?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          added_at?: string | null
+          id?: string
+          product_id?: string | null
+          quantity?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          label: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          label: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          label?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      formations: {
+        Row: {
+          completion_rate: number | null
+          duration_hours: number | null
+          id: string
+          level_count: number | null
+          total_lessons: number | null
+        }
+        Insert: {
+          completion_rate?: number | null
+          duration_hours?: number | null
+          id: string
+          level_count?: number | null
+          total_lessons?: number | null
+        }
+        Update: {
+          completion_rate?: number | null
+          duration_hours?: number | null
+          id?: string
+          level_count?: number | null
+          total_lessons?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "formations_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lessons: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration: string | null
+          has_exercise: boolean | null
+          id: string
+          level_id: string | null
+          order_index: number
+          title: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          has_exercise?: boolean | null
+          id?: string
+          level_id?: string | null
+          order_index: number
+          title: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          has_exercise?: boolean | null
+          id?: string
+          level_id?: string | null
+          order_index?: number
+          title?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      levels: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          formation_id: string | null
+          id: string
+          order_index: number
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          formation_id?: string | null
+          id?: string
+          order_index: number
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          formation_id?: string | null
+          id?: string
+          order_index?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "levels_formation_id_fkey"
+            columns: ["formation_id"]
+            isOneToOne: false
+            referencedRelation: "formations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_items: {
+        Row: {
+          id: string
+          order_id: string | null
+          price: number
+          product_id: string | null
+          quantity: number
+        }
+        Insert: {
+          id?: string
+          order_id?: string | null
+          price: number
+          product_id?: string | null
+          quantity: number
+        }
+        Update: {
+          id?: string
+          order_id?: string | null
+          price?: number
+          product_id?: string | null
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string | null
+          id: string
+          status: string | null
+          total_amount: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          total_amount: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          total_amount?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          badge: string | null
+          category_id: string | null
+          created_at: string | null
+          description: string | null
+          discount_percentage: number | null
+          id: string
+          image_url: string | null
+          instructor_id: string | null
+          is_active: boolean | null
+          original_price: number | null
+          price: number
+          product_type: Database["public"]["Enums"]["product_type"]
+          rating: number | null
+          students_count: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          badge?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          discount_percentage?: number | null
+          id?: string
+          image_url?: string | null
+          instructor_id?: string | null
+          is_active?: boolean | null
+          original_price?: number | null
+          price: number
+          product_type: Database["public"]["Enums"]["product_type"]
+          rating?: number | null
+          students_count?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          badge?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          discount_percentage?: number | null
+          id?: string
+          image_url?: string | null
+          instructor_id?: string | null
+          is_active?: boolean | null
+          original_price?: number | null
+          price?: number
+          product_type?: Database["public"]["Enums"]["product_type"]
+          rating?: number | null
+          students_count?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          subscribers_count: number | null
+          updated_at: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          subscribers_count?: number | null
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          subscribers_count?: number | null
+          updated_at?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
+      user_enrollments: {
+        Row: {
+          enrolled_at: string | null
+          expires_at: string | null
+          formation_id: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          enrolled_at?: string | null
+          expires_at?: string | null
+          formation_id?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          enrolled_at?: string | null
+          expires_at?: string | null
+          formation_id?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_enrollments_formation_id_fkey"
+            columns: ["formation_id"]
+            isOneToOne: false
+            referencedRelation: "formations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_enrollments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_lesson_progress: {
+        Row: {
+          completed_at: string | null
+          exercise_completed: boolean | null
+          id: string
+          lesson_id: string | null
+          status: Database["public"]["Enums"]["lesson_status"] | null
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          exercise_completed?: boolean | null
+          id?: string
+          lesson_id?: string | null
+          status?: Database["public"]["Enums"]["lesson_status"] | null
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          exercise_completed?: boolean | null
+          id?: string
+          lesson_id?: string | null
+          status?: Database["public"]["Enums"]["lesson_status"] | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_lesson_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_lesson_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      videos: {
+        Row: {
+          author_id: string | null
+          comments_count: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          likes_count: number | null
+          product_id: string | null
+          thumbnail_url: string | null
+          title: string
+          video_type: Database["public"]["Enums"]["video_type"] | null
+          video_url: string | null
+          views_count: number | null
+        }
+        Insert: {
+          author_id?: string | null
+          comments_count?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          likes_count?: number | null
+          product_id?: string | null
+          thumbnail_url?: string | null
+          title: string
+          video_type?: Database["public"]["Enums"]["video_type"] | null
+          video_url?: string | null
+          views_count?: number | null
+        }
+        Update: {
+          author_id?: string | null
+          comments_count?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          likes_count?: number | null
+          product_id?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          video_type?: Database["public"]["Enums"]["video_type"] | null
+          video_url?: string | null
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "videos_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "videos_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +517,10 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      lesson_status: "locked" | "available" | "completed"
+      product_type: "formation" | "article" | "service"
+      user_role: "student" | "instructor" | "admin"
+      video_type: "promo" | "educational" | "testimonial"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +635,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      lesson_status: ["locked", "available", "completed"],
+      product_type: ["formation", "article", "service"],
+      user_role: ["student", "instructor", "admin"],
+      video_type: ["promo", "educational", "testimonial"],
+    },
   },
 } as const
