@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { VideoComment } from '@/types/comments';
 
@@ -200,7 +199,7 @@ export const commentService = {
       .maybeSingle();
 
     if (existingLike) {
-      // Unlike - Remove from likes table
+      // Unlike - Remove from likes table (trigger will handle count update)
       const { error: deleteError } = await supabase
         .from('video_comment_likes')
         .delete()
@@ -208,8 +207,8 @@ export const commentService = {
 
       if (deleteError) throw deleteError;
 
-      // Get current comment and decrement likes_count
-      const { data: currentComment, error: fetchError } = await supabase
+      // Get updated likes count from database after trigger execution
+      const { data: updatedComment, error: fetchError } = await supabase
         .from('video_comments')
         .select('likes_count')
         .eq('id', commentId)
@@ -217,18 +216,9 @@ export const commentService = {
 
       if (fetchError) throw fetchError;
 
-      const newCount = Math.max(0, (currentComment?.likes_count || 0) - 1);
-      
-      const { error: updateError } = await supabase
-        .from('video_comments')
-        .update({ likes_count: newCount })
-        .eq('id', commentId);
-
-      if (updateError) throw updateError;
-
-      return { isLiked: false, likesChange: -1, newCount };
+      return { isLiked: false, likesChange: -1, newCount: updatedComment.likes_count };
     } else {
-      // Like - Add to likes table
+      // Like - Add to likes table (trigger will handle count update)
       const { error: insertError } = await supabase
         .from('video_comment_likes')
         .insert({
@@ -238,8 +228,8 @@ export const commentService = {
 
       if (insertError) throw insertError;
 
-      // Get current comment and increment likes_count
-      const { data: currentComment, error: fetchError } = await supabase
+      // Get updated likes count from database after trigger execution
+      const { data: updatedComment, error: fetchError } = await supabase
         .from('video_comments')
         .select('likes_count')
         .eq('id', commentId)
@@ -247,16 +237,7 @@ export const commentService = {
 
       if (fetchError) throw fetchError;
 
-      const newCount = (currentComment?.likes_count || 0) + 1;
-      
-      const { error: updateError } = await supabase
-        .from('video_comments')
-        .update({ likes_count: newCount })
-        .eq('id', commentId);
-
-      if (updateError) throw updateError;
-
-      return { isLiked: true, likesChange: 1, newCount };
+      return { isLiked: true, likesChange: 1, newCount: updatedComment.likes_count };
     }
   }
 };
