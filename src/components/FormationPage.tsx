@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from 'react';
 // Import de composants refactorisés
 import SidebarLevels from './SidebarLevels';
 import LessonSelectorMobile from './LessonSelectorMobile';
 import TemporaryAccessBanner from './TemporaryAccessBanner';
-import { ArrowLeft, Play, MessageCircle, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Play, MessageCircle, ShoppingCart, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useParams } from 'react-router-dom';
 import VideoPlayer from './VideoPlayer';
