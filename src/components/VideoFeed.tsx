@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Heart, MessageCircle, Share, ShoppingCart, Flag, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useVideoLikes } from '@/hooks/useVideoLikes';
@@ -39,6 +39,7 @@ const VideoFeed = () => {
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [currentVideoId, setCurrentVideoId] = useState<string>('');
   const containerRef = useRef<HTMLDivElement>(null);
+  const iframeRefs = useRef<(HTMLIFrameElement | null)[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -102,12 +103,31 @@ const VideoFeed = () => {
     }
   };
 
+  // Helper function to pause all videos except the current one
+  const updateVideoPlayback = (currentIndex: number) => {
+    iframeRefs.current.forEach((iframe, index) => {
+      if (iframe) {
+        if (index === currentIndex) {
+          // Play current video
+          iframe.contentWindow?.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+        } else {
+          // Pause other videos
+          iframe.contentWindow?.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+        }
+      }
+    });
+  };
+
   const handleScroll = () => {
     if (containerRef.current) {
       const scrollTop = containerRef.current.scrollTop;
       const videoHeight = window.innerHeight;
       const newIndex = Math.round(scrollTop / videoHeight);
-      setCurrentVideoIndex(newIndex);
+      
+      if (newIndex !== currentVideoIndex) {
+        setCurrentVideoIndex(newIndex);
+        updateVideoPlayback(newIndex);
+      }
     }
   };
 
@@ -117,18 +137,32 @@ const VideoFeed = () => {
       container.addEventListener('scroll', handleScroll);
       return () => container.removeEventListener('scroll', handleScroll);
     }
-  }, []);
+  }, [currentVideoIndex]);
+
+  // Update playback when videos load
+  useEffect(() => {
+    if (videos.length > 0) {
+      setTimeout(() => updateVideoPlayback(currentVideoIndex), 1000);
+    }
+  }, [videos, currentVideoIndex]);
 
   const handleLike = async (videoId: string) => {
     const newLikedState = await toggleLike(videoId);
     if (newLikedState !== undefined) {
+      // Refetch the updated video data to get the correct like count
+      const { data: updatedVideo } = await supabase
+        .from('videos')
+        .select('likes_count')
+        .eq('id', videoId)
+        .single();
+
       setVideos(prevVideos => 
         prevVideos.map(video => 
           video.id === videoId 
             ? { 
                 ...video, 
                 isLiked: newLikedState,
-                likes_count: newLikedState ? video.likes_count + 1 : video.likes_count - 1
+                likes_count: updatedVideo?.likes_count || video.likes_count
               }
             : video
         )
@@ -223,7 +257,8 @@ const VideoFeed = () => {
                 <div className="relative w-full h-full max-w-[400px] mx-auto">
                   {youtubeId ? (
                     <iframe
-                      src={`https://www.youtube.com/embed/${youtubeId}?autoplay=${index === currentVideoIndex ? 1 : 0}&mute=1&controls=0&loop=1&playlist=${youtubeId}&rel=0&showinfo=0&modestbranding=1`}
+                      ref={(el) => (iframeRefs.current[index] = el)}
+                      src={`https://www.youtube.com/embed/${youtubeId}?enablejsapi=1&mute=0&controls=0&loop=1&playlist=${youtubeId}&rel=0&showinfo=0&modestbranding=1`}
                       className="w-full h-full object-cover rounded-lg"
                       allow="autoplay; encrypted-media"
                       allowFullScreen

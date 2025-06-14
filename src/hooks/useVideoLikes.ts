@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthProvider';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export const useVideoLikes = () => {
   const { user } = useAuth();
@@ -24,7 +24,7 @@ export const useVideoLikes = () => {
         .select('id')
         .eq('user_id', user.id)
         .eq('video_id', videoId)
-        .single();
+        .maybeSingle();
 
       if (existingLike) {
         // Unlike the video
@@ -90,7 +90,7 @@ export const useVideoLikes = () => {
         .select('id')
         .eq('user_id', user.id)
         .eq('video_id', videoId)
-        .single();
+        .maybeSingle();
 
       return !!data;
     } catch {
