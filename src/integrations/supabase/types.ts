@@ -514,7 +514,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_courses: {
+        Args: { user_id_param: string }
+        Returns: {
+          id: string
+          title: string
+          image_url: string
+          total_lessons: number
+          completed_lessons: number
+          product_type: Database["public"]["Enums"]["product_type"]
+        }[]
+      }
     }
     Enums: {
       lesson_status: "locked" | "available" | "completed"
