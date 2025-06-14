@@ -1,13 +1,11 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { 
   Play, 
-  MessageCircle,
   Send,
   Smile,
   Paperclip,
@@ -16,8 +14,25 @@ import {
   MicOff,
   Phone,
   Video,
-  Pause
+  Pause,
+  ChevronUp,
+  ChevronDown,
+  CheckCircle,
+  BookOpen
 } from 'lucide-react';
+import LessonExercise from './LessonExercise';
+
+interface Lesson {
+  id: string;
+  title: string;
+  duration: string;
+  completed: boolean;
+  locked: boolean;
+  videoUrl?: string;
+  unreadMessages: number;
+  hasExercise: boolean;
+  exerciseCompleted: boolean;
+}
 
 interface VideoPlayerProps {
   lesson: {
@@ -37,15 +52,19 @@ interface VideoPlayerProps {
     };
     description: string;
   };
+  videoCollapsed: boolean;
+  setVideoCollapsed: (collapsed: boolean) => void;
+  selectedLesson: Lesson;
 }
 
-const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
-  const [comment, setComment] = useState('');
+const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson }: VideoPlayerProps) => {
   const [privateMessage, setPrivateMessage] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
+  const [showExercise, setShowExercise] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [privateChatMessages, setPrivateChatMessages] = useState([
     {
       id: '1',
@@ -85,25 +104,6 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
     }
   ]);
 
-  const comments = [
-    {
-      id: '1',
-      author: 'Ahmad M.',
-      avatar: '/placeholder.svg',
-      content: 'Excellente explication, merci professeur !',
-      time: '2h',
-      likes: 5
-    },
-    {
-      id: '2',
-      author: 'Fatima K.',
-      avatar: '/placeholder.svg',
-      content: 'Pourriez-vous répéter la partie sur la prononciation ?',
-      time: '1h',
-      likes: 2
-    }
-  ];
-
   const availableTeachers = [
     { id: '1', name: 'Prof. Ahmed', status: 'en ligne', subject: 'Coran', avatar: '/placeholder.svg' },
     { id: '2', name: 'Dr. Hassan', status: 'absent', subject: 'Tafsir', avatar: '/placeholder.svg' },
@@ -111,13 +111,6 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
   ];
 
   const emojis = ['😊', '😂', '❤️', '👍', '👎', '😍', '😢', '😮', '😡', '🤔', '👏', '🙏'];
-
-  const handleSendComment = () => {
-    if (comment.trim()) {
-      console.log('Nouveau commentaire:', comment);
-      setComment('');
-    }
-  };
 
   const handleSendPrivateMessage = () => {
     if (privateMessage.trim()) {
@@ -133,7 +126,6 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
       setPrivateChatMessages([...privateChatMessages, newMessage]);
       setPrivateMessage('');
       
-      // Simuler une réponse automatique d'un prof après 2 secondes
       setTimeout(() => {
         const response = {
           id: (Date.now() + 1).toString(),
@@ -177,8 +169,6 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
   const handleVoiceRecord = () => {
     if (!isRecording) {
       setIsRecording(true);
-      console.log('Début de l\'enregistrement vocal');
-      // Simuler l'arrêt de l'enregistrement après 3 secondes
       setTimeout(() => {
         setIsRecording(false);
         const newMessage = {
@@ -202,7 +192,6 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
       setPlayingVoiceId(null);
     } else {
       setPlayingVoiceId(messageId);
-      // Simulate playing for 3 seconds
       setTimeout(() => {
         setPlayingVoiceId(null);
       }, 3000);
@@ -211,323 +200,299 @@ const VideoPlayer = ({ lesson }: VideoPlayerProps) => {
 
   const handleCall = (type: 'voice' | 'video') => {
     console.log(`Initiating ${type} call with teacher`);
-    // Here you would implement the actual call functionality
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Video Player */}
-      <div className="bg-black aspect-video rounded-lg flex items-center justify-center">
-        <div className="text-center text-white">
-          <Play className="w-16 h-16 mx-auto mb-4 opacity-70" />
-          <p className="text-lg font-medium">{lesson.title}</p>
-          <p className="text-sm opacity-70">Durée: {lesson.duration}</p>
+    <div className="flex flex-col h-full bg-[#0b141a]">
+      {/* Chat Header - WhatsApp style */}
+      <div className="bg-[#202c33] border-b border-[#313d44] p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Avatar className="w-10 h-10">
+              <AvatarImage src={lesson.instructor.avatar} />
+              <AvatarFallback className="bg-[#25d366] text-black">
+                {lesson.instructor.name.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="font-medium text-white">{lesson.title}</h3>
+              <p className="text-sm text-[#8696a0]">
+                {lesson.instructor.name} • {lesson.duration}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => handleCall('voice')}
+              className="text-[#8696a0] hover:text-white hover:bg-[#2a3942] rounded-full"
+            >
+              <Phone className="w-5 h-5" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => handleCall('video')}
+              className="text-[#8696a0] hover:text-white hover:bg-[#2a3942] rounded-full"
+            >
+              <Video className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Video Info */}
-      <div className="space-y-4">
-        <h1 className="text-xl font-bold">{lesson.title}</h1>
-        <div className="text-sm text-muted-foreground">
-          {lesson.stats.views.toLocaleString()} vues
+      {/* Collapsible Video Section */}
+      {!videoCollapsed && (
+        <div className="bg-black border-b border-[#313d44]">
+          <div className="aspect-video flex items-center justify-center relative">
+            <div className="text-center text-white">
+              <Play className="w-16 h-16 mx-auto mb-4 opacity-70" />
+              <p className="text-lg font-medium">{lesson.title}</p>
+              <p className="text-sm opacity-70">Durée: {lesson.duration}</p>
+            </div>
+            <Button
+              onClick={() => setVideoCollapsed(true)}
+              className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white"
+              size="sm"
+            >
+              <ChevronUp className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Tabs */}
-      <Tabs defaultValue="comments" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="comments">Commentaires</TabsTrigger>
-          <TabsTrigger value="chat">Chat Privé</TabsTrigger>
-        </TabsList>
+      {/* Show Video Button when collapsed */}
+      {videoCollapsed && (
+        <div className="bg-[#202c33] border-b border-[#313d44] p-2">
+          <Button
+            onClick={() => setVideoCollapsed(false)}
+            variant="ghost"
+            className="w-full text-[#8696a0] hover:text-white hover:bg-[#2a3942] justify-start"
+          >
+            <ChevronDown className="w-4 h-4 mr-2" />
+            Afficher la vidéo
+          </Button>
+        </div>
+      )}
 
-        <TabsContent value="comments" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Commentaires ({comments.length})</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex space-x-3">
-                <img 
-                  src="/placeholder.svg" 
-                  alt="Votre avatar"
-                  className="w-8 h-8 rounded-full"
-                />
-                <div className="flex-1 space-y-2">
-                  <Textarea
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    placeholder="Ajoutez un commentaire..."
-                  />
-                  <Button size="sm" onClick={handleSendComment} disabled={!comment.trim()}>
-                    Commenter
-                  </Button>
-                </div>
+      {/* Exercise Section - if lesson has exercise */}
+      {selectedLesson.hasExercise && (
+        <div className="bg-[#202c33] border-b border-[#313d44]">
+          <Button
+            onClick={() => setShowExercise(!showExercise)}
+            variant="ghost"
+            className="w-full p-4 text-left justify-between text-white hover:bg-[#2a3942]"
+          >
+            <div className="flex items-center space-x-3">
+              <BookOpen className="w-5 h-5 text-[#25d366]" />
+              <div>
+                <p className="font-medium">Exercice de la leçon</p>
+                <p className="text-sm text-[#8696a0]">
+                  {selectedLesson.exerciseCompleted ? 'Terminé' : 'Non terminé'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              {selectedLesson.exerciseCompleted && (
+                <CheckCircle className="w-4 h-4 text-[#25d366]" />
+              )}
+              {showExercise ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </div>
+          </Button>
+          
+          {showExercise && (
+            <div className="p-4 bg-[#0b141a] border-t border-[#313d44]">
+              <LessonExercise 
+                lesson={selectedLesson} 
+                onComplete={() => {
+                  console.log('Exercise completed for lesson:', selectedLesson.id);
+                  setShowExercise(false);
+                }}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Messages du chat - Style WhatsApp */}
+      <div className="flex-1 overflow-y-auto bg-[#0b141a] p-4">
+        <div className="space-y-4">
+          {privateChatMessages.map((msg) => (
+            <div key={msg.id} className={`flex ${msg.isStudent ? 'justify-end' : 'justify-start'} items-end space-x-2`}>
+              {!msg.isStudent && (
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src={msg.avatar} />
+                  <AvatarFallback className="bg-[#25d366] text-black">
+                    {msg.user.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+              )}
+              
+              <div className={`max-w-xs px-4 py-2 rounded-lg relative ${
+                msg.isStudent 
+                  ? 'bg-[#005c4b] text-white rounded-br-sm' 
+                  : 'bg-[#202c33] text-white rounded-bl-sm'
+              }`}>
+                {!msg.isStudent && (
+                  <p className="text-xs font-medium mb-1 text-[#25d366]">{msg.user}</p>
+                )}
+                
+                {msg.type === 'voice' ? (
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleVoicePlay(msg.id)}
+                      className="p-1 h-auto text-white hover:bg-white/10"
+                    >
+                      {playingVoiceId === msg.id ? (
+                        <Pause className="w-4 h-4" />
+                      ) : (
+                        <Play className="w-4 h-4" />
+                      )}
+                    </Button>
+                    <div className="flex-1 bg-white/20 rounded h-2 relative">
+                      <div className="bg-[#25d366] h-full rounded w-1/3"></div>
+                    </div>
+                    <span className="text-xs">0:03</span>
+                  </div>
+                ) : (
+                  <p className="text-sm break-words">{msg.message}</p>
+                )}
+                
+                <p className="text-xs opacity-70 mt-1 text-right">{msg.time}</p>
               </div>
               
-              <div className="space-y-4">
-                {comments.map((comment) => (
-                  <div key={comment.id} className="flex space-x-3">
-                    <img 
-                      src={comment.avatar} 
-                      alt={comment.author}
-                      className="w-8 h-8 rounded-full"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 text-sm">
-                        <span className="font-medium">{comment.author}</span>
-                        <span className="text-muted-foreground">{comment.time}</span>
-                      </div>
-                      <p className="text-sm">{comment.content}</p>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <Button variant="ghost" size="sm">
-                          ❤️ {comment.likes}
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          Répondre
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              {msg.isStudent && (
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src={msg.avatar} />
+                  <AvatarFallback className="bg-[#8696a0] text-white">V</AvatarFallback>
+                </Avatar>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Zone de saisie style WhatsApp */}
+      <div className="bg-[#202c33] border-t border-[#313d44] p-4">
+        {/* Sélecteur d'émojis */}
+        {showEmojiPicker && (
+          <div className="mb-4 bg-[#2a3942] border border-[#313d44] rounded-lg p-3">
+            <div className="grid grid-cols-6 gap-2">
+              {emojis.map((emoji, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleEmojiSelect(emoji)}
+                  className="p-2 hover:bg-[#202c33] rounded text-lg"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Input avec boutons style WhatsApp */}
+        <div className="flex items-end space-x-2 bg-[#2a3942] rounded-full px-4 py-2">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="rounded-full p-2 h-auto text-[#8696a0] hover:text-white hover:bg-[#202c33]"
+          >
+            <Smile className="w-5 h-5" />
+          </Button>
+
+          <div className="flex-1">
+            <textarea
+              placeholder="Tapez votre message..."
+              value={privateMessage}
+              onChange={(e) => setPrivateMessage(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendPrivateMessage())}
+              className="w-full resize-none border-none outline-none bg-transparent max-h-20 min-h-6 py-1 text-white placeholder-[#8696a0]"
+              rows={1}
+              style={{ 
+                height: 'auto',
+                minHeight: '24px'
+              }}
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = 'auto';
+                target.style.height = target.scrollHeight + 'px';
+              }}
+            />
+          </div>
+
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={handleFileAttachment}
+            className="rounded-full p-2 h-auto text-[#8696a0] hover:text-white hover:bg-[#202c33]"
+          >
+            <Paperclip className="w-5 h-5" />
+          </Button>
+
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="rounded-full p-2 h-auto text-[#8696a0] hover:text-white hover:bg-[#202c33]"
+          >
+            <Camera className="w-5 h-5" />
+          </Button>
+
+          {privateMessage.trim() ? (
+            <Button 
+              size="sm" 
+              onClick={handleSendPrivateMessage}
+              className="rounded-full p-2 h-auto w-10 bg-[#25d366] hover:bg-[#25d366]/90 text-black"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          ) : (
+            <Button 
+              variant={isRecording ? "destructive" : "default"}
+              size="sm" 
+              onClick={handleVoiceRecord}
+              className={`rounded-full p-2 h-auto w-10 ${!isRecording ? 'bg-[#25d366] hover:bg-[#25d366]/90 text-black' : ''}`}
+            >
+              {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            </Button>
+          )}
+        </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*,video/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+      </div>
+
+      {/* Professeurs disponibles */}
+      <div className="bg-[#202c33] border-t border-[#313d44] p-4">
+        <h4 className="text-sm font-medium mb-3 text-white">Professeurs disponibles</h4>
+        <div className="flex space-x-3 overflow-x-auto">
+          {availableTeachers.map((teacher) => (
+            <div key={teacher.id} className="flex-shrink-0 text-center">
+              <div className="relative mb-2">
+                <Avatar className="w-12 h-12">
+                  <AvatarImage src={teacher.avatar} />
+                  <AvatarFallback className="bg-[#8696a0] text-white">
+                    {teacher.name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-[#202c33] ${
+                  teacher.status === 'en ligne' ? 'bg-[#25d366]' : 'bg-[#8696a0]'
+                }`} />
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="chat" className="space-y-4">
-          <Card>
-            <CardHeader className="pb-3 bg-[#25d366]/5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-[#25d366] rounded-full flex items-center justify-center">
-                    <MessageCircle className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">Chat avec les Professeurs</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Posez vos questions, les professeurs vous répondront
-                    </p>
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => handleCall('voice')}
-                    className="text-[#25d366] hover:bg-[#25d366]/10"
-                  >
-                    <Phone className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => handleCall('video')}
-                    className="text-[#25d366] hover:bg-[#25d366]/10"
-                  >
-                    <Video className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Messages du chat - Style WhatsApp avec avatars */}
-              <div className="h-80 overflow-y-auto bg-[#efeae2] rounded-lg p-4 space-y-3">
-                {privateChatMessages.map((msg) => (
-                  <div key={msg.id} className={`flex ${msg.isStudent ? 'justify-end' : 'justify-start'} items-end space-x-2`}>
-                    {!msg.isStudent && (
-                      <Avatar className="w-8 h-8">
-                        <AvatarImage src={msg.avatar} />
-                        <AvatarFallback>{msg.user.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                    )}
-                    
-                    <div className={`max-w-xs px-4 py-2 rounded-lg relative ${
-                      msg.isStudent 
-                        ? 'bg-[#dcf8c6] text-foreground rounded-br-sm' 
-                        : 'bg-white text-foreground border rounded-bl-sm shadow-sm'
-                    }`}>
-                      {!msg.isStudent && (
-                        <p className="text-xs font-medium mb-1 text-[#25d366]">{msg.user}</p>
-                      )}
-                      
-                      {msg.type === 'voice' ? (
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleVoicePlay(msg.id)}
-                            className="p-1 h-auto"
-                          >
-                            {playingVoiceId === msg.id ? (
-                              <Pause className="w-4 h-4" />
-                            ) : (
-                              <Play className="w-4 h-4" />
-                            )}
-                          </Button>
-                          <div className="flex-1 bg-muted/50 rounded h-2 relative">
-                            <div className="bg-[#25d366] h-full rounded w-1/3"></div>
-                          </div>
-                          <span className="text-xs">0:03</span>
-                        </div>
-                      ) : (
-                        <p className="text-sm break-words">{msg.message}</p>
-                      )}
-                      
-                      <p className="text-xs opacity-70 mt-1 text-right">{msg.time}</p>
-                      
-                      {/* Petite flèche style WhatsApp */}
-                      <div className={`absolute top-0 w-0 h-0 ${
-                        msg.isStudent 
-                          ? 'right-0 border-l-8 border-l-[#dcf8c6] border-t-8 border-t-transparent' 
-                          : 'left-0 border-r-8 border-r-white border-t-8 border-t-transparent'
-                      }`} />
-                    </div>
-                    
-                    {msg.isStudent && (
-                      <Avatar className="w-8 h-8">
-                        <AvatarImage src={msg.avatar} />
-                        <AvatarFallback>V</AvatarFallback>
-                      </Avatar>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Zone de saisie style WhatsApp */}
-              <div className="space-y-3">
-                {/* Sélecteur d'émojis */}
-                {showEmojiPicker && (
-                  <div className="bg-background border rounded-lg p-3">
-                    <div className="grid grid-cols-6 gap-2">
-                      {emojis.map((emoji, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleEmojiSelect(emoji)}
-                          className="p-2 hover:bg-muted rounded text-lg"
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Input avec boutons style WhatsApp */}
-                <div className="flex items-end space-x-2 bg-background border rounded-full px-4 py-2">
-                  {/* Bouton émojis */}
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    className="rounded-full p-2 h-auto"
-                  >
-                    <Smile className="w-5 h-5" />
-                  </Button>
-
-                  {/* Zone de texte */}
-                  <div className="flex-1">
-                    <textarea
-                      placeholder="Tapez votre message..."
-                      value={privateMessage}
-                      onChange={(e) => setPrivateMessage(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendPrivateMessage())}
-                      className="w-full resize-none border-none outline-none bg-transparent max-h-20 min-h-6 py-1"
-                      rows={1}
-                      style={{ 
-                        height: 'auto',
-                        minHeight: '24px'
-                      }}
-                      onInput={(e) => {
-                        const target = e.target as HTMLTextAreaElement;
-                        target.style.height = 'auto';
-                        target.style.height = target.scrollHeight + 'px';
-                      }}
-                    />
-                  </div>
-
-                  {/* Bouton pièce jointe / caméra */}
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={handleFileAttachment}
-                    className="rounded-full p-2 h-auto"
-                  >
-                    <Paperclip className="w-5 h-5" />
-                  </Button>
-
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="rounded-full p-2 h-auto"
-                  >
-                    <Camera className="w-5 h-5" />
-                  </Button>
-
-                  {/* Bouton dynamique : Envoyer ou Vocal */}
-                  {privateMessage.trim() ? (
-                    <Button 
-                      size="sm" 
-                      onClick={handleSendPrivateMessage}
-                      className="rounded-full p-2 h-auto w-10 bg-[#25d366] hover:bg-[#25d366]/90"
-                    >
-                      <Send className="w-4 h-4" />
-                    </Button>
-                  ) : (
-                    <Button 
-                      variant={isRecording ? "destructive" : "default"}
-                      size="sm" 
-                      onClick={handleVoiceRecord}
-                      className={`rounded-full p-2 h-auto w-10 ${!isRecording ? 'bg-[#25d366] hover:bg-[#25d366]/90' : ''}`}
-                    >
-                      {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                    </Button>
-                  )}
-                </div>
-
-                {/* Input caché pour les fichiers */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*,video/*"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-              </div>
-
-              {/* Professeurs disponibles */}
-              <div className="border-t pt-4">
-                <h4 className="text-sm font-medium mb-3">Professeurs de cette formation</h4>
-                <div className="space-y-2">
-                  {availableTeachers.map((teacher) => (
-                    <div key={teacher.id} className="flex items-center justify-between p-2 border rounded-lg hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center space-x-3">
-                        <div className="relative">
-                          <img 
-                            src={teacher.avatar} 
-                            alt={teacher.name}
-                            className="w-8 h-8 rounded-full"
-                          />
-                          <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-background ${
-                            teacher.status === 'en ligne' ? 'bg-[#25d366]' : 'bg-gray-400'
-                          }`} />
-                        </div>
-                        <div>
-                          <h5 className="text-sm font-medium">{teacher.name}</h5>
-                          <p className="text-xs text-muted-foreground">{teacher.subject}</p>
-                        </div>
-                      </div>
-                      
-                      <Badge variant={teacher.status === 'en ligne' ? 'default' : 'secondary'} className="text-xs">
-                        {teacher.status}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              <p className="text-xs text-[#8696a0] max-w-16 truncate">{teacher.name}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
