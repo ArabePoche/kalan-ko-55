@@ -1,10 +1,10 @@
-
 import { useState } from 'react';
 import BottomNavigation from '@/components/BottomNavigation';
 import HomePage from '@/components/HomePage';
 import ShopPage from '@/components/ShopPage';
 import CoursesPage from '@/components/CoursesPage';
 import ProfilePage from '@/components/ProfilePage';
+import NotificationsFeed from '@/components/NotificationsFeed';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
@@ -18,11 +18,7 @@ const Index = () => {
       case 'courses':
         return <CoursesPage />;
       case 'notifications':
-        return (
-          <div className="flex items-center justify-center h-screen">
-            <p className="text-muted-foreground">Notifications - En développement</p>
-          </div>
-        );
+        return <NotificationsFeed />;
       case 'profile':
         return <ProfilePage />;
       default:
