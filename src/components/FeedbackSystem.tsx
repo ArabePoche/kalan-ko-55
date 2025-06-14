@@ -1,91 +1,109 @@
 
 import { useState } from 'react';
-import { useFeedbackSubmissions, useFeedbackStats, useExpertActivity, useSubmitReview, FeedbackSubmissionWithReview } from '@/hooks/useFeedbackData';
-import { useToast } from '@/hooks/use-toast';
-import { FeedbackStatsDashboard } from './feedback/FeedbackStatsDashboard';
-import { FeedbackDetailedStats } from './feedback/FeedbackDetailedStats';
-import { FeedbackContentList } from './feedback/FeedbackContentList';
-import { FeedbackReviewPanel } from './feedback/FeedbackReviewPanel';
+import { VideoFeedbackPanel } from './feedback/VideoFeedbackPanel';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
 
 const FeedbackSystem = () => {
-  const [selectedItem, setSelectedItem] = useState<FeedbackSubmissionWithReview | null>(null);
-  const [reviewComment, setReviewComment] = useState('');
-  const { toast } = useToast();
+  const [selectedVideoId, setSelectedVideoId] = useState<string>('');
+  const [videoTitle, setVideoTitle] = useState<string>('');
+  const [searchVideoId, setSearchVideoId] = useState<string>('');
 
-  const { data: submissions, isLoading: submissionsLoading } = useFeedbackSubmissions();
-  const { data: stats, isLoading: statsLoading } = useFeedbackStats();
-  const { data: expertActivity, isLoading: expertActivityLoading } = useExpertActivity();
-  const submitReviewMutation = useSubmitReview();
+  // Sample video IDs for testing - in real app, this would come from a video selection component
+  const sampleVideos = [
+    { id: '4000d84d-d52a-41ff-958e-50cc294a9396', title: 'Formation Coran - Niveau Débutant' },
+    { id: 'v2', title: 'Tajwid Avancé' },
+    { id: 'v3', title: 'Histoire Islamique' },
+  ];
 
-  const handleReview = (action: 'approve' | 'suggest' | 'correct' | 'reject') => {
-    if (!selectedItem || !reviewComment.trim()) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez sélectionner un contenu et ajouter un commentaire.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    submitReviewMutation.mutate({
-      submissionId: selectedItem.id,
-      expertName: 'Expert Actuel', // This should come from auth context
-      action,
-      comment: reviewComment,
-    }, {
-      onSuccess: () => {
-        toast({
-          title: "Révision soumise",
-          description: "Votre révision a été enregistrée avec succès.",
-        });
-        setReviewComment('');
-        setSelectedItem(null);
-      },
-      onError: (error) => {
-        toast({
-          title: "Erreur",
-          description: "Une erreur est survenue lors de la soumission.",
-          variant: "destructive",
-        });
-        console.error('Review submission error:', error);
-      },
-    });
+  const handleVideoSelect = (videoId: string, title: string) => {
+    setSelectedVideoId(videoId);
+    setVideoTitle(title);
   };
 
-  if (submissionsLoading || statsLoading || expertActivityLoading) {
-    return (
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="text-center">Chargement...</div>
-      </div>
-    );
-  }
+  const handleSearchVideo = () => {
+    if (searchVideoId.trim()) {
+      setSelectedVideoId(searchVideoId.trim());
+      setVideoTitle(`Vidéo ${searchVideoId.trim()}`);
+    }
+  };
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-6xl mx-auto p-6">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold">Système de Feedback</h2>
-        <p className="text-muted-foreground">Modération et validation des contenus</p>
+        <h2 className="text-2xl font-bold">Système de Feedback par Vidéo</h2>
+        <p className="text-muted-foreground">Gérez les feedbacks spécifiques à chaque vidéo</p>
       </div>
 
-      <FeedbackStatsDashboard submissions={submissions} stats={stats} />
-      
-      <FeedbackDetailedStats submissions={submissions} expertActivity={expertActivity} />
+      {!selectedVideoId ? (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Rechercher une vidéo par ID</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Entrez l'ID de la vidéo..."
+                  value={searchVideoId}
+                  onChange={(e) => setSearchVideoId(e.target.value)}
+                />
+                <Button onClick={handleSearchVideo}>
+                  <Search className="w-4 h-4 mr-2" />
+                  Rechercher
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        <FeedbackContentList 
-          submissions={submissions}
-          selectedItem={selectedItem}
-          onItemSelect={setSelectedItem}
-        />
+          <Card>
+            <CardHeader>
+              <CardTitle>Ou sélectionnez une vidéo d'exemple</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {sampleVideos.map((video) => (
+                  <Card 
+                    key={video.id} 
+                    className="cursor-pointer hover:bg-accent transition-colors"
+                    onClick={() => handleVideoSelect(video.id, video.title)}
+                  >
+                    <CardContent className="p-4">
+                      <h3 className="font-medium">{video.title}</h3>
+                      <p className="text-sm text-muted-foreground">ID: {video.id}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setSelectedVideoId('');
+                setVideoTitle('');
+              }}
+            >
+              ← Retour à la sélection
+            </Button>
+            <div>
+              <h3 className="font-medium">Vidéo sélectionnée: {videoTitle}</h3>
+              <p className="text-sm text-muted-foreground">ID: {selectedVideoId}</p>
+            </div>
+          </div>
 
-        <FeedbackReviewPanel
-          selectedItem={selectedItem}
-          reviewComment={reviewComment}
-          onReviewCommentChange={setReviewComment}
-          onReview={handleReview}
-          isSubmitting={submitReviewMutation.isPending}
-        />
-      </div>
+          <VideoFeedbackPanel 
+            videoId={selectedVideoId} 
+            videoTitle={videoTitle}
+          />
+        </div>
+      )}
     </div>
   );
 };

@@ -5,16 +5,14 @@ import type { Database } from '@/integrations/supabase/types';
 
 type FeedbackSubmission = Database['public']['Tables']['feedback_submissions']['Row'];
 type ExpertReview = Database['public']['Tables']['expert_reviews']['Row'];
-type FeedbackStats = Database['public']['Tables']['feedback_stats']['Row'];
-type ExpertActivity = Database['public']['Tables']['expert_activity']['Row'];
 
 export interface FeedbackSubmissionWithReview extends FeedbackSubmission {
   expert_reviews?: ExpertReview[];
 }
 
-export const useFeedbackSubmissions = () => {
+export const useVideoFeedback = (videoId: string) => {
   return useQuery({
-    queryKey: ['feedback-submissions'],
+    queryKey: ['video-feedback', videoId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('feedback_submissions')
@@ -22,47 +20,72 @@ export const useFeedbackSubmissions = () => {
           *,
           expert_reviews (*)
         `)
+        .eq('content_id', videoId)
+        .eq('content_type', 'video')
         .order('submitted_at', { ascending: false });
 
       if (error) throw error;
       return data as FeedbackSubmissionWithReview[];
     },
+    enabled: !!videoId,
   });
 };
 
-export const useFeedbackStats = () => {
-  return useQuery({
-    queryKey: ['feedback-stats'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('feedback_stats')
-        .select('*')
-        .order('date', { ascending: false })
+export const useSubmitVideoFeedback = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      videoId, 
+      contentTitle,
+      submittedBy,
+      comment 
+    }: {
+      videoId: string;
+      contentTitle: string;
+      submittedBy: string;
+      comment: string;
+    }) => {
+      const { error } = await supabase
+        .from('feedback_submissions')
+        .insert({
+          content_id: videoId,
+          content_type: 'video',
+          content_title: contentTitle,
+          submitted_by: submittedBy,
+          status: 'pending',
+        });
+
+      if (error) throw error;
+
+      // Add the comment as an initial review
+      const { data: submissionData } = await supabase
+        .from('feedback_submissions')
+        .select('id')
+        .eq('content_id', videoId)
+        .eq('content_type', 'video')
+        .order('created_at', { ascending: false })
         .limit(1)
         .single();
 
-      if (error) throw error;
-      return data as FeedbackStats;
+      if (submissionData) {
+        await supabase
+          .from('expert_reviews')
+          .insert({
+            submission_id: submissionData.id,
+            expert_name: submittedBy,
+            action: 'suggest',
+            comment: comment,
+          });
+      }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['video-feedback', variables.videoId] });
     },
   });
 };
 
-export const useExpertActivity = () => {
-  return useQuery({
-    queryKey: ['expert-activity'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('expert_activity')
-        .select('*')
-        .order('reviews_count', { ascending: false });
-
-      if (error) throw error;
-      return data as ExpertActivity[];
-    },
-  });
-};
-
-export const useSubmitReview = () => {
+export const useSubmitFeedbackReview = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -70,12 +93,14 @@ export const useSubmitReview = () => {
       submissionId, 
       expertName, 
       action, 
-      comment 
+      comment,
+      videoId
     }: {
       submissionId: string;
       expertName: string;
       action: 'approve' | 'suggest' | 'correct' | 'reject';
       comment: string;
+      videoId: string;
     }) => {
       // Insert the review
       const { error: reviewError } = await supabase
@@ -103,36 +128,39 @@ export const useSubmitReview = () => {
         .eq('id', submissionId);
 
       if (updateError) throw updateError;
-
-      // Update expert activity
-      const { data: expertData } = await supabase
-        .from('expert_activity')
-        .select('*')
-        .eq('expert_name', expertName)
-        .single();
-
-      if (expertData) {
-        await supabase
-          .from('expert_activity')
-          .update({
-            reviews_count: expertData.reviews_count + 1,
-            last_review_at: new Date().toISOString(),
-          })
-          .eq('expert_name', expertName);
-      } else {
-        await supabase
-          .from('expert_activity')
-          .insert({
-            expert_name: expertName,
-            reviews_count: 1,
-            last_review_at: new Date().toISOString(),
-          });
-      }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['feedback-submissions'] });
-      queryClient.invalidateQueries({ queryKey: ['expert-activity'] });
-      queryClient.invalidateQueries({ queryKey: ['feedback-stats'] });
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['video-feedback', variables.videoId] });
+    },
+  });
+};
+
+export const useLikeFeedback = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      submissionId, 
+      expertName,
+      videoId
+    }: {
+      submissionId: string;
+      expertName: string;
+      videoId: string;
+    }) => {
+      const { error } = await supabase
+        .from('expert_reviews')
+        .insert({
+          submission_id: submissionId,
+          expert_name: expertName,
+          action: 'approve',
+          comment: '👍 Feedback apprécié',
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['video-feedback', variables.videoId] });
     },
   });
 };
