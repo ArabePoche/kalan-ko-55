@@ -1,22 +1,13 @@
 
-import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ShoppingCart, User, Mail, Phone } from 'lucide-react';
+import { ArrowLeft, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 
 const OrderPage = () => {
   const { videoId } = useParams();
   const navigate = useNavigate();
-  const [orderData, setOrderData] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    message: ''
-  });
 
   // Mock video data - in real app, fetch based on videoId
   const video = {
@@ -28,28 +19,19 @@ const OrderPage = () => {
     thumbnail: '/placeholder.svg'
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Commande soumise:', { video, orderData });
-    
-    // Show success notification
+  const handleOrder = () => {
+    // Ici, dans la vraie app, on enverrait la commande associée au compte utilisateur connecté
     toast({
-      title: "Commande soumise avec succès!",
-      description: "Votre commande a été envoyée. Un administrateur va l'examiner et vous contacter bientôt par email ou téléphone.",
+      title: "Demande de commande envoyée !",
+      description: "Votre demande de commande a été soumise et sera examinée par un administrateur.",
     });
-    
-    // Navigate back after a short delay
     setTimeout(() => {
       navigate('/');
     }, 2000);
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setOrderData(prev => ({ ...prev, [field]: value }));
-  };
-
   return (
-    <div className="max-w-md mx-auto bg-background min-h-screen">
+    <div className="max-w-md mx-auto bg-background min-h-screen flex flex-col">
       {/* Header */}
       <div className="p-4 pt-16 bg-primary text-primary-foreground">
         <div className="flex items-center space-x-3">
@@ -67,8 +49,7 @@ const OrderPage = () => {
           </div>
         </div>
       </div>
-
-      <div className="p-4 space-y-6">
+      <div className="p-4 flex-1 flex flex-col justify-center">
         {/* Formation Info */}
         <Card>
           <CardContent className="p-4">
@@ -84,83 +65,26 @@ const OrderPage = () => {
                 <p className="text-lg font-bold text-primary">{video.price}€</p>
               </div>
             </div>
+            <div className="mt-4 text-sm text-muted-foreground">{video.description}</div>
           </CardContent>
         </Card>
-
-        {/* Order Form */}
-        <Card>
+        <Card className="mt-6">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <ShoppingCart className="w-5 h-5" />
-              <span>Informations de commande</span>
+              <span>Finaliser ma commande</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground flex items-center space-x-2">
-                  <User className="w-4 h-4" />
-                  <span>Nom complet *</span>
-                </label>
-                <Input
-                  required
-                  value={orderData.fullName}
-                  onChange={(e) => handleInputChange('fullName', e.target.value)}
-                  placeholder="Votre nom complet"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground flex items-center space-x-2">
-                  <Mail className="w-4 h-4" />
-                  <span>Email *</span>
-                </label>
-                <Input
-                  type="email"
-                  required
-                  value={orderData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  placeholder="votre@email.com"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground flex items-center space-x-2">
-                  <Phone className="w-4 h-4" />
-                  <span>Téléphone *</span>
-                </label>
-                <Input
-                  type="tel"
-                  required
-                  value={orderData.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
-                  placeholder="+33 6 12 34 56 78"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Message (optionnel)
-                </label>
-                <Textarea
-                  value={orderData.message}
-                  onChange={(e) => handleInputChange('message', e.target.value)}
-                  placeholder="Des questions ou des commentaires..."
-                  rows={3}
-                />
-              </div>
-
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                <p className="text-sm text-yellow-800">
-                  <strong>Note:</strong> Votre commande sera examinée manuellement par un administrateur. 
-                  Vous recevrez une confirmation par email une fois approuvée.
-                </p>
-              </div>
-
-              <Button type="submit" className="w-full" size="lg">
-                Soumettre la commande - {video.price}€
-              </Button>
-            </form>
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3">
+              <p className="text-sm text-yellow-800">
+                <strong>Note :</strong> Votre commande sera associée à votre compte et examinée par un administrateur.<br />
+                Un email ou une notification vous sera envoyé(e) une fois la commande approuvée.
+              </p>
+            </div>
+            <Button onClick={handleOrder} className="w-full" size="lg">
+              Soumettre ma commande - {video.price}€
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -169,3 +93,4 @@ const OrderPage = () => {
 };
 
 export default OrderPage;
+
