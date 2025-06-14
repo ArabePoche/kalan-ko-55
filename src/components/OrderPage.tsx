@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from '@/hooks/use-toast';
 
 const OrderPage = () => {
   const { videoId } = useParams();
@@ -31,9 +32,16 @@ const OrderPage = () => {
     e.preventDefault();
     console.log('Commande soumise:', { video, orderData });
     
-    // In real app, send to backend
-    alert('Votre commande a été soumise! Un administrateur va l\'examiner et vous contacter bientôt.');
-    navigate('/');
+    // Show success notification
+    toast({
+      title: "Commande soumise avec succès!",
+      description: "Votre commande a été envoyée. Un administrateur va l'examiner et vous contacter bientôt par email ou téléphone.",
+    });
+    
+    // Navigate back after a short delay
+    setTimeout(() => {
+      navigate('/');
+    }, 2000);
   };
 
   const handleInputChange = (field: string, value: string) => {

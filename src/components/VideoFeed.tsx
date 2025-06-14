@@ -75,7 +75,7 @@ const VideoFeed = () => {
   };
 
   const handleBuyClick = (videoId: string) => {
-    navigate(`/order/${videoId}`);
+    navigate(`/formation/${videoId}`);
   };
 
   return (
@@ -84,11 +84,13 @@ const VideoFeed = () => {
       className="h-screen overflow-y-scroll snap-y snap-mandatory bg-black"
       style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
     >
-      <style jsx>{`
-        div::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
+      <style>
+        {`
+          div::-webkit-scrollbar {
+            display: none;
+          }
+        `}
+      </style>
       
       {videos.map((video, index) => (
         <div
@@ -130,7 +132,7 @@ const VideoFeed = () => {
                     onClick={() => handleBuyClick(video.id)}
                   >
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    Acheter - {video.price}€
+                    Voir la formation - {video.price}€
                   </Button>
                 )}
               </div>

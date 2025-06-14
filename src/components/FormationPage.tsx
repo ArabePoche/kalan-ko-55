@@ -1,11 +1,13 @@
+
 import { useState, useEffect } from 'react';
 // Import de composants refactorisés
 import SidebarLevels from './SidebarLevels';
 import LessonSelectorMobile from './LessonSelectorMobile';
-import { ArrowLeft, Play, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Play, MessageCircle, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import VideoPlayer from './VideoPlayer';
+import { toast } from '@/hooks/use-toast';
 
 interface Lesson {
   id: string;
@@ -28,6 +30,7 @@ interface Level {
 
 const FormationPage = () => {
   const navigate = useNavigate();
+  const { id: formationId } = useParams();
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -42,9 +45,11 @@ const FormationPage = () => {
   }, []);
 
   const formation = {
-    id: '1',
+    id: formationId || '1',
     title: 'Formation Coran Complet',
-    instructor: 'Professeur Ahmed'
+    instructor: 'Professeur Ahmed',
+    price: 49.99,
+    description: 'Apprenez les bases de la lecture du Coran avec cette formation complète.'
   };
 
   const levels: Level[] = [
@@ -114,6 +119,14 @@ const FormationPage = () => {
     }
   ];
 
+  const handleOrderClick = () => {
+    navigate(`/order/${formation.id}`);
+    toast({
+      title: "Redirection vers la commande",
+      description: "Vous allez être redirigé vers la page de commande.",
+    });
+  };
+
   // Pour le composant vidéo/joueur
   const lessonData = {
     id: selectedLesson?.id || '',
@@ -139,13 +152,36 @@ const FormationPage = () => {
       <div className="h-screen bg-background flex flex-col overflow-hidden">
         <div className="flex-shrink-0 p-3 border-b border-border bg-[#075e54] safe-area-top">
           <div className="flex items-center space-x-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/courses')} className="text-white p-2">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="text-white p-2">
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1 min-w-0">
               <h2 className="font-semibold text-white text-base truncate">{formation.title}</h2>
               <p className="text-sm text-white/80 truncate">{formation.instructor}</p>
             </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleOrderClick}
+              className="text-white p-2"
+            >
+              <ShoppingCart className="w-5 h-5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Formation Details Card */}
+        <div className="bg-card border-b border-border p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h3 className="font-semibold text-foreground">{formation.title}</h3>
+              <p className="text-sm text-muted-foreground">{formation.description}</p>
+              <p className="text-lg font-bold text-primary mt-2">{formation.price}€</p>
+            </div>
+            <Button onClick={handleOrderClick} size="sm">
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              Commander
+            </Button>
           </div>
         </div>
 
@@ -184,6 +220,21 @@ const FormationPage = () => {
         formation={formation}
       />
       <div className="flex-1 flex flex-col bg-[#0b141a]">
+        {/* Desktop Formation Header with Order Button */}
+        <div className="bg-[#202c33] border-b border-[#313d44] p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-white">{formation.title}</h2>
+              <p className="text-[#8696a0] text-sm">{formation.description}</p>
+              <p className="text-primary text-lg font-bold mt-1">{formation.price}€</p>
+            </div>
+            <Button onClick={handleOrderClick} className="bg-primary hover:bg-primary/90">
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              Passer commande
+            </Button>
+          </div>
+        </div>
+
         {selectedLesson ? (
           <VideoPlayer 
             lesson={lessonData} 
