@@ -1,85 +1,20 @@
 
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthProvider';
-import { useVideoLikes } from '@/hooks/useVideoLikes';
 import { useVideoPlayback } from '@/hooks/useVideoPlayback';
-import { Video } from '@/types/video';
+import { useVideoFeed } from '@/hooks/useVideoFeed';
+import { useVideoActions } from '@/hooks/useVideoActions';
 import VideoItem from './video/VideoItem';
 import VideoComments from './VideoComments';
 
 const VideoFeed = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
-  const [videos, setVideos] = useState<Video[]>([]);
-  const [loading, setLoading] = useState(true);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [currentVideoId, setCurrentVideoId] = useState<string>('');
   const containerRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const { user } = useAuth();
-  const { toggleLike, checkIfLiked } = useVideoLikes();
+  
+  const { videos, loading, updateVideoLike, updateVideoCommentCount } = useVideoFeed();
   const { iframeRefs, updateVideoPlayback } = useVideoPlayback(currentVideoIndex, videos);
-
-  useEffect(() => {
-    fetchVideos();
-  }, []);
-
-  const fetchVideos = async () => {
-    try {
-      const { data: videosData, error } = await supabase
-        .from('videos')
-        .select(`
-          *,
-          author:profiles!videos_author_id_fkey(id, first_name, last_name, username),
-          product:products!videos_product_id_fkey(id, price)
-        `)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const videosWithLikes = await Promise.all(
-        (videosData || []).map(async (video) => {
-          const isLiked = await checkIfLiked(video.id);
-          return {
-            id: video.id,
-            title: video.title,
-            description: video.description || '',
-            video_url: video.video_url || '',
-            thumbnail_url: video.thumbnail_url || '/placeholder.svg',
-            video_type: video.video_type,
-            likes_count: video.likes_count || 0,
-            comments_count: video.comments_count || 0,
-            views_count: video.views_count || 0,
-            author: {
-              id: video.author?.id || '',
-              first_name: video.author?.first_name || 'Utilisateur',
-              last_name: video.author?.last_name || '',
-              username: video.author?.username || 'user'
-            },
-            product: video.product ? {
-              id: video.product.id,
-              price: video.product.price
-            } : undefined,
-            isLiked
-          };
-        })
-      );
-
-      setVideos(videosWithLikes);
-    } catch (error) {
-      console.error('Error fetching videos:', error);
-      toast({
-        variant: "destructive",
-        description: "Erreur lors du chargement des vidéos.",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { handleLike, handleShare, handleFeedback, handleBuyClick } = useVideoActions(updateVideoLike);
 
   const handleScroll = () => {
     if (containerRef.current) {
@@ -102,75 +37,13 @@ const VideoFeed = () => {
     }
   }, [currentVideoIndex]);
 
-  const handleLike = async (videoId: string) => {
-    console.log('Attempting to like/unlike video:', videoId);
-    
-    const likeResult = await toggleLike(videoId);
-    console.log('Like result:', likeResult);
-    
-    if (likeResult !== undefined) {
-      // Update the local state immediately with the correct count
-      setVideos(prevVideos => 
-        prevVideos.map(video => 
-          video.id === videoId 
-            ? { 
-                ...video, 
-                isLiked: likeResult.isLiked,
-                likes_count: likeResult.newCount
-              }
-            : video
-        )
-      );
-      
-      toast({
-        description: likeResult.isLiked ? "J'aime ajouté!" : "J'aime retiré!",
-      });
-      
-      console.log('Updated video state locally');
-    }
-  };
-
   const handleComment = (videoId: string) => {
     setCurrentVideoId(videoId);
     setCommentsOpen(true);
   };
 
   const handleCommentAdded = () => {
-    // Update the comments count for the current video
-    setVideos(prevVideos => 
-      prevVideos.map(video => 
-        video.id === currentVideoId 
-          ? { 
-              ...video, 
-              comments_count: video.comments_count + 1
-            }
-          : video
-      )
-    );
-  };
-
-  const handleShare = (videoId: string) => {
-    console.log('Partage de la vidéo:', videoId);
-    if (navigator.share) {
-      navigator.share({
-        title: 'Regardez cette vidéo',
-        url: window.location.href,
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast({
-        description: "Lien copié dans le presse-papiers!",
-      });
-    }
-  };
-
-  const handleFeedback = (videoId: string) => {
-    console.log('Feedback pour la vidéo:', videoId);
-    navigate('/admin/feedback');
-  };
-
-  const handleBuyClick = (videoId: string) => {
-    navigate(`/formation/${videoId}`);
+    updateVideoCommentCount(currentVideoId);
   };
 
   if (loading) {
