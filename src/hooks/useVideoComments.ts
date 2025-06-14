@@ -159,4 +159,4 @@ export const useVideoComments = (videoId: string) => {
   };
 };
 
-export { VideoComment } from '@/types/comments';
+export type { VideoComment } from '@/types/comments';
