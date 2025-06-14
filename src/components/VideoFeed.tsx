@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -103,30 +102,30 @@ const VideoFeed = () => {
   }, [currentVideoIndex]);
 
   const handleLike = async (videoId: string) => {
-    const newLikedState = await toggleLike(videoId);
-    if (newLikedState !== undefined) {
-      // Refetch the updated video data to get the correct like count
-      const { data: updatedVideo } = await supabase
-        .from('videos')
-        .select('likes_count')
-        .eq('id', videoId)
-        .single();
-
+    console.log('Attempting to like/unlike video:', videoId);
+    
+    const likeResult = await toggleLike(videoId);
+    console.log('Like result:', likeResult);
+    
+    if (likeResult !== undefined) {
+      // Update the local state immediately with the correct count
       setVideos(prevVideos => 
         prevVideos.map(video => 
           video.id === videoId 
             ? { 
                 ...video, 
-                isLiked: newLikedState,
-                likes_count: updatedVideo?.likes_count || video.likes_count
+                isLiked: likeResult.isLiked,
+                likes_count: likeResult.newCount
               }
             : video
         )
       );
       
       toast({
-        description: newLikedState ? "J'aime ajouté!" : "J'aime retiré!",
+        description: likeResult.isLiked ? "J'aime ajouté!" : "J'aime retiré!",
       });
+      
+      console.log('Updated video state locally');
     }
   };
 
