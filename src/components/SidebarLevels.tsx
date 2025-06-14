@@ -1,5 +1,4 @@
-
-import { Play, Lock } from 'lucide-react';
+import { Play, Lock, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface Lesson {
@@ -26,6 +25,7 @@ interface SidebarLevelsProps {
   sidebarCollapsed: boolean;
   navigate: (url: string) => void;
   formation: { title: string; instructor: string };
+  hasAccess?: boolean;
 }
 
 const SidebarLevels = ({
@@ -35,6 +35,7 @@ const SidebarLevels = ({
   sidebarCollapsed,
   navigate,
   formation,
+  hasAccess = false
 }: SidebarLevelsProps) => (
   <div className={`${sidebarCollapsed ? 'w-16' : 'w-80'} bg-[#202c33] border-r border-[#313d44] transition-all duration-300 flex flex-col`}>
     {/* Header */}
@@ -47,6 +48,12 @@ const SidebarLevels = ({
           <div className="flex-1">
             <h2 className="font-semibold text-white">{formation.title}</h2>
             <p className="text-sm text-[#8696a0]">{formation.instructor}</p>
+            {hasAccess && (
+              <div className="flex items-center space-x-1 mt-1">
+                <Clock className="w-3 h-3 text-orange-400" />
+                <span className="text-xs text-orange-400">Accès temporaire</span>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -71,38 +78,49 @@ const SidebarLevels = ({
           </div>
           {!sidebarCollapsed && (
             <div className="space-y-1">
-              {level.lessons.map((lesson) => (
-                <div
-                  key={lesson.id}
-                  onClick={() => !lesson.locked && setSelectedLesson(lesson)}
-                  className={`p-3 cursor-pointer hover:bg-[#2a3942] transition-colors flex items-center justify-between ${
-                    selectedLesson?.id === lesson.id ? 'bg-[#2a3942]' : ''
-                  } ${lesson.locked ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  <div className="flex items-center space-x-3">
-                    {lesson.locked ? (
-                      <Lock className="w-4 h-4 text-[#8696a0]" />
-                    ) : (
-                      <Play className="w-4 h-4 text-[#25d366]" />
-                    )}
-                    <div>
-                      <p className="text-sm font-medium text-white">{lesson.title}</p>
-                      <p className="text-xs text-[#8696a0]">{lesson.duration}</p>
+              {level.lessons.map((lesson) => {
+                const isAccessible = hasAccess || !lesson.locked;
+                const isClickable = isAccessible && !lesson.locked;
+                
+                return (
+                  <div
+                    key={lesson.id}
+                    onClick={() => isClickable && setSelectedLesson(lesson)}
+                    className={`p-3 transition-colors flex items-center justify-between ${
+                      selectedLesson?.id === lesson.id ? 'bg-[#2a3942]' : ''
+                    } ${
+                      isClickable 
+                        ? 'cursor-pointer hover:bg-[#2a3942]' 
+                        : 'opacity-50 cursor-not-allowed'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      {!hasAccess && lesson.locked ? (
+                        <Lock className="w-4 h-4 text-[#8696a0]" />
+                      ) : !hasAccess ? (
+                        <Clock className="w-4 h-4 text-orange-400" />
+                      ) : (
+                        <Play className="w-4 h-4 text-[#25d366]" />
+                      )}
+                      <div>
+                        <p className="text-sm font-medium text-white">{lesson.title}</p>
+                        <p className="text-xs text-[#8696a0]">{lesson.duration}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {lesson.unreadMessages > 0 && hasAccess && (
+                        <span className="bg-[#25d366] text-black text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-medium">
+                          {lesson.unreadMessages}
+                        </span>
+                      )}
+                      {lesson.completed && hasAccess && <div className="w-2 h-2 bg-[#25d366] rounded-full"></div>}
+                      {lesson.hasExercise && !lesson.exerciseCompleted && !lesson.locked && hasAccess && (
+                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    {lesson.unreadMessages > 0 && (
-                      <span className="bg-[#25d366] text-black text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-medium">
-                        {lesson.unreadMessages}
-                      </span>
-                    )}
-                    {lesson.completed && <div className="w-2 h-2 bg-[#25d366] rounded-full"></div>}
-                    {lesson.hasExercise && !lesson.exerciseCompleted && !lesson.locked && (
-                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
