@@ -200,25 +200,63 @@ export const commentService = {
       .maybeSingle();
 
     if (existingLike) {
-      // Unlike
-      const { error } = await supabase
+      // Unlike - Remove from likes table
+      const { error: deleteError } = await supabase
         .from('video_comment_likes')
         .delete()
         .eq('id', existingLike.id);
 
-      if (error) throw error;
-      return { isLiked: false, likesChange: -1 };
+      if (deleteError) throw deleteError;
+
+      // Get current comment and decrement likes_count
+      const { data: currentComment, error: fetchError } = await supabase
+        .from('video_comments')
+        .select('likes_count')
+        .eq('id', commentId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const newCount = Math.max(0, (currentComment?.likes_count || 0) - 1);
+      
+      const { error: updateError } = await supabase
+        .from('video_comments')
+        .update({ likes_count: newCount })
+        .eq('id', commentId);
+
+      if (updateError) throw updateError;
+
+      return { isLiked: false, likesChange: -1, newCount };
     } else {
-      // Like
-      const { error } = await supabase
+      // Like - Add to likes table
+      const { error: insertError } = await supabase
         .from('video_comment_likes')
         .insert({
           comment_id: commentId,
           user_id: userId
         });
 
-      if (error) throw error;
-      return { isLiked: true, likesChange: 1 };
+      if (insertError) throw insertError;
+
+      // Get current comment and increment likes_count
+      const { data: currentComment, error: fetchError } = await supabase
+        .from('video_comments')
+        .select('likes_count')
+        .eq('id', commentId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const newCount = (currentComment?.likes_count || 0) + 1;
+      
+      const { error: updateError } = await supabase
+        .from('video_comments')
+        .update({ likes_count: newCount })
+        .eq('id', commentId);
+
+      if (updateError) throw updateError;
+
+      return { isLiked: true, likesChange: 1, newCount };
     }
   }
 };

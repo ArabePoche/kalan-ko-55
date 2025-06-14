@@ -105,16 +105,16 @@ export const useVideoComments = (videoId: string) => {
     }
 
     try {
-      const { isLiked, likesChange } = await commentService.toggleCommentLike(commentId, user.id);
+      const result = await commentService.toggleCommentLike(commentId, user.id);
 
-      // Update local state for both comments and replies
+      // Update local state with the actual count from database
       setComments(prevComments =>
         prevComments.map(comment => {
           if (comment.id === commentId) {
             return {
               ...comment,
-              isLiked,
-              likes_count: Math.max(0, comment.likes_count + likesChange)
+              isLiked: result.isLiked,
+              likes_count: result.newCount
             };
           }
           
@@ -125,8 +125,8 @@ export const useVideoComments = (videoId: string) => {
                 reply.id === commentId
                   ? {
                       ...reply,
-                      isLiked,
-                      likes_count: Math.max(0, reply.likes_count + likesChange)
+                      isLiked: result.isLiked,
+                      likes_count: result.newCount
                     }
                   : reply
               )
