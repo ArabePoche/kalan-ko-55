@@ -47,8 +47,21 @@ export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, userInitials }:
 
       console.log('Uploading file to path:', filePath);
 
-      // Upload file to Supabase Storage
-      const { error: uploadError } = await supabase.storage
+      // First, delete any existing avatar for this user
+      const { data: existingFiles } = await supabase.storage
+        .from('avatars')
+        .list(user.id);
+
+      if (existingFiles && existingFiles.length > 0) {
+        for (const existingFile of existingFiles) {
+          await supabase.storage
+            .from('avatars')
+            .remove([`${user.id}/${existingFile.name}`]);
+        }
+      }
+
+      // Upload new file to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, {
           cacheControl: '3600',
@@ -59,6 +72,8 @@ export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, userInitials }:
         console.error('Upload error:', uploadError);
         throw uploadError;
       }
+
+      console.log('Upload successful:', uploadData);
 
       // Get public URL
       const { data } = supabase.storage

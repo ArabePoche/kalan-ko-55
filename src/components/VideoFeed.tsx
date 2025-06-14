@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Heart, MessageCircle, Share, ShoppingCart, Flag, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/components/ui/use-toast';
 
 interface Video {
   id: string;
@@ -16,6 +17,7 @@ interface Video {
   likes: number;
   comments: number;
   students: number;
+  isLiked?: boolean;
 }
 
 const mockVideos: Video[] = [
@@ -30,7 +32,8 @@ const mockVideos: Video[] = [
     price: 49.99,
     likes: 1234,
     comments: 89,
-    students: 245
+    students: 245,
+    isLiked: false
   },
   {
     id: '2',
@@ -42,15 +45,17 @@ const mockVideos: Video[] = [
     isPromo: false,
     likes: 856,
     comments: 45,
-    students: 189
+    students: 189,
+    isLiked: false
   }
 ];
 
 const VideoFeed = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
-  const [videos] = useState(mockVideos);
+  const [videos, setVideos] = useState(mockVideos);
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleScroll = () => {
     if (containerRef.current) {
@@ -68,6 +73,46 @@ const VideoFeed = () => {
       return () => container.removeEventListener('scroll', handleScroll);
     }
   }, []);
+
+  const handleLike = (videoId: string) => {
+    setVideos(prevVideos => 
+      prevVideos.map(video => 
+        video.id === videoId 
+          ? { 
+              ...video, 
+              isLiked: !video.isLiked,
+              likes: video.isLiked ? video.likes - 1 : video.likes + 1
+            }
+          : video
+      )
+    );
+    
+    toast({
+      description: "J'aime ajouté!",
+    });
+  };
+
+  const handleComment = (videoId: string) => {
+    console.log('Commentaire pour la vidéo:', videoId);
+    toast({
+      description: "Fonctionnalité de commentaires bientôt disponible!",
+    });
+  };
+
+  const handleShare = (videoId: string) => {
+    console.log('Partage de la vidéo:', videoId);
+    if (navigator.share) {
+      navigator.share({
+        title: 'Regardez cette vidéo',
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast({
+        description: "Lien copié dans le presse-papiers!",
+      });
+    }
+  };
 
   const handleFeedback = (videoId: string) => {
     console.log('Feedback pour la vidéo:', videoId);
@@ -140,16 +185,22 @@ const VideoFeed = () => {
 
             {/* Right side - Action Buttons */}
             <div className="w-16 flex flex-col justify-end items-center pb-20 space-y-6 z-10">
-              <button className="flex flex-col items-center">
+              <button 
+                className="flex flex-col items-center"
+                onClick={() => handleLike(video.id)}
+              >
                 <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                  <Heart className="w-6 h-6 text-white" />
+                  <Heart className={`w-6 h-6 ${video.isLiked ? 'text-red-500 fill-current' : 'text-white'}`} />
                 </div>
                 <span className="text-xs text-white mt-1 font-medium">
                   {video.likes > 999 ? `${(video.likes/1000).toFixed(1)}k` : video.likes}
                 </span>
               </button>
 
-              <button className="flex flex-col items-center">
+              <button 
+                className="flex flex-col items-center"
+                onClick={() => handleComment(video.id)}
+              >
                 <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
                   <MessageCircle className="w-6 h-6 text-white" />
                 </div>
@@ -173,7 +224,10 @@ const VideoFeed = () => {
                 <span className="text-xs text-white mt-1 font-medium">Report</span>
               </button>
 
-              <button className="flex flex-col items-center">
+              <button 
+                className="flex flex-col items-center"
+                onClick={() => handleShare(video.id)}
+              >
                 <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
                   <Share className="w-6 h-6 text-white" />
                 </div>
