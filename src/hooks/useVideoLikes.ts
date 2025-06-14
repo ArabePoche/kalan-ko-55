@@ -35,10 +35,20 @@ export const useVideoLikes = () => {
           .eq('video_id', videoId);
 
         // Decrement likes count
-        await supabase
+        const { data: currentVideo } = await supabase
           .from('videos')
-          .update({ likes_count: supabase.rpc('decrement_likes_count', { video_id: videoId }) })
-          .eq('id', videoId);
+          .select('likes_count')
+          .eq('id', videoId)
+          .single();
+
+        if (currentVideo) {
+          await supabase
+            .from('videos')
+            .update({ likes_count: Math.max(0, currentVideo.likes_count - 1) })
+            .eq('id', videoId);
+        }
+
+        return false;
       } else {
         // Like the video
         await supabase
@@ -46,19 +56,28 @@ export const useVideoLikes = () => {
           .insert({ user_id: user.id, video_id: videoId });
 
         // Increment likes count
-        await supabase
+        const { data: currentVideo } = await supabase
           .from('videos')
-          .update({ likes_count: supabase.rpc('increment_likes_count', { video_id: videoId }) })
-          .eq('id', videoId);
-      }
+          .select('likes_count')
+          .eq('id', videoId)
+          .single();
 
-      return !existingLike;
+        if (currentVideo) {
+          await supabase
+            .from('videos')
+            .update({ likes_count: currentVideo.likes_count + 1 })
+            .eq('id', videoId);
+        }
+
+        return true;
+      }
     } catch (error) {
       console.error('Error toggling like:', error);
       toast({
         variant: "destructive",
         description: "Erreur lors de la gestion du like.",
       });
+      return undefined;
     }
   };
 
