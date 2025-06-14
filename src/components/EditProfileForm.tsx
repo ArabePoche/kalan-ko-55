@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -19,12 +18,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 import { Tables } from "@/integrations/supabase/types";
 import { useState } from "react";
+import { AvatarUpload } from "./AvatarUpload";
 
 const profileFormSchema = z.object({
   first_name: z.string().min(2, "Le prénom doit contenir au moins 2 caractères.").max(50),
   last_name: z.string().min(2, "Le nom doit contenir au moins 2 caractères.").max(50),
   username: z.string().min(3, "Le nom d'utilisateur doit contenir au moins 3 caractères.").max(50).optional().or(z.literal('')),
   bio: z.string().max(280, "La biographie ne doit pas dépasser 280 caractères.").optional().or(z.literal('')),
+  avatar_url: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -47,9 +48,14 @@ export const EditProfileForm = ({ profile, onSuccess }: EditProfileFormProps) =>
       last_name: profile.last_name || "",
       username: profile.username || "",
       bio: profile.bio || "",
+      avatar_url: profile.avatar_url || "",
     },
     mode: "onChange",
   });
+
+  const handleAvatarUpdate = (url: string) => {
+    form.setValue('avatar_url', url);
+  };
 
   async function onSubmit(data: ProfileFormValues) {
     if (!user) return;
@@ -62,6 +68,7 @@ export const EditProfileForm = ({ profile, onSuccess }: EditProfileFormProps) =>
         last_name: data.last_name,
         username: data.username || null,
         bio: data.bio || null,
+        avatar_url: data.avatar_url || null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", user.id);
@@ -84,9 +91,19 @@ export const EditProfileForm = ({ profile, onSuccess }: EditProfileFormProps) =>
     }
   }
 
+  const userInitials = `${profile?.first_name?.[0] || ''}${profile?.last_name?.[0] || ''}`;
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="flex justify-center">
+          <AvatarUpload
+            currentAvatarUrl={form.watch('avatar_url') || profile.avatar_url}
+            onAvatarUpdate={handleAvatarUpdate}
+            userInitials={userInitials}
+          />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
