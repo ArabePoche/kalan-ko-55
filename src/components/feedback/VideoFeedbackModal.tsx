@@ -157,7 +157,7 @@ export const VideoFeedbackModal = ({ isOpen, onClose, videoId, videoTitle }: Vid
         <SheetHeader className="pb-4">
           <SheetTitle className="text-left">Feedbacks - {videoTitle}</SheetTitle>
           <SheetDescription className="text-left">
-            Gérez et modérez les feedbacks de cette vidéo
+            Partagez et évaluez les feedbacks de cette vidéo
           </SheetDescription>
           <FeedbackStats feedbacks={feedbacks} />
         </SheetHeader>

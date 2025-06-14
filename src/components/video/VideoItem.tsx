@@ -1,8 +1,10 @@
 
-import { ShoppingCart } from 'lucide-react';
+import React, { forwardRef } from 'react';
+import { Heart, MessageCircle, Share2, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Video } from '@/types/video';
-import VideoActionButtons from './VideoActionButtons';
+import { VideoFeedbackButton } from './VideoFeedbackButton';
 
 interface VideoItemProps {
   video: Video;
@@ -12,10 +14,10 @@ interface VideoItemProps {
   onComment: (videoId: string) => void;
   onShare: (videoId: string) => void;
   onFeedback: (videoId: string) => void;
-  onBuyClick: (videoId: string) => void;
+  onBuyClick: (video: Video) => void;
 }
 
-const VideoItem = ({
+const VideoItem = forwardRef<HTMLDivElement, VideoItemProps>(({
   video,
   index,
   iframeRef,
@@ -24,84 +26,132 @@ const VideoItem = ({
   onShare,
   onFeedback,
   onBuyClick
-}: VideoItemProps) => {
-  // Helper function to extract YouTube video ID
-  const getYouTubeVideoId = (url: string) => {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : null;
-  };
-
-  const youtubeId = getYouTubeVideoId(video.video_url);
+}, ref) => {
+  const handleLike = () => onLike(video.id);
+  const handleComment = () => onComment(video.id);
+  const handleShare = () => onShare(video.id);
+  const handleBuy = () => onBuyClick(video);
 
   return (
-    <div className="relative h-screen w-full snap-start bg-black overflow-hidden">
-      {/* Video Background - Vertical Format */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="relative w-full h-full max-w-[400px] mx-auto">
-          {youtubeId ? (
-            <iframe
-              ref={iframeRef}
-              src={`https://www.youtube.com/embed/${youtubeId}?enablejsapi=1&mute=0&controls=0&loop=1&playlist=${youtubeId}&rel=0&showinfo=0&modestbranding=1`}
-              className="w-full h-full object-cover rounded-lg"
-              allow="autoplay; encrypted-media"
-              allowFullScreen
-              frameBorder="0"
-            />
-          ) : (
-            <img 
-              src={video.thumbnail_url} 
-              alt={video.title}
-              className="w-full h-full object-cover rounded-lg"
-            />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 rounded-lg" />
-        </div>
+    <div 
+      ref={ref}
+      className="relative h-screen w-full snap-start flex items-center justify-center bg-black overflow-hidden"
+      style={{ scrollSnapAlign: 'start' }}
+    >
+      {/* Video */}
+      <div className="relative w-full h-full flex items-center justify-center">
+        {video.video_url ? (
+          <iframe
+            ref={iframeRef}
+            src={video.video_url}
+            className="w-full h-full object-cover"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title={video.title}
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+            <p className="text-white text-lg">Vidéo non disponible</p>
+          </div>
+        )}
       </div>
 
-      {/* Content Overlay */}
-      <div className="absolute inset-0 flex">
-        {/* Left side - Video info */}
-        <div className="flex-1 flex flex-col justify-end p-4 pb-20 text-white z-10 max-w-[calc(100%-80px)]">
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold">
-                  {video.author.first_name?.charAt(0) || video.author.username?.charAt(0) || 'U'}
-                </span>
-              </div>
-              <span className="text-sm font-medium">
-                @{video.author.username || `${video.author.first_name} ${video.author.last_name}`.trim()}
+      {/* Video Info Overlay */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+        <div className="flex justify-between items-end">
+          {/* Left side - Video info */}
+          <div className="flex-1 mr-4">
+            <h3 className="text-white text-lg font-semibold mb-2 line-clamp-2">
+              {video.title}
+            </h3>
+            
+            {video.description && (
+              <p className="text-gray-300 text-sm mb-3 line-clamp-2">
+                {video.description}
+              </p>
+            )}
+
+            {/* Stats */}
+            <div className="flex items-center space-x-4 text-white text-sm">
+              <span className="flex items-center">
+                <Heart className="w-4 h-4 mr-1" />
+                {video.likes_count || 0}
               </span>
+              <span className="flex items-center">
+                <MessageCircle className="w-4 h-4 mr-1" />
+                {video.comments_count || 0}
+              </span>
+              <span>{video.views_count || 0} vues</span>
             </div>
-            
-            <h3 className="text-lg font-bold leading-tight">{video.title}</h3>
-            <p className="text-sm text-gray-200 line-clamp-2">{video.description}</p>
-            
-            {video.video_type === 'promo' && video.product && (
-              <Button 
-                className="bg-primary text-primary-foreground hover:bg-primary/90 w-fit"
+          </div>
+
+          {/* Right side - Action buttons */}
+          <div className="flex flex-col space-y-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLike}
+              className="text-white hover:bg-white/20 flex-col h-auto py-2"
+            >
+              <Heart className="w-6 h-6 mb-1" />
+              <span className="text-xs">{video.likes_count || 0}</span>
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleComment}
+              className="text-white hover:bg-white/20 flex-col h-auto py-2"
+            >
+              <MessageCircle className="w-6 h-6 mb-1" />
+              <span className="text-xs">{video.comments_count || 0}</span>
+            </Button>
+
+            <VideoFeedbackButton
+              videoId={video.id}
+              videoTitle={video.title}
+              className="flex-col h-auto py-2"
+            />
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleShare}
+              className="text-white hover:bg-white/20 flex-col h-auto py-2"
+            >
+              <Share2 className="w-6 h-6 mb-1" />
+              <span className="text-xs">Partager</span>
+            </Button>
+
+            {video.product_id && (
+              <Button
+                variant="ghost"
                 size="sm"
-                onClick={() => onBuyClick(video.id)}
+                onClick={handleBuy}
+                className="text-white hover:bg-white/20 flex-col h-auto py-2"
               >
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                Voir la formation - {video.product.price}€
+                <ShoppingCart className="w-6 h-6 mb-1" />
+                <span className="text-xs">Acheter</span>
               </Button>
             )}
           </div>
         </div>
-
-        {/* Right side - Action Buttons */}
-        <VideoActionButtons
-          video={video}
-          onLike={onLike}
-          onComment={onComment}
-          onShare={onShare}
-          onFeedback={onFeedback}
-        />
       </div>
+
+      {/* Video type badge */}
+      {video.video_type && (
+        <div className="absolute top-4 left-4">
+          <Badge variant="secondary" className="bg-black/50 text-white">
+            {video.video_type === 'educational' ? 'Éducatif' : 
+             video.video_type === 'promotional' ? 'Promotionnel' : 
+             video.video_type}
+          </Badge>
+        </div>
+      )}
     </div>
   );
-};
+});
+
+VideoItem.displayName = 'VideoItem';
 
 export default VideoItem;
