@@ -82,9 +82,9 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ isOpen, onClose, videoId 
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-      <div className="bg-white w-full h-[80vh] rounded-t-3xl flex flex-col">
+      <div className="bg-white w-full h-[85vh] rounded-t-3xl flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-white">
+        <div className="flex items-center justify-between p-4 border-b bg-white rounded-t-3xl">
           <div className="flex items-center space-x-2">
             <MessageCircle className="w-5 h-5 text-gray-600" />
             <span className="text-lg font-semibold">
@@ -102,7 +102,7 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ isOpen, onClose, videoId 
         </div>
 
         {/* Comments List */}
-        <ScrollArea className="flex-1 p-4">
+        <ScrollArea className="flex-1 p-4 pb-0">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="text-gray-500">Chargement des commentaires...</div>
@@ -116,7 +116,7 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ isOpen, onClose, videoId 
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 pb-4">
               {comments.map((comment) => (
                 <div key={comment.id} className="space-y-3">
                   {/* Main Comment */}
@@ -144,7 +144,7 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ isOpen, onClose, videoId 
                           <Heart 
                             className={`w-3 h-3 ${comment.isLiked ? 'text-red-500 fill-current' : ''}`} 
                           />
-                          <span>{comment.likes_count}</span>
+                          <span>{comment.likes_count || 0}</span>
                         </button>
                         <button 
                           className="flex items-center space-x-1 text-xs text-gray-500 hover:text-blue-500 transition-colors"
@@ -233,7 +233,7 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ isOpen, onClose, videoId 
                                 <Heart 
                                   className={`w-3 h-3 ${reply.isLiked ? 'text-red-500 fill-current' : ''}`} 
                                 />
-                                <span>{reply.likes_count}</span>
+                                <span>{reply.likes_count || 0}</span>
                               </button>
                             </div>
                           </div>
@@ -247,36 +247,34 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ isOpen, onClose, videoId 
           )}
         </ScrollArea>
 
-        {/* Comment Input - Fixed at bottom */}
-        <div className="p-4 border-t bg-white">
-          <div className="space-y-3">
-            <div className="flex items-start space-x-3">
-              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-xs font-bold text-primary">V</span>
-              </div>
-              <div className="flex-1">
-                <Textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Écrivez votre commentaire..."
-                  className="min-h-[60px] resize-none border-gray-200 focus:border-primary"
-                  maxLength={500}
-                />
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs text-gray-400">
-                    {newComment.length}/500
-                  </span>
-                  <Button
-                    onClick={handleSendComment}
-                    disabled={!newComment.trim()}
-                    size="sm"
-                    className="px-4"
-                  >
-                    <Send className="w-4 h-4 mr-1" />
-                    Publier
-                  </Button>
-                </div>
+        {/* Comment Input - Fixed at bottom with proper safe area */}
+        <div className="p-4 border-t bg-white mt-auto">
+          <div className="flex items-start space-x-3">
+            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-xs font-bold text-primary">V</span>
+            </div>
+            <div className="flex-1">
+              <Textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Écrivez votre commentaire..."
+                className="min-h-[60px] resize-none border-gray-200 focus:border-primary"
+                maxLength={500}
+              />
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-xs text-gray-400">
+                  {newComment.length}/500
+                </span>
+                <Button
+                  onClick={handleSendComment}
+                  disabled={!newComment.trim()}
+                  size="sm"
+                  className="px-4"
+                >
+                  <Send className="w-4 h-4 mr-1" />
+                  Publier
+                </Button>
               </div>
             </div>
           </div>

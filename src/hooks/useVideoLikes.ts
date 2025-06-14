@@ -9,6 +9,8 @@ export const useVideoLikes = () => {
   const { toast } = useToast();
 
   const toggleLike = async (videoId: string) => {
+    console.log('toggleLike called with videoId:', videoId, 'user:', user?.id);
+    
     if (!user) {
       toast({
         variant: "destructive",
@@ -19,14 +21,22 @@ export const useVideoLikes = () => {
 
     try {
       // Check if user already liked this video
-      const { data: existingLike } = await supabase
+      const { data: existingLike, error: checkError } = await supabase
         .from('video_likes')
         .select('id')
         .eq('user_id', user.id)
         .eq('video_id', videoId)
         .maybeSingle();
 
+      if (checkError) {
+        console.error('Error checking existing like:', checkError);
+        throw checkError;
+      }
+
+      console.log('Existing like check result:', existingLike);
+
       if (existingLike) {
+        console.log('Removing like...');
         // Unlike the video
         const { error: deleteError } = await supabase
           .from('video_likes')
@@ -34,59 +44,84 @@ export const useVideoLikes = () => {
           .eq('user_id', user.id)
           .eq('video_id', videoId);
 
-        if (deleteError) throw deleteError;
+        if (deleteError) {
+          console.error('Error deleting like:', deleteError);
+          throw deleteError;
+        }
 
-        // Decrement likes count with proper error handling
+        // Get current likes count and decrement
         const { data: currentVideo, error: fetchError } = await supabase
           .from('videos')
           .select('likes_count')
           .eq('id', videoId)
           .single();
 
-        if (fetchError) throw fetchError;
+        if (fetchError) {
+          console.error('Error fetching video for decrement:', fetchError);
+          throw fetchError;
+        }
 
+        const newCount = Math.max(0, (currentVideo?.likes_count || 0) - 1);
+        
         const { error: updateError } = await supabase
           .from('videos')
-          .update({ likes_count: Math.max(0, (currentVideo?.likes_count || 0) - 1) })
+          .update({ likes_count: newCount })
           .eq('id', videoId);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('Error updating likes count (decrement):', updateError);
+          throw updateError;
+        }
 
+        console.log('Like removed successfully, new count:', newCount);
         return { 
           isLiked: false, 
-          newCount: Math.max(0, (currentVideo?.likes_count || 0) - 1) 
+          newCount: newCount
         };
       } else {
+        console.log('Adding like...');
         // Like the video
         const { error: insertError } = await supabase
           .from('video_likes')
           .insert({ user_id: user.id, video_id: videoId });
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Error inserting like:', insertError);
+          throw insertError;
+        }
 
-        // Increment likes count with proper error handling
+        // Get current likes count and increment
         const { data: currentVideo, error: fetchError } = await supabase
           .from('videos')
           .select('likes_count')
           .eq('id', videoId)
           .single();
 
-        if (fetchError) throw fetchError;
+        if (fetchError) {
+          console.error('Error fetching video for increment:', fetchError);
+          throw fetchError;
+        }
 
+        const newCount = (currentVideo?.likes_count || 0) + 1;
+        
         const { error: updateError } = await supabase
           .from('videos')
-          .update({ likes_count: (currentVideo?.likes_count || 0) + 1 })
+          .update({ likes_count: newCount })
           .eq('id', videoId);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('Error updating likes count (increment):', updateError);
+          throw updateError;
+        }
 
+        console.log('Like added successfully, new count:', newCount);
         return { 
           isLiked: true, 
-          newCount: (currentVideo?.likes_count || 0) + 1 
+          newCount: newCount
         };
       }
     } catch (error) {
-      console.error('Error toggling like:', error);
+      console.error('Error in toggleLike:', error);
       toast({
         variant: "destructive",
         description: "Erreur lors de la gestion du like.",
@@ -99,15 +134,21 @@ export const useVideoLikes = () => {
     if (!user) return false;
 
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('video_likes')
         .select('id')
         .eq('user_id', user.id)
         .eq('video_id', videoId)
         .maybeSingle();
 
+      if (error) {
+        console.error('Error checking if liked:', error);
+        return false;
+      }
+
       return !!data;
-    } catch {
+    } catch (error) {
+      console.error('Error in checkIfLiked:', error);
       return false;
     }
   };
