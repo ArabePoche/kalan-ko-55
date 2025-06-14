@@ -26,16 +26,37 @@ export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, userInitials }:
         throw new Error('Vous devez sélectionner une image à télécharger.');
       }
 
+      if (!user) {
+        throw new Error('Vous devez être connecté pour télécharger une photo.');
+      }
+
       const file = event.target.files[0];
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Veuillez sélectionner un fichier image valide.');
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('La taille du fichier ne doit pas dépasser 5MB.');
+      }
+
       const fileExt = file.name.split('.').pop();
-      const filePath = `${user?.id}/${Date.now()}.${fileExt}`;
+      const filePath = `${user.id}/${Date.now()}.${fileExt}`;
+
+      console.log('Uploading file to path:', filePath);
 
       // Upload file to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
       if (uploadError) {
+        console.error('Upload error:', uploadError);
         throw uploadError;
       }
 
@@ -44,13 +65,20 @@ export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, userInitials }:
         .from('avatars')
         .getPublicUrl(filePath);
 
-      onAvatarUpdate(data.publicUrl);
+      console.log('Generated public URL:', data.publicUrl);
 
-      toast({
-        title: "Avatar mis à jour",
-        description: "Votre photo de profil a été mise à jour avec succès.",
-      });
+      if (data.publicUrl) {
+        onAvatarUpdate(data.publicUrl);
+        
+        toast({
+          title: "Avatar mis à jour",
+          description: "Votre photo de profil a été mise à jour avec succès.",
+        });
+      } else {
+        throw new Error('Impossible de générer l\'URL publique de l\'image.');
+      }
     } catch (error) {
+      console.error('Avatar upload error:', error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -58,6 +86,10 @@ export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, userInitials }:
       });
     } finally {
       setUploading(false);
+      // Reset the input value so the same file can be selected again
+      if (event.target) {
+        event.target.value = '';
+      }
     }
   };
 
@@ -65,7 +97,7 @@ export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, userInitials }:
     <div className="flex flex-col items-center space-y-4">
       <div className="relative">
         <Avatar className="w-24 h-24">
-          <AvatarImage src={currentAvatarUrl || "https://github.com/shadcn.png"} />
+          <AvatarImage src={currentAvatarUrl || undefined} />
           <AvatarFallback>{userInitials}</AvatarFallback>
         </Avatar>
         <Button

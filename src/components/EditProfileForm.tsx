@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -54,40 +55,50 @@ export const EditProfileForm = ({ profile, onSuccess }: EditProfileFormProps) =>
   });
 
   const handleAvatarUpdate = (url: string) => {
-    form.setValue('avatar_url', url);
+    console.log('Avatar URL updated:', url);
+    form.setValue('avatar_url', url, { shouldDirty: true });
   };
 
   async function onSubmit(data: ProfileFormValues) {
     if (!user) return;
     setIsSubmitting(true);
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        first_name: data.first_name,
-        last_name: data.last_name,
-        username: data.username || null,
-        bio: data.bio || null,
-        avatar_url: data.avatar_url || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", user.id);
-    
-    setIsSubmitting(false);
+    console.log('Submitting profile data:', data);
 
-    if (error) {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          first_name: data.first_name,
+          last_name: data.last_name,
+          username: data.username || null,
+          bio: data.bio || null,
+          avatar_url: data.avatar_url || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id);
+
+      if (error) {
+        console.error('Profile update error:', error);
+        throw error;
+      }
+
+      toast({
+        title: "Profil mis à jour",
+        description: "Vos informations ont été enregistrées avec succès.",
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
+      onSuccess();
+    } catch (error) {
+      console.error('Profile update failed:', error);
       toast({
         variant: "destructive",
         title: "Erreur",
         description: "Une erreur est survenue lors de la mise à jour de votre profil.",
       });
-    } else {
-      toast({
-        title: "Profil mis à jour",
-        description: "Vos informations ont été enregistrées avec succès.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
-      onSuccess();
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
