@@ -72,6 +72,146 @@ export type Database = {
         }
         Relationships: []
       }
+      expert_activity: {
+        Row: {
+          created_at: string
+          expert_name: string
+          id: string
+          last_review_at: string | null
+          reviews_count: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expert_name: string
+          id?: string
+          last_review_at?: string | null
+          reviews_count?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expert_name?: string
+          id?: string
+          last_review_at?: string | null
+          reviews_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      expert_reviews: {
+        Row: {
+          action: string
+          comment: string
+          created_at: string
+          expert_name: string
+          id: string
+          reviewed_at: string
+          submission_id: string
+        }
+        Insert: {
+          action: string
+          comment: string
+          created_at?: string
+          expert_name: string
+          id?: string
+          reviewed_at?: string
+          submission_id: string
+        }
+        Update: {
+          action?: string
+          comment?: string
+          created_at?: string
+          expert_name?: string
+          id?: string
+          reviewed_at?: string
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_reviews_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "feedback_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedback_stats: {
+        Row: {
+          approval_rate: number | null
+          approved_today: number
+          average_review_time_hours: number | null
+          created_at: string
+          date: string
+          id: string
+          pending_review: number
+          rejected_today: number
+          total_submissions: number
+          updated_at: string
+        }
+        Insert: {
+          approval_rate?: number | null
+          approved_today?: number
+          average_review_time_hours?: number | null
+          created_at?: string
+          date?: string
+          id?: string
+          pending_review?: number
+          rejected_today?: number
+          total_submissions?: number
+          updated_at?: string
+        }
+        Update: {
+          approval_rate?: number | null
+          approved_today?: number
+          average_review_time_hours?: number | null
+          created_at?: string
+          date?: string
+          id?: string
+          pending_review?: number
+          rejected_today?: number
+          total_submissions?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      feedback_submissions: {
+        Row: {
+          content_id: string
+          content_title: string
+          content_type: string
+          created_at: string
+          id: string
+          status: string
+          submitted_at: string
+          submitted_by: string
+          updated_at: string
+        }
+        Insert: {
+          content_id: string
+          content_title: string
+          content_type: string
+          created_at?: string
+          id?: string
+          status?: string
+          submitted_at?: string
+          submitted_by: string
+          updated_at?: string
+        }
+        Update: {
+          content_id?: string
+          content_title?: string
+          content_type?: string
+          created_at?: string
+          id?: string
+          status?: string
+          submitted_at?: string
+          submitted_by?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       formations: {
         Row: {
           completion_rate: number | null
