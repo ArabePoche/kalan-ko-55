@@ -188,52 +188,58 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0b141a]">
-      <ChatHeader
-        lessonTitle={lesson.title}
-        lessonDuration={lesson.duration}
-        instructor={lesson.instructor}
-        onCall={handleCall}
-      />
-      <VideoSection
-        visible={!videoCollapsed}
-        onToggle={() => setVideoCollapsed(!videoCollapsed)}
-        lessonTitle={lesson.title}
-        lessonDuration={lesson.duration}
-      />
-      <ExerciseSection
-        hasExercise={selectedLesson.hasExercise}
-        exerciseCompleted={selectedLesson.exerciseCompleted}
-        showExercise={showExercise}
-        onToggle={() => setShowExercise(!showExercise)}
-        onComplete={() => {
-          console.log('Exercise completed for lesson:', selectedLesson.id);
-          setShowExercise(false);
-        }}
-        lesson={selectedLesson}
-      />
-      <div className="flex-1 overflow-y-auto bg-[#0b141a] p-4">
+    <div className="flex flex-col h-full bg-[#0b141a] overflow-hidden">
+      <div className="flex-shrink-0">
+        <ChatHeader
+          lessonTitle={lesson.title}
+          lessonDuration={lesson.duration}
+          instructor={lesson.instructor}
+          onCall={handleCall}
+        />
+        <VideoSection
+          visible={!videoCollapsed}
+          onToggle={() => setVideoCollapsed(!videoCollapsed)}
+          lessonTitle={lesson.title}
+          lessonDuration={lesson.duration}
+        />
+        <ExerciseSection
+          hasExercise={selectedLesson.hasExercise}
+          exerciseCompleted={selectedLesson.exerciseCompleted}
+          showExercise={showExercise}
+          onToggle={() => setShowExercise(!showExercise)}
+          onComplete={() => {
+            console.log('Exercise completed for lesson:', selectedLesson.id);
+            setShowExercise(false);
+          }}
+          lesson={selectedLesson}
+        />
+      </div>
+      
+      <div className="flex-1 overflow-y-auto bg-[#0b141a] p-3 md:p-4">
         <ChatMessages
           messages={privateChatMessages}
           playingVoiceId={playingVoiceId}
           onVoicePlay={handleVoicePlay}
         />
       </div>
-      <ChatInput
-        privateMessage={privateMessage}
-        setPrivateMessage={setPrivateMessage}
-        isRecording={isRecording}
-        showEmojiPicker={showEmojiPicker}
-        emojis={emojis}
-        onToggleEmojiPicker={() => setShowEmojiPicker((state) => !state)}
-        onSend={handleSendPrivateMessage}
-        onFileAttachment={handleFileAttachment}
-        onFileSelect={handleFileSelect}
-        onVoiceRecord={handleVoiceRecord}
-        setIsRecording={setIsRecording}
-        fileInputRef={fileInputRef}
-      />
-      <AvailableTeachers teachers={availableTeachers} />
+      
+      <div className="flex-shrink-0">
+        <ChatInput
+          privateMessage={privateMessage}
+          setPrivateMessage={setPrivateMessage}
+          isRecording={isRecording}
+          showEmojiPicker={showEmojiPicker}
+          emojis={emojis}
+          onToggleEmojiPicker={() => setShowEmojiPicker((state) => !state)}
+          onSend={handleSendPrivateMessage}
+          onFileAttachment={handleFileAttachment}
+          onFileSelect={handleFileSelect}
+          onVoiceRecord={handleVoiceRecord}
+          setIsRecording={setIsRecording}
+          fileInputRef={fileInputRef}
+        />
+        <AvailableTeachers teachers={availableTeachers} />
+      </div>
     </div>
   );
 };

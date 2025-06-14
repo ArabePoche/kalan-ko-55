@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 // Import de composants refactorisés
 import SidebarLevels from './SidebarLevels';
@@ -135,17 +134,17 @@ const FormationPage = () => {
   };
 
   if (isMobile) {
-    // Version mobile
+    // Version mobile améliorée
     return (
-      <div className="h-screen bg-background flex flex-col">
-        <div className="p-4 border-b border-border bg-[#075e54]">
+      <div className="h-screen bg-background flex flex-col overflow-hidden">
+        <div className="flex-shrink-0 p-3 border-b border-border bg-[#075e54] safe-area-top">
           <div className="flex items-center space-x-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/courses')} className="text-white">
-              <ArrowLeft className="w-4 h-4" />
+            <Button variant="ghost" size="sm" onClick={() => navigate('/courses')} className="text-white p-2">
+              <ArrowLeft className="w-5 h-5" />
             </Button>
-            <div className="flex-1">
-              <h2 className="font-semibold text-white">{formation.title}</h2>
-              <p className="text-sm text-white/80">{formation.instructor}</p>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-semibold text-white text-base truncate">{formation.title}</h2>
+              <p className="text-sm text-white/80 truncate">{formation.instructor}</p>
             </div>
           </div>
         </div>
@@ -159,11 +158,11 @@ const FormationPage = () => {
               selectedLesson={selectedLesson}
             />
           ) : (
-            <div className="flex-1 flex items-center justify-center p-6">
-              <div className="text-center">
-                <Play className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <div className="flex-1 flex items-center justify-center p-4">
+              <div className="text-center max-w-sm mx-auto">
+                <Play className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
                 <h3 className="text-lg font-semibold text-foreground mb-2">Sélectionnez une leçon</h3>
-                <p className="text-muted-foreground">Choisissez une leçon pour commencer</p>
+                <p className="text-muted-foreground text-sm mb-4">Choisissez une leçon pour commencer</p>
                 <LessonSelectorMobile levels={levels} setSelectedLesson={setSelectedLesson} />
               </div>
             </div>
