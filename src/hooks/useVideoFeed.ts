@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useVideoLikes } from '@/hooks/useVideoLikes';
+import { videoService } from '@/services/videoService';
 import { Video } from '@/types/video';
 
 export const useVideoFeed = () => {
@@ -28,6 +28,15 @@ export const useVideoFeed = () => {
       const videosWithLikes = await Promise.all(
         (videosData || []).map(async (video) => {
           const isLiked = await checkIfLiked(video.id);
+          
+          // Sync comments count to ensure it's accurate
+          let commentsCount = video.comments_count || 0;
+          try {
+            commentsCount = await videoService.syncCommentsCount(video.id);
+          } catch (error) {
+            console.error('Error syncing comments count for video:', video.id, error);
+          }
+          
           return {
             id: video.id,
             title: video.title,
@@ -36,7 +45,7 @@ export const useVideoFeed = () => {
             thumbnail_url: video.thumbnail_url || '/placeholder.svg',
             video_type: video.video_type,
             likes_count: video.likes_count || 0,
-            comments_count: video.comments_count || 0,
+            comments_count: commentsCount,
             views_count: video.views_count || 0,
             author: {
               id: video.author?.id || '',
