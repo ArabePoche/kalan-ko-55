@@ -27,14 +27,14 @@ const VideoEditModal = ({ open, onOpenChange, video, onUpdated }: VideoEditModal
     description: string;
     video_url: string;
     thumbnail_url: string;
-    video_type: '' | 'promo' | 'educational' | 'testimonial';
+    video_type?: 'promo' | 'educational' | 'testimonial';
     product_id: string;
   }>({
     title: '',
     description: '',
     video_url: '',
     thumbnail_url: '',
-    video_type: '',
+    video_type: undefined,
     product_id: ''
   });
   const [loading, setLoading] = useState(false);
@@ -46,7 +46,7 @@ const VideoEditModal = ({ open, onOpenChange, video, onUpdated }: VideoEditModal
         description: video.description || '',
         video_url: video.video_url || '',
         thumbnail_url: video.thumbnail_url || '',
-        video_type: (video.video_type as 'promo' | 'educational' | 'testimonial') || '',
+        video_type: (video.video_type as 'promo' | 'educational' | 'testimonial') || undefined,
         product_id: video.product_id || ''
       });
     }
@@ -70,7 +70,7 @@ const VideoEditModal = ({ open, onOpenChange, video, onUpdated }: VideoEditModal
       description: form.description || null,
       video_url: form.video_url,
       thumbnail_url: form.thumbnail_url || null,
-      video_type: form.video_type as 'promo' | 'educational' | 'testimonial',
+      video_type: form.video_type,
       product_id: form.product_id || null
     };
 
@@ -103,7 +103,7 @@ const VideoEditModal = ({ open, onOpenChange, video, onUpdated }: VideoEditModal
         <DialogHeader>
           <DialogTitle>Modifier la vidéo</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           <Input
             placeholder="Titre"
@@ -111,7 +111,7 @@ const VideoEditModal = ({ open, onOpenChange, video, onUpdated }: VideoEditModal
             onChange={(e) => setForm({ ...form, title: e.target.value })}
             disabled={loading}
           />
-          
+
           <Textarea
             placeholder="Description"
             value={form.description}
@@ -135,7 +135,7 @@ const VideoEditModal = ({ open, onOpenChange, video, onUpdated }: VideoEditModal
 
           <Select
             value={form.video_type}
-            onValueChange={(value) => setForm({ ...form, video_type: value })}
+            onValueChange={(value: 'promo' | 'educational' | 'testimonial') => setForm({ ...form, video_type: value })}
             disabled={loading}
           >
             <SelectTrigger>

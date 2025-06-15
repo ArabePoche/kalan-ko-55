@@ -28,12 +28,19 @@ const VIDEO_TYPES = [
 ];
 
 export default function VideoCreateForm({ onCreated }: VideoCreateFormProps) {
-  const [newVideo, setNewVideo] = useState({
+  const [newVideo, setNewVideo] = useState<{
+    title: string;
+    description: string;
+    video_url: string;
+    thumbnail_url: string;
+    video_type?: 'promo' | 'educational' | 'testimonial';
+    product_id: string;
+  }>({
     title: '',
     description: '',
     video_url: '',
     thumbnail_url: '',
-    video_type: '' as '' | 'promo' | 'educational' | 'testimonial',
+    video_type: undefined,
     product_id: '',
   });
   const [isCreating, setIsCreating] = useState(false);
@@ -56,7 +63,7 @@ export default function VideoCreateForm({ onCreated }: VideoCreateFormProps) {
         description: newVideo.description || null,
         video_url: newVideo.video_url,
         thumbnail_url: newVideo.thumbnail_url || null,
-        video_type: newVideo.video_type as 'promo' | 'educational' | 'testimonial',
+        video_type: newVideo.video_type,
         product_id: newVideo.product_id || null,
         is_active: true,
         likes_count: 0,
@@ -64,7 +71,6 @@ export default function VideoCreateForm({ onCreated }: VideoCreateFormProps) {
         views_count: 0
       };
 
-      // Corriger l'appel: pas besoin d'array si on passe une seule entrée (Supabase accepte les deux, mais l'erreur le signale)
       const { error } = await supabase
         .from('videos')
         .insert(videoData);
@@ -83,13 +89,13 @@ export default function VideoCreateForm({ onCreated }: VideoCreateFormProps) {
         title: "Vidéo créée",
         description: "La vidéo a été ajoutée avec succès.",
       });
-      
+
       setNewVideo({
         title: '',
         description: '',
         video_url: '',
         thumbnail_url: '',
-        video_type: '' as '' | 'promo' | 'educational' | 'testimonial',
+        video_type: undefined,
         product_id: '',
       });
       onCreated();
@@ -111,7 +117,7 @@ export default function VideoCreateForm({ onCreated }: VideoCreateFormProps) {
         onChange={(e) => setNewVideo({ ...newVideo, title: e.target.value })}
         disabled={isCreating}
       />
-      
+
       <Textarea
         placeholder="Description (optionnel)"
         value={newVideo.description}
@@ -141,7 +147,7 @@ export default function VideoCreateForm({ onCreated }: VideoCreateFormProps) {
 
       <Select
         value={newVideo.video_type}
-        onValueChange={(value) => setNewVideo({ ...newVideo, video_type: value })}
+        onValueChange={(value: 'promo' | 'educational' | 'testimonial') => setNewVideo({ ...newVideo, video_type: value })}
         disabled={isCreating}
       >
         <SelectTrigger className="w-full">
