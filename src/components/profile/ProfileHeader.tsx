@@ -1,7 +1,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Edit, LayoutDashboard } from 'lucide-react';
+import { Edit } from 'lucide-react';
 import { useState } from 'react';
 import {
   Dialog,
@@ -79,12 +79,6 @@ export const ProfileHeader = ({ profile, user, signOut }: ProfileHeaderProps) =>
         <p className="text-muted-foreground">@{profile?.username || user.email}</p>
       </div>
       <div className="flex flex-wrap items-center justify-center gap-2 mt-4 md:mt-0 md:ml-auto">
-        {profile?.role === 'admin' && (
-          <Button onClick={() => navigate('/admin')}>
-            <LayoutDashboard className="mr-2 h-4 w-4" />
-            Dashboard
-          </Button>
-        )}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="outline">
