@@ -60,6 +60,43 @@ export const useOrderMutation = (
 
       console.log('Order items created successfully');
 
+      // Créer les notifications manuellement
+      console.log('Creating notifications for order:', order.id);
+
+      // Notification pour tous les admins
+      const { error: adminNotificationError } = await supabase
+        .from('notifications')
+        .insert({
+          title: 'Nouvelle commande à valider',
+          message: `Une nouvelle commande d'un montant de ${order.total_amount}€ nécessite votre validation.`,
+          type: 'order',
+          is_for_all_admins: true,
+          order_id: order.id
+        });
+
+      if (adminNotificationError) {
+        console.error('Error creating admin notification:', adminNotificationError);
+        // Ne pas faire échouer la commande pour une erreur de notification
+      }
+
+      // Notification pour l'acheteur
+      const { error: buyerNotificationError } = await supabase
+        .from('notifications')
+        .insert({
+          title: 'Commande passée avec succès',
+          message: `Votre commande d'un montant de ${order.total_amount}€ a été soumise et sera examinée par un administrateur.`,
+          type: 'order',
+          user_id: user.id,
+          order_id: order.id
+        });
+
+      if (buyerNotificationError) {
+        console.error('Error creating buyer notification:', buyerNotificationError);
+        // Ne pas faire échouer la commande pour une erreur de notification
+      }
+
+      console.log('Notifications created successfully');
+
       return order;
     },
     onSuccess: (order) => {
