@@ -57,6 +57,11 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
   const [cameraMode, setCameraMode] = useState<"menu" | "photo" | "video">("menu");
   const [callModal, setCallModal] = useState<{ open: boolean; type: "voice" | "video" } | null>(null);
 
+  // Handler to open voice or video call
+  const handleCall = (type: "voice" | "video") => {
+    setCallModal({ open: true, type });
+  };
+
   const [privateChatMessages, setPrivateChatMessages] = useState([
     {
       id: '1',
