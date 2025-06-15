@@ -14,27 +14,52 @@ export const useOrderMutation = (
 
   return useMutation({
     mutationFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Utilisateur non connecté');
+      console.log('=== STARTING ORDER CREATION ===');
+      console.log('Cart items:', items);
+      console.log('Total price:', getTotalPrice());
 
-      console.log('Creating order for user:', user.id);
-      console.log('Order items:', items);
-      console.log('Total amount:', getTotalPrice());
+      // Vérifier l'authentification
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      console.log('Auth check - User:', user);
+      console.log('Auth check - Error:', authError);
+      
+      if (authError) {
+        console.error('Auth error:', authError);
+        throw new Error('Erreur d\'authentification: ' + authError.message);
+      }
+      
+      if (!user) {
+        console.error('No user found');
+        throw new Error('Utilisateur non connecté');
+      }
+
+      console.log('User authenticated successfully:', user.id);
+
+      const totalAmount = getTotalPrice();
+      console.log('Creating order with amount:', totalAmount);
 
       // Créer la commande
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
           user_id: user.id,
-          total_amount: getTotalPrice(),
+          total_amount: totalAmount,
           status: 'pending'
         })
         .select()
         .single();
 
+      console.log('Order creation result - Data:', order);
+      console.log('Order creation result - Error:', orderError);
+
       if (orderError) {
         console.error('Error creating order:', orderError);
-        throw orderError;
+        throw new Error('Erreur lors de la création de la commande: ' + orderError.message);
+      }
+
+      if (!order) {
+        console.error('No order returned after creation');
+        throw new Error('Aucune commande retournée après création');
       }
 
       console.log('Order created successfully:', order);
@@ -49,13 +74,17 @@ export const useOrderMutation = (
 
       console.log('Creating order items:', orderItems);
 
-      const { error: itemsError } = await supabase
+      const { data: orderItemsData, error: itemsError } = await supabase
         .from('order_items')
-        .insert(orderItems);
+        .insert(orderItems)
+        .select();
+
+      console.log('Order items creation result - Data:', orderItemsData);
+      console.log('Order items creation result - Error:', itemsError);
 
       if (itemsError) {
         console.error('Error creating order items:', itemsError);
-        throw itemsError;
+        throw new Error('Erreur lors de la création des articles de commande: ' + itemsError.message);
       }
 
       console.log('Order items created successfully');
@@ -64,7 +93,7 @@ export const useOrderMutation = (
       console.log('Creating notifications for order:', order.id);
 
       // Notification pour tous les admins
-      const { error: adminNotificationError } = await supabase
+      const { data: adminNotificationData, error: adminNotificationError } = await supabase
         .from('notifications')
         .insert({
           title: 'Nouvelle commande à valider',
@@ -72,7 +101,11 @@ export const useOrderMutation = (
           type: 'order',
           is_for_all_admins: true,
           order_id: order.id
-        });
+        })
+        .select();
+
+      console.log('Admin notification creation result - Data:', adminNotificationData);
+      console.log('Admin notification creation result - Error:', adminNotificationError);
 
       if (adminNotificationError) {
         console.error('Error creating admin notification:', adminNotificationError);
@@ -80,7 +113,7 @@ export const useOrderMutation = (
       }
 
       // Notification pour l'acheteur
-      const { error: buyerNotificationError } = await supabase
+      const { data: buyerNotificationData, error: buyerNotificationError } = await supabase
         .from('notifications')
         .insert({
           title: 'Commande passée avec succès',
@@ -88,7 +121,11 @@ export const useOrderMutation = (
           type: 'order',
           user_id: user.id,
           order_id: order.id
-        });
+        })
+        .select();
+
+      console.log('Buyer notification creation result - Data:', buyerNotificationData);
+      console.log('Buyer notification creation result - Error:', buyerNotificationError);
 
       if (buyerNotificationError) {
         console.error('Error creating buyer notification:', buyerNotificationError);
@@ -96,6 +133,7 @@ export const useOrderMutation = (
       }
 
       console.log('Notifications created successfully');
+      console.log('=== ORDER CREATION COMPLETED ===');
 
       return order;
     },
@@ -119,10 +157,11 @@ export const useOrderMutation = (
       }, 2000);
     },
     onError: (error) => {
-      console.error('Error creating order:', error);
+      console.error('=== ORDER CREATION FAILED ===');
+      console.error('Error details:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de passer la commande. Veuillez réessayer.",
+        description: error.message || "Impossible de passer la commande. Veuillez réessayer.",
         variant: "destructive"
       });
     }

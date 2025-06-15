@@ -24,8 +24,12 @@ const CheckoutPage = () => {
   const createOrderMutation = useOrderMutation(items, getTotalPrice, clearCart, navigate);
 
   const handlePlaceOrder = () => {
-    console.log('Placing order with items:', items);
+    console.log('=== PLACE ORDER BUTTON CLICKED ===');
+    console.log('Items in cart:', items);
+    console.log('Total price:', getTotalPrice());
+    
     if (items.length === 0) {
+      console.log('Cart is empty, showing error');
       toast({
         title: "Panier vide",
         description: "Ajoutez des articles à votre panier avant de passer commande.",
@@ -33,6 +37,8 @@ const CheckoutPage = () => {
       });
       return;
     }
+    
+    console.log('Starting order mutation...');
     createOrderMutation.mutate();
   };
 
