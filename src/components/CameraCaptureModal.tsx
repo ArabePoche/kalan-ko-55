@@ -27,8 +27,10 @@ const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   const [capturedVideo, setCapturedVideo] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
   const chunksRef = useRef<Blob[]>([]);
+  const [cameraFacing, setCameraFacing] = useState<"environment" | "user">("user");
+  const [askFacing, setAskFacing] = useState(false);
 
-  // (Re)démarre la webcam selon mode photo/video
+  // (Re)démarre la webcam selon mode photo/video et front/dos
   useEffect(() => {
     async function startCamera(constraints: MediaStreamConstraints) {
       setError(null);
@@ -43,8 +45,24 @@ const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
           if (streamRef.current) {
             streamRef.current.getTracks().forEach((track) => track.stop());
           }
-          
-          streamRef.current = await navigator.mediaDevices.getUserMedia(constraints);
+          // Ajout du facingMode utilisateur/environnement
+          const deviceConstraints: MediaStreamConstraints = {
+            ...constraints,
+            video: {
+              ...(typeof constraints.video === "boolean" ? {} : constraints.video),
+              facingMode: { exact: cameraFacing }
+            }
+          };
+          // Si facingMode n'est pas supporté, fallback
+          try {
+            streamRef.current = await navigator.mediaDevices.getUserMedia(deviceConstraints);
+          } catch {
+            // fallback sans "exact"
+            streamRef.current = await navigator.mediaDevices.getUserMedia({
+              ...constraints,
+              video: { ...(typeof constraints.video === "boolean" ? {} : constraints.video), facingMode: cameraFacing }
+            });
+          }
           videoRef.current.srcObject = streamRef.current;
           await videoRef.current.play();
         } catch (err: any) {
@@ -54,12 +72,12 @@ const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
       }
     }
     
-    if (open && mode === "photo") {
-      startCamera({ video: true, audio: false });
-    } else if (open && mode === "video") {
-      startCamera({ video: true, audio: true });
+    if (open && (mode === "photo" || mode === "video")) {
+      startCamera({
+        video: true,
+        audio: mode === "video"
+      });
     }
-    
     return () => {
       // Cleanup: arrêter la caméra
       if (streamRef.current) {
@@ -70,7 +88,8 @@ const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
         mediaRecorderRef.current.stop();
       }
     };
-  }, [open, mode]);
+  // Ajout cameraFacing dans les dépendances
+  }, [open, mode, cameraFacing]);
 
   // Capture photo
   const handleCapturePhoto = useCallback(() => {
@@ -104,50 +123,37 @@ const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     setRecording(true);
 
     try {
-      const options = { mimeType: "video/webm;codecs=vp9" };
-      
+      let options: any = { mimeType: "video/webm;codecs=vp9" };
       // Fallback to other formats if vp9 is not supported
       if (!MediaRecorder.isTypeSupported(options.mimeType)) {
         options.mimeType = "video/webm;codecs=vp8";
         if (!MediaRecorder.isTypeSupported(options.mimeType)) {
           options.mimeType = "video/webm";
-          if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-            options.mimeType = "video/mp4";
-          }
         }
       }
-      
       const rec = new MediaRecorder(streamRef.current, options);
       mediaRecorderRef.current = rec;
 
       rec.ondataavailable = (e) => {
-        console.log('Data available:', e.data.size);
         if (e.data && e.data.size > 0) {
           chunksRef.current.push(e.data);
         }
       };
-      
       rec.onstop = () => {
-        console.log('Recording stopped, chunks:', chunksRef.current.length);
         if (chunksRef.current.length > 0) {
           const blob = new Blob(chunksRef.current, { type: rec.mimeType });
-          console.log('Created blob:', blob.size, 'bytes');
           const videoURL = URL.createObjectURL(blob);
           setCapturedVideo(videoURL);
         }
         setRecording(false);
       };
-      
       rec.onerror = (e) => {
-        console.error('MediaRecorder error:', e);
         setError("Erreur lors de l'enregistrement");
         setRecording(false);
       };
       
       rec.start(1000); // Collect data every second
-      console.log('Recording started');
     } catch (err) {
-      console.error('Failed to start recording:', err);
       setError("Impossible de démarrer l'enregistrement");
       setRecording(false);
     }
@@ -156,7 +162,6 @@ const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   // Arrête et sauvegarde la vidéo
   const handleStopRecording = () => {
     if (mediaRecorderRef.current && recording) {
-      console.log('Stopping recording...');
       mediaRecorderRef.current.stop();
     }
   };
@@ -172,20 +177,33 @@ const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
 
   if (!open) return null;
 
-  // MENU d'options : photo ou vidéo
-  if (mode === "menu") {
+  // Ajout: Sélecteur caméra si mode non choisi
+  if (mode === "menu" || askFacing) {
     return (
       <div className="fixed z-50 inset-0 bg-black bg-opacity-80 flex items-center justify-center">
         <div className="bg-gray-900 rounded-lg shadow-lg p-6 max-w-xs w-full relative flex flex-col items-center">
           <h2 className="text-white text-lg mb-4">Choisir une action caméra</h2>
           <div className="flex flex-col gap-4 w-full mb-4">
-            <Button className="w-full bg-[#25d366]" onClick={() => setMode("photo")}>
+            <Button className="w-full bg-[#25d366]" onClick={() => { setAskFacing(true); setMode("photo"); }}>
               Prendre une photo
             </Button>
-            <Button className="w-full bg-[#25d366]" onClick={() => setMode("video")}>
+            <Button className="w-full bg-[#25d366]" onClick={() => { setAskFacing(true); setMode("video"); }}>
               Enregistrer une vidéo
             </Button>
           </div>
+          {((mode === "photo" || mode === "video") && askFacing) && (
+            <div className="w-full flex flex-col gap-2 mb-2">
+              <div className="text-white text-center text-sm mb-2">Choisissez la caméra</div>
+              <Button className={`w-full ${cameraFacing === "user" ? "bg-blue-500" : "bg-[#25d366]"}`}
+                onClick={() => { setCameraFacing("user"); setAskFacing(false); }}>
+                Caméra frontale
+              </Button>
+              <Button className={`w-full ${cameraFacing === "environment" ? "bg-blue-500" : "bg-[#25d366]"}`}
+                onClick={() => { setCameraFacing("environment"); setAskFacing(false); }}>
+                Caméra dorsale
+              </Button>
+            </div>
+          )}
           <Button variant="ghost" className="w-full" onClick={onClose}>
             Annuler
           </Button>
@@ -228,9 +246,6 @@ const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
             controls 
             className="w-full rounded mb-4" 
             style={{ maxHeight: '300px' }}
-            onLoadStart={() => console.log('Video loading started')}
-            onCanPlay={() => console.log('Video can play')}
-            onError={(e) => console.error('Video error:', e)}
           />
         )}
         
@@ -248,7 +263,7 @@ const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
               </Button>
               :
               <Button onClick={handleStopRecording} variant="destructive" className="flex-1">
-                Arrêter ({Math.floor(Date.now() / 1000) % 60}s)
+                Arrêter
               </Button>
           )}
           
@@ -277,11 +292,10 @@ const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
               </Button>
             </>
           )}
-          
-          <Button onClick={() => { setMode("menu"); }} variant="ghost" className="flex-1">
+          <Button onClick={() => { setMode("menu"); setAskFacing(false); }} variant="ghost" className="flex-1">
             Retour
           </Button>
-          <Button onClick={() => { onClose(); setMode("menu"); }} variant="ghost" className="flex-1">
+          <Button onClick={() => { onClose(); setMode("menu"); setAskFacing(false); }} variant="ghost" className="flex-1">
             Annuler
           </Button>
         </div>

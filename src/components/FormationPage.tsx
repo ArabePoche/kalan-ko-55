@@ -205,25 +205,23 @@ const FormationPage = () => {
             />
           )}
 
-          {/* Formation Details Card */}
-          <div className="bg-card border-b border-border p-4 rounded-lg mb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <h3 className="font-semibold text-foreground">{formation.title}</h3>
-                <p className="text-sm text-muted-foreground">{formation.description}</p>
-                <p className="text-lg font-bold text-primary mt-2">{formation.price}€</p>
-              </div>
-              <div className="flex flex-col space-y-2">
-                {!hasAccess && (
-                  <Button onClick={handleStartTrial} size="sm" variant="outline">
-                    Essai 15min
-                  </Button>
-                )}
-                <Button onClick={handleOrderClick} size="sm">
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Commander
+          {/* Formation Details Card : version compacte */}
+          <div className="bg-card border-b border-border rounded-lg mb-3 px-3 py-2 flex items-center justify-between min-h-[78px] max-h-[110px]">
+            <div className="flex-1 overflow-hidden">
+              <h3 className="font-semibold text-foreground text-base truncate">{formation.title}</h3>
+              <p className="text-xs text-muted-foreground truncate">{formation.description}</p>
+              <p className="text-sm font-bold text-primary mt-1">{formation.price}€</p>
+            </div>
+            <div className="flex flex-col space-y-1 ml-3">
+              {!hasAccess && (
+                <Button onClick={handleStartTrial} size="sm" variant="outline" className="py-1 px-2 text-xs h-7 min-w-0">
+                  Essai 15min
                 </Button>
-              </div>
+              )}
+              <Button onClick={handleOrderClick} size="sm" className="py-1 px-2 text-xs h-7 min-w-0">
+                <ShoppingCart className="w-4 h-4 mr-1" />
+                Commander
+              </Button>
             </div>
           </div>
         </div>
@@ -286,30 +284,29 @@ const FormationPage = () => {
         hasAccess={hasAccess}
       />
       <div className="flex-1 flex flex-col bg-[#0b141a]" style={{ scrollBehavior: 'smooth' }}>
-        {/* Desktop Formation Header with Order Button */}
-        <div className="bg-[#202c33] border-b border-[#313d44] p-4">
+        {/* Desktop Formation Header with Order Button : version compacte */}
+        <div className="bg-[#202c33] border-b border-[#313d44] px-6 py-3">
           {hasAccess && (
             <TemporaryAccessBanner 
               timeLeft={timeLeft} 
               onExpired={handleAccessExpired}
             />
           )}
-          
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold text-white">{formation.title}</h2>
-              <p className="text-[#8696a0] text-sm">{formation.description}</p>
-              <p className="text-primary text-lg font-bold mt-1">{formation.price}€</p>
+          <div className="flex items-center justify-between min-h-[85px] max-h-[140px]">
+            <div className="overflow-hidden">
+              <h2 className="text-xl font-semibold text-white truncate">{formation.title}</h2>
+              <p className="text-[#8696a0] text-sm truncate">{formation.description}</p>
+              <p className="text-primary text-base font-bold mt-1">{formation.price}€</p>
             </div>
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 ml-2">
               {!hasAccess && (
-                <Button onClick={handleStartTrial} variant="outline">
-                  <Clock className="w-4 h-4 mr-2" />
+                <Button onClick={handleStartTrial} variant="outline" size="sm" className="px-3 py-1 h-8 text-xs">
+                  <Clock className="w-4 h-4 mr-1" />
                   Essai 15min
                 </Button>
               )}
-              <Button onClick={handleOrderClick} className="bg-primary hover:bg-primary/90">
-                <ShoppingCart className="w-4 h-4 mr-2" />
+              <Button onClick={handleOrderClick} className="bg-primary hover:bg-primary/90 px-3 py-1 h-8 text-xs" size="sm">
+                <ShoppingCart className="w-4 h-4 mr-1" />
                 Passer commande
               </Button>
             </div>
