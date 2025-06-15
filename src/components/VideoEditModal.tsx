@@ -22,7 +22,14 @@ const VIDEO_TYPES = [
 ];
 
 const VideoEditModal = ({ open, onOpenChange, video, onUpdated }: VideoEditModalProps) => {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    title: string;
+    description: string;
+    video_url: string;
+    thumbnail_url: string;
+    video_type: '' | 'promo' | 'educational' | 'testimonial';
+    product_id: string;
+  }>({
     title: '',
     description: '',
     video_url: '',
@@ -39,7 +46,7 @@ const VideoEditModal = ({ open, onOpenChange, video, onUpdated }: VideoEditModal
         description: video.description || '',
         video_url: video.video_url || '',
         thumbnail_url: video.thumbnail_url || '',
-        video_type: video.video_type || '',
+        video_type: (video.video_type as 'promo' | 'educational' | 'testimonial') || '',
         product_id: video.product_id || ''
       });
     }
@@ -63,7 +70,7 @@ const VideoEditModal = ({ open, onOpenChange, video, onUpdated }: VideoEditModal
       description: form.description || null,
       video_url: form.video_url,
       thumbnail_url: form.thumbnail_url || null,
-      video_type: form.video_type,
+      video_type: form.video_type as 'promo' | 'educational' | 'testimonial',
       product_id: form.product_id || null
     };
 

@@ -28,7 +28,14 @@ const VIDEO_TYPES = [
 ];
 
 export default function VideoCreateForm({ onCreated }: VideoCreateFormProps) {
-  const [newVideo, setNewVideo] = useState(initialState);
+  const [newVideo, setNewVideo] = useState({
+    title: '',
+    description: '',
+    video_url: '',
+    thumbnail_url: '',
+    video_type: '' as '' | 'promo' | 'educational' | 'testimonial',
+    product_id: '',
+  });
   const [isCreating, setIsCreating] = useState(false);
 
   const handleCreateVideo = async () => {
@@ -49,7 +56,7 @@ export default function VideoCreateForm({ onCreated }: VideoCreateFormProps) {
         description: newVideo.description || null,
         video_url: newVideo.video_url,
         thumbnail_url: newVideo.thumbnail_url || null,
-        video_type: newVideo.video_type,
+        video_type: newVideo.video_type as 'promo' | 'educational' | 'testimonial',
         product_id: newVideo.product_id || null,
         is_active: true,
         likes_count: 0,
@@ -57,9 +64,10 @@ export default function VideoCreateForm({ onCreated }: VideoCreateFormProps) {
         views_count: 0
       };
 
+      // Corriger l'appel: pas besoin d'array si on passe une seule entrée (Supabase accepte les deux, mais l'erreur le signale)
       const { error } = await supabase
         .from('videos')
-        .insert([videoData]);
+        .insert(videoData);
 
       if (error) {
         toast({
@@ -76,7 +84,14 @@ export default function VideoCreateForm({ onCreated }: VideoCreateFormProps) {
         description: "La vidéo a été ajoutée avec succès.",
       });
       
-      setNewVideo(initialState);
+      setNewVideo({
+        title: '',
+        description: '',
+        video_url: '',
+        thumbnail_url: '',
+        video_type: '' as '' | 'promo' | 'educational' | 'testimonial',
+        product_id: '',
+      });
       onCreated();
     } catch (e: any) {
       toast({
