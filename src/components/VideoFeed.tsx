@@ -12,7 +12,7 @@ const VideoFeed = () => {
   const [currentVideoId, setCurrentVideoId] = useState<string>('');
   const containerRef = useRef<HTMLDivElement>(null);
   
-  const { videos, loading, updateVideoLike, updateVideoCommentCount } = useVideoFeed();
+  const { videos, loading, updateVideoLike, updateVideoCommentCount, updateVideoViews } = useVideoFeed();
   const { iframeRefs, updateVideoPlayback } = useVideoPlayback(currentVideoIndex, videos);
   const { handleLike, handleShare, handleBuyClick } = useVideoActions(updateVideoLike);
 
@@ -22,9 +22,15 @@ const VideoFeed = () => {
       const videoHeight = window.innerHeight;
       const newIndex = Math.round(scrollTop / videoHeight);
       
-      if (newIndex !== currentVideoIndex) {
+      if (newIndex !== currentVideoIndex && newIndex >= 0 && newIndex < videos.length) {
         setCurrentVideoIndex(newIndex);
         updateVideoPlayback(newIndex);
+        
+        // Increment view count when video changes
+        const video = videos[newIndex];
+        if (video) {
+          updateVideoViews(video.id);
+        }
       }
     }
   };
@@ -35,7 +41,14 @@ const VideoFeed = () => {
       container.addEventListener('scroll', handleScroll);
       return () => container.removeEventListener('scroll', handleScroll);
     }
-  }, [currentVideoIndex]);
+  }, [currentVideoIndex, videos]);
+
+  // Increment view for the first video when component mounts
+  useEffect(() => {
+    if (videos.length > 0 && currentVideoIndex === 0) {
+      updateVideoViews(videos[0].id);
+    }
+  }, [videos]);
 
   const handleComment = (videoId: string) => {
     setCurrentVideoId(videoId);

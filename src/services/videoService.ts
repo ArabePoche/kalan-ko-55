@@ -45,5 +45,18 @@ export const videoService = {
     if (updateError) throw updateError;
 
     return actualCount;
+  },
+
+  async syncViewsCount(videoId: string) {
+    // Get current views count from database
+    const { data: video, error: fetchError } = await supabase
+      .from('videos')
+      .select('views_count')
+      .eq('id', videoId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    return video?.views_count || 0;
   }
 };

@@ -4,11 +4,13 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useVideoLikes } from '@/hooks/useVideoLikes';
 import { videoService } from '@/services/videoService';
+import { videoViewService } from '@/services/videoViewService';
 import { Video } from '@/types/video';
 
 export const useVideoFeed = () => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewedVideos, setViewedVideos] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const { checkIfLiked } = useVideoLikes();
 
@@ -110,6 +112,32 @@ export const useVideoFeed = () => {
     );
   };
 
+  const updateVideoViews = async (videoId: string) => {
+    // Only increment view if this video hasn't been viewed in this session
+    if (viewedVideos.has(videoId)) {
+      return;
+    }
+
+    const newViewCount = await videoViewService.incrementView(videoId);
+    
+    if (newViewCount !== null) {
+      // Mark video as viewed
+      setViewedVideos(prev => new Set([...prev, videoId]));
+      
+      // Update local state
+      setVideos(prevVideos => 
+        prevVideos.map(video => 
+          video.id === videoId 
+            ? { 
+                ...video, 
+                views_count: newViewCount
+              }
+            : video
+        )
+      );
+    }
+  };
+
   useEffect(() => {
     fetchVideos();
   }, []);
@@ -119,6 +147,7 @@ export const useVideoFeed = () => {
     loading,
     updateVideoLike,
     updateVideoCommentCount,
+    updateVideoViews,
     refetchVideos: fetchVideos
   };
 };
