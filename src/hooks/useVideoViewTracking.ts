@@ -21,6 +21,7 @@ export const useVideoViewTracking = (
           
           // If user has watched for 10 seconds, increment view count
           if (viewDuration >= 10000) {
+            console.log(`User watched video ${videoId} for 10+ seconds, incrementing view count`);
             onViewCountIncrement(videoId);
             hasIncrementedRef.current = true;
             clearInterval(interval);

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -113,17 +112,12 @@ export const useVideoFeed = () => {
   };
 
   const updateVideoViews = async (videoId: string) => {
-    // Only increment view if this video hasn't been viewed in this session
-    if (viewedVideos.has(videoId)) {
-      return;
-    }
-
+    console.log('Attempting to increment views for video:', videoId);
+    
     const newViewCount = await videoViewService.incrementView(videoId);
     
     if (newViewCount !== null) {
-      // Mark video as viewed
-      setViewedVideos(prev => new Set([...prev, videoId]));
-      
+      console.log('Successfully incremented views, updating local state');
       // Update local state
       setVideos(prevVideos => 
         prevVideos.map(video => 
@@ -135,6 +129,8 @@ export const useVideoFeed = () => {
             : video
         )
       );
+    } else {
+      console.error('Failed to increment views for video:', videoId);
     }
   };
 

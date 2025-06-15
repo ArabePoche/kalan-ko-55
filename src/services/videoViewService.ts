@@ -4,32 +4,24 @@ import { supabase } from '@/integrations/supabase/client';
 export const videoViewService = {
   async incrementView(videoId: string) {
     try {
-      // First get current view count
-      const { data: video, error: fetchError } = await supabase
+      console.log('Incrementing view for video:', videoId);
+      
+      // Increment the views count directly
+      const { data, error } = await supabase
         .from('videos')
-        .select('views_count')
+        .update({ 
+          views_count: supabase.sql`views_count + 1`
+        })
         .eq('id', videoId)
+        .select('views_count')
         .single();
 
-      if (fetchError) {
-        console.error('Error fetching video views:', fetchError);
+      if (error) {
+        console.error('Error updating video views:', error);
         return null;
       }
 
-      const currentViews = video?.views_count || 0;
-      const newViewCount = currentViews + 1;
-
-      // Update the views count
-      const { error: updateError } = await supabase
-        .from('videos')
-        .update({ views_count: newViewCount })
-        .eq('id', videoId);
-
-      if (updateError) {
-        console.error('Error updating video views:', updateError);
-        return null;
-      }
-
+      const newViewCount = data?.views_count || 0;
       console.log(`Video ${videoId} views incremented to ${newViewCount}`);
       return newViewCount;
     } catch (error) {
