@@ -25,7 +25,7 @@ export const useUserSessions = () => {
         .from('user_sessions')
         .select('*')
         .order('started_at', { ascending: false })
-        .limit(50);
+        .limit(100); // Augmenter la limite pour voir plus de sessions
 
       if (error) throw error;
 
@@ -49,7 +49,7 @@ export const useUserSessions = () => {
         }
       })) as UserSession[];
     },
-    refetchInterval: 30000
+    refetchInterval: 5000 // Rafraîchir toutes les 5 secondes pour voir les changements rapidement
   });
 };
 
@@ -59,14 +59,16 @@ export const useUserSessionStats = () => {
     queryFn: async () => {
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
       
-      // Sessions actives (pas encore terminées)
+      // Sessions réellement actives (avec heartbeat récent et pas terminées)
       const { count: activeSessions } = await supabase
         .from('user_sessions')
         .select('*', { count: 'exact', head: true })
-        .is('ended_at', null);
+        .is('ended_at', null)
+        .gte('started_at', twoMinutesAgo.toISOString());
 
-      // Temps moyen de session aujourd'hui
+      // Temps moyen de session aujourd'hui (seulement les sessions terminées)
       const { data: todaySessions } = await supabase
         .from('user_sessions')
         .select('duration_minutes')
@@ -89,6 +91,6 @@ export const useUserSessionStats = () => {
         todaySessionsCount: todaySessionsCount || 0
       };
     },
-    refetchInterval: 30000
+    refetchInterval: 5000 // Rafraîchir toutes les 5 secondes
   });
 };

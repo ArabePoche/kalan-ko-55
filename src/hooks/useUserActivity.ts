@@ -36,6 +36,11 @@ export const useUserActivity = () => {
 
       console.log('Profiles fetched:', profiles.length);
 
+      // Définir les seuils de temps
+      const now = new Date();
+      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000); // 2 minutes pour être considéré en ligne
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
       // Pour chaque utilisateur, récupérer les données de session
       const usersWithActivity = await Promise.all(profiles.map(async (profile) => {
         // Récupérer les sessions de l'utilisateur
@@ -45,10 +50,6 @@ export const useUserActivity = () => {
           .eq('user_id', profile.id)
           .order('started_at', { ascending: false });
 
-        // Calculer les métriques d'activité
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        
         // Sessions aujourd'hui
         const sessionsToday = sessions?.filter(s => 
           new Date(s.started_at) >= today
@@ -62,18 +63,18 @@ export const useUserActivity = () => {
         // Dernière connexion réelle
         const lastSignInAt = sessions?.[0]?.started_at || profile.created_at;
 
-        // Utilisateur en ligne (session active dans les 10 dernières minutes)
-        const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+        // Utilisateur en ligne : session active avec heartbeat récent (moins de 2 minutes)
         const isOnline = sessions?.some(session => {
           const sessionStart = new Date(session.started_at);
-          const isRecent = sessionStart > tenMinutesAgo;
-          const isActive = !session.ended_at;
-          return isRecent && isActive;
+          const isActive = !session.ended_at; // Session pas encore terminée
+          const hasRecentHeartbeat = sessionStart > twoMinutesAgo; // Heartbeat récent
+          
+          return isActive && hasRecentHeartbeat;
         }) || false;
 
         console.log(`User ${profile.username} online status:`, {
-          hasRecentSessions: sessions?.some(s => new Date(s.started_at) > tenMinutesAgo),
-          hasActiveSessions: sessions?.some(s => !s.ended_at),
+          hasActiveSessions: sessions?.filter(s => !s.ended_at).length || 0,
+          hasRecentHeartbeat: sessions?.some(s => new Date(s.started_at) > twoMinutesAgo) || false,
           isOnline
         });
 
@@ -99,6 +100,6 @@ export const useUserActivity = () => {
       // Trier par score d'activité décroissant
       return usersWithActivity.sort((a, b) => b.activity_score - a.activity_score);
     },
-    refetchInterval: 15000, // Actualiser toutes les 15 secondes pour voir les changements d'état
+    refetchInterval: 10000, // Actualiser toutes les 10 secondes pour une détection plus rapide
   });
 };
