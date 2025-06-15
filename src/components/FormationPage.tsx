@@ -197,15 +197,14 @@ const FormationPage = () => {
         </div>
 
         <div className="p-4" style={{ scrollBehavior: 'smooth' }}>
-          {/* Bannière d'accès temporaire */}
-          {hasAccess && (
+          {/* Affiche la bannière d'accès temporaire seulement quand aucune leçon n'est sélectionnée */}
+          {hasAccess && !selectedLesson && (
             <TemporaryAccessBanner 
               timeLeft={timeLeft} 
               onExpired={handleAccessExpired}
             />
           )}
-
-          {/* La carte "Détails formation" a été supprimée */}
+          {/* Formation details + bouton commande supprimés */}
         </div>
 
         <div className="flex-1 overflow-hidden" style={{ scrollBehavior: 'smooth' }}>
@@ -216,6 +215,7 @@ const FormationPage = () => {
                 videoCollapsed={videoCollapsed}
                 setVideoCollapsed={setVideoCollapsed}
                 selectedLesson={selectedLesson}
+                timeLeft={timeLeft}
               />
             ) : (
               <div className="flex-1 flex items-center justify-center p-4">
@@ -266,9 +266,9 @@ const FormationPage = () => {
         hasAccess={hasAccess}
       />
       <div className="flex-1 flex flex-col bg-[#0b141a]" style={{ scrollBehavior: 'smooth' }}>
-        {/* Desktop Formation Header with Order Button : version compacte */}
+        {/* Bannière accès temporaire desktop : seulement si aucune leçon n’est ouverte */}
         <div className="bg-[#202c33] border-b border-[#313d44] px-6 py-3">
-          {hasAccess && (
+          {hasAccess && !selectedLesson && (
             <TemporaryAccessBanner 
               timeLeft={timeLeft} 
               onExpired={handleAccessExpired}
@@ -302,6 +302,7 @@ const FormationPage = () => {
               videoCollapsed={videoCollapsed}
               setVideoCollapsed={setVideoCollapsed}
               selectedLesson={selectedLesson}
+              timeLeft={timeLeft}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center">

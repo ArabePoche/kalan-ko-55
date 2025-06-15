@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import ChatHeader from './ChatHeader';
 import VideoSection from './VideoSection';
 import ExerciseSection from './ExerciseSection';
@@ -40,9 +40,10 @@ interface VideoPlayerProps {
   videoCollapsed: boolean;
   setVideoCollapsed: (collapsed: boolean) => void;
   selectedLesson: Lesson;
+  timeLeft?: number; // Ajout: pour le timer
 }
 
-const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson }: VideoPlayerProps) => {
+const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson, timeLeft }: VideoPlayerProps) => {
   const [privateMessage, setPrivateMessage] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -154,10 +155,32 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
     }
   };
 
+  // Affichage du timer si timeLeft fourni (accès temporaire)
+  const [localTimeLeft, setLocalTimeLeft] = useState(timeLeft || 0);
+
+  useEffect(() => {
+    if (typeof timeLeft === "number") setLocalTimeLeft(timeLeft);
+  }, [timeLeft]);
+
+  useEffect(() => {
+    if (typeof localTimeLeft !== "number" || localTimeLeft <= 0) return;
+    const interval = setInterval(() => {
+      setLocalTimeLeft((t) => {
+        if (t <= 0.02) { // ~1s de marge
+          clearInterval(interval);
+          return 0;
+        }
+        return t - 1 / 60;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [localTimeLeft]);
+
+  // -- Limite le temps d'enregistrement vocal à 3 secondes
   const handleVoiceRecord = () => {
     if (!isRecording) {
       setIsRecording(true);
-      setTimeout(() => {
+      const recordTimeout = setTimeout(() => {
         setIsRecording(false);
         const newMessage = {
           id: Date.now().toString(),
@@ -169,7 +192,15 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
           avatar: '/placeholder.svg'
         };
         setPrivateChatMessages(prev => [...prev, newMessage]);
-      }, 3000);
+      }, 3000); // Limite à 3s
+
+      // Clean-up si interruption manuelle
+      const stopEarly = () => {
+        clearTimeout(recordTimeout);
+        setIsRecording(false);
+      };
+      // Optionnel, selon si on veut permettre interruption manuelle
+      // window.addEventListener('mouseup', stopEarly, { once: true });
     } else {
       setIsRecording(false);
     }
@@ -249,8 +280,24 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
     setPrivateChatMessages((prev) => [...prev, newMessage]);
   };
 
+  // Calcul timer format
+  let timerElement: React.ReactNode = null;
+  if (typeof localTimeLeft === "number" && localTimeLeft > 0) {
+    const min = Math.floor(localTimeLeft);
+    const sec = Math.floor((localTimeLeft - min) * 60);
+    const isLow = localTimeLeft < 5;
+    timerElement = (
+      <div className={`absolute top-2 right-2 z-30 px-3 py-1 rounded-lg shadow font-semibold text-xs flex items-center
+        ${isLow ? "bg-red-600 text-white" : "bg-orange-500 text-white"} opacity-90`}>
+        ⏳ Accès temporaire {min}:{sec.toString().padStart(2, '0')}
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col h-full bg-[#0b141a] overflow-hidden">
+    <div className="relative flex flex-col h-full bg-[#0b141a] overflow-hidden">
+      {/* Timer accès temporaire par-dessus la vidéo si actif */}
+      {timerElement}
       <div className="flex-shrink-0">
         <ChatHeader
           lessonTitle={lesson.title}
