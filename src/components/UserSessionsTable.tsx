@@ -1,7 +1,6 @@
-
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Globe } from 'lucide-react';
+import { Clock, Globe, Laptop, Smartphone } from 'lucide-react';
 import { UserSession } from '@/hooks/useUserSessions';
 
 interface UserSessionsTableProps {
@@ -38,6 +37,32 @@ export default function UserSessionsTable({ sessions, loading }: UserSessionsTab
     return ip.startsWith('127.') ? 'Local' : 'Externe';
   };
 
+  const getDeviceInfo = (userAgent: string | null) => {
+    if (!userAgent) return { device: 'Inconnu', browser: 'Inconnu', os: 'Inconnu' };
+
+    let device = 'Ordinateur';
+    if (/Mobi|Android|iPhone|iPad|iPod/i.test(userAgent)) {
+      device = 'Mobile';
+    }
+
+    let browser = 'Navigateur Inconnu';
+    if (userAgent.includes("Firefox/")) browser = 'Firefox';
+    else if (userAgent.includes("SamsungBrowser/")) browser = 'Samsung Internet';
+    else if (userAgent.includes("Opera/") || userAgent.includes("OPR/")) browser = 'Opera';
+    else if (userAgent.includes("Edge/")) browser = 'Edge';
+    else if (userAgent.includes("Chrome/")) browser = 'Chrome';
+    else if (userAgent.includes("Safari/")) browser = 'Safari';
+
+    let os = 'OS Inconnu';
+    if (userAgent.includes("Windows NT")) os = 'Windows';
+    else if (userAgent.includes("Macintosh")) os = 'macOS';
+    else if (userAgent.includes("Android")) os = 'Android';
+    else if (userAgent.includes("Linux")) os = 'Linux';
+    else if (userAgent.includes("iPhone") || userAgent.includes("iPad")) os = 'iOS';
+    
+    return { device, browser, os };
+  };
+
   return (
     <Table>
       <TableHeader>
@@ -46,6 +71,7 @@ export default function UserSessionsTable({ sessions, loading }: UserSessionsTab
           <TableHead>Début de session</TableHead>
           <TableHead>Fin de session</TableHead>
           <TableHead>Durée</TableHead>
+          <TableHead className="hidden md:table-cell">Appareil</TableHead>
           <TableHead className="hidden md:table-cell">Localisation</TableHead>
         </TableRow>
       </TableHeader>
@@ -81,6 +107,21 @@ export default function UserSessionsTable({ sessions, loading }: UserSessionsTab
                   {formatDuration(session.duration_minutes)}
                 </Badge>
               </div>
+            </TableCell>
+            <TableCell className="hidden md:table-cell">
+              {(() => {
+                const info = getDeviceInfo(session.user_agent);
+                const DeviceIcon = info.device === 'Mobile' ? Smartphone : Laptop;
+                return (
+                  <div className="flex items-center gap-2">
+                    <DeviceIcon className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium">{info.browser}</p>
+                      <p className="text-xs text-muted-foreground">{info.os}</p>
+                    </div>
+                  </div>
+                );
+              })()}
             </TableCell>
             <TableCell className="hidden md:table-cell">
               <div className="flex items-center gap-2">
