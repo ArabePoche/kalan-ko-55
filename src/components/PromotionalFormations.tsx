@@ -83,7 +83,7 @@ const PromotionalFormations = ({ onBuyClick }: PromotionalFormationsProps) => {
       <h2 className="text-xl font-bold mb-4 text-white">Formations en vedette</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {formations.map((formation) => (
-          <Card key={formation.id} className="overflow-hidden bg-black/20 backdrop-blur-sm border-white/20">
+          <Card key={formation.id} className="overflow-hidden bg-white/10 backdrop-blur-sm border-white/20 shadow-lg">
             <CardContent className="p-0">
               <div className="relative">
                 {/* Video promotional */}
@@ -110,37 +110,38 @@ const PromotionalFormations = ({ onBuyClick }: PromotionalFormationsProps) => {
                 )}
               </div>
 
-              <div className="p-4">
+              <div className="p-4 bg-white/5 backdrop-blur">
                 <h3 className="font-semibold text-white text-lg mb-2 line-clamp-2">
                   {formation.title}
                 </h3>
                 
-                <p className="text-gray-300 text-sm mb-2">{formation.instructor}</p>
+                <p className="text-gray-200 text-sm mb-2">{formation.instructor}</p>
                 
                 {formation.description && (
-                  <p className="text-gray-400 text-sm mb-3 line-clamp-2">
+                  <p className="text-gray-300 text-sm mb-3 line-clamp-2">
                     {formation.description}
                   </p>
                 )}
 
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-2">
                     <span className="text-xl font-bold text-green-400">{formation.price}€</span>
                     {formation.rating && (
-                      <span className="text-sm text-gray-400">
+                      <span className="text-sm text-gray-300">
                         ⭐ {formation.rating} ({formation.students_count || 0})
                       </span>
                     )}
                   </div>
                 </div>
 
-                {/* Bouton acheter pour les formations promotionnelles */}
+                {/* Bouton acheter bien visible */}
                 <Button
                   onClick={() => onBuyClick(formation)}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 shadow-lg border-0"
+                  size="lg"
                 >
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Acheter - {formation.price}€
+                  <ShoppingCart className="w-5 h-5 mr-2" />
+                  Acheter maintenant - {formation.price}€
                 </Button>
               </div>
             </CardContent>
