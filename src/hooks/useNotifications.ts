@@ -1,7 +1,6 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface Notification {
   id: string;
@@ -23,20 +22,36 @@ export const useNotifications = () => {
     queryKey: ['notifications'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      if (!user) {
+        console.log('No user logged in, returning empty notifications');
+        return [];
+      }
 
       console.log('Fetching notifications for user:', user.id);
 
-      // Récupérer les notifications pour l'utilisateur connecté
-      // Soit celles qui lui sont adressées directement, soit celles pour tous les admins (si c'est un admin)
-      const { data, error } = await supabase
+      // D'abord, récupérer le profil de l'utilisateur pour vérifier son rôle
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      console.log('User profile:', profile);
+
+      let query = supabase
         .from('notifications')
-        .select(`
-          *,
-          profiles:user_id (role)
-        `)
-        .or(`user_id.eq.${user.id},is_for_all_admins.eq.true`)
+        .select('*')
         .order('created_at', { ascending: false });
+
+      // Si l'utilisateur est admin, récupérer toutes ses notifications + celles pour tous les admins
+      if (profile?.role === 'admin') {
+        query = query.or(`user_id.eq.${user.id},is_for_all_admins.eq.true`);
+      } else {
+        // Sinon, seulement ses notifications personnelles
+        query = query.eq('user_id', user.id);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching notifications:', error);
@@ -45,11 +60,12 @@ export const useNotifications = () => {
       
       console.log('Raw notifications data:', data);
       
-      return data.map(notification => ({
+      return (data || []).map(notification => ({
         ...notification,
         type: notification.type as 'info' | 'success' | 'warning' | 'error' | 'order'
       }));
-    }
+    },
+    refetchInterval: 10000, // Rafraîchir toutes les 10 secondes
   });
 
   const markAsReadMutation = useMutation({
@@ -78,11 +94,25 @@ export const useNotifications = () => {
 
       console.log('Marking all notifications as read for user:', user.id);
 
-      const { error } = await supabase
+      // Récupérer le profil pour vérifier le rôle
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      let query = supabase
         .from('notifications')
         .update({ is_read: true })
-        .or(`user_id.eq.${user.id},is_for_all_admins.eq.true`)
         .eq('is_read', false);
+
+      if (profile?.role === 'admin') {
+        query = query.or(`user_id.eq.${user.id},is_for_all_admins.eq.true`);
+      } else {
+        query = query.eq('user_id', user.id);
+      }
+
+      const { error } = await query;
 
       if (error) {
         console.error('Error marking all notifications as read:', error);

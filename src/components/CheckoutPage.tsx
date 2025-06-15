@@ -71,11 +71,15 @@ const CheckoutPage = () => {
     },
     onSuccess: (order) => {
       console.log('Order process completed successfully:', order);
+      
+      // Vider le panier immédiatement après succès
+      clearCart();
+      
       toast({
         title: "Commande passée avec succès !",
         description: "Votre commande a été soumise et sera examinée par un administrateur.",
       });
-      clearCart();
+      
       setTimeout(() => {
         navigate('/');
       }, 2000);
@@ -91,7 +95,15 @@ const CheckoutPage = () => {
   });
 
   const handlePlaceOrder = () => {
-    console.log('Placing order...');
+    console.log('Placing order with items:', items);
+    if (items.length === 0) {
+      toast({
+        title: "Panier vide",
+        description: "Ajoutez des articles à votre panier avant de passer commande.",
+        variant: "destructive"
+      });
+      return;
+    }
     createOrderMutation.mutate();
   };
 

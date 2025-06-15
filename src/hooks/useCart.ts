@@ -19,8 +19,8 @@ export const useCart = () => {
     if (dbCartItems.length > 0) {
       console.log('Syncing database items to local state:', dbCartItems);
       setLocalItems(dbCartItems);
-    } else {
-      // Charger depuis localStorage seulement si pas d'items en DB
+    } else if (!isLoading) {
+      // Charger depuis localStorage seulement si pas d'items en DB et que le chargement est terminé
       const savedCart = localStorage.getItem('cart');
       if (savedCart) {
         try {
@@ -30,15 +30,20 @@ export const useCart = () => {
         } catch (error) {
           console.error('Error parsing cart from localStorage:', error);
           localStorage.removeItem('cart');
+          setLocalItems([]);
         }
+      } else {
+        setLocalItems([]);
       }
     }
-  }, [dbCartItems]);
+  }, [dbCartItems, isLoading]);
 
-  // Sauvegarder le panier dans localStorage
+  // Sauvegarder le panier dans localStorage seulement si pas en cours de chargement
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(localItems));
-  }, [localItems]);
+    if (!isLoading) {
+      localStorage.setItem('cart', JSON.stringify(localItems));
+    }
+  }, [localItems, isLoading]);
 
   const addToCart = (item: Omit<CartItem, 'quantity'>) => {
     console.log('Adding item to cart:', item);
@@ -61,11 +66,13 @@ export const useCart = () => {
   };
 
   const removeFromCart = (id: string) => {
+    console.log('Removing item from cart:', id);
     setLocalItems(prev => prev.filter(item => item.id !== id));
     removeFromCartMutation.mutate(id);
   };
 
   const updateQuantity = (id: string, quantity: number) => {
+    console.log('Updating quantity for item:', id, 'to:', quantity);
     if (quantity <= 0) {
       removeFromCart(id);
       return;
@@ -79,7 +86,9 @@ export const useCart = () => {
   };
 
   const clearCart = () => {
+    console.log('Clearing cart - current items:', localItems.length);
     setLocalItems([]);
+    localStorage.removeItem('cart');
     clearCartMutation.mutate();
   };
 
