@@ -26,7 +26,7 @@ const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [capturedVideo, setCapturedVideo] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
-  const [videoChunks, setVideoChunks] = useState<Blob[]>([]);
+  const chunksRef = useRef<Blob[]>([]);
 
   // (Re)démarre la webcam selon mode photo/video
   useEffect(() => {
@@ -35,22 +35,31 @@ const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
       setCapturedImage(null);
       setCapturedVideo(null);
       setRecording(false);
-      setVideoChunks([]);
+      chunksRef.current = [];
+      
       if (open && (mode === "photo" || mode === "video") && videoRef.current) {
         try {
+          // Stop existing stream if any
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach((track) => track.stop());
+          }
+          
           streamRef.current = await navigator.mediaDevices.getUserMedia(constraints);
           videoRef.current.srcObject = streamRef.current;
-          videoRef.current.play();
+          await videoRef.current.play();
         } catch (err: any) {
-          setError("Impossible d'accéder à la caméra.");
+          console.error('Camera access error:', err);
+          setError("Impossible d'accéder à la caméra. Vérifiez les permissions.");
         }
       }
     }
+    
     if (open && mode === "photo") {
       startCamera({ video: true, audio: false });
     } else if (open && mode === "video") {
       startCamera({ video: true, audio: true });
     }
+    
     return () => {
       // Cleanup: arrêter la caméra
       if (streamRef.current) {
@@ -61,8 +70,6 @@ const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
         mediaRecorderRef.current.stop();
       }
     };
-    // Ne dépend pas de setMode !
-    // eslint-disable-next-line
   }, [open, mode]);
 
   // Capture photo
@@ -91,29 +98,65 @@ const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   // Capture vidéo
   const handleStartRecording = () => {
     if (!streamRef.current) return;
-    const rec = new MediaRecorder(streamRef.current, { mimeType: "video/webm" });
-    mediaRecorderRef.current = rec;
-    setVideoChunks([]);
+    
+    chunksRef.current = [];
     setCapturedVideo(null);
     setRecording(true);
 
-    rec.ondataavailable = (e) => {
-      if (e.data && e.data.size > 0) {
-        setVideoChunks((prev) => [...prev, e.data]);
+    try {
+      const options = { mimeType: "video/webm;codecs=vp9" };
+      
+      // Fallback to other formats if vp9 is not supported
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        options.mimeType = "video/webm;codecs=vp8";
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options.mimeType = "video/webm";
+          if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+            options.mimeType = "video/mp4";
+          }
+        }
       }
-    };
-    rec.onstop = () => {
-      const blob = new Blob(videoChunks, { type: "video/webm" });
-      const videoURL = URL.createObjectURL(blob);
-      setCapturedVideo(videoURL);
+      
+      const rec = new MediaRecorder(streamRef.current, options);
+      mediaRecorderRef.current = rec;
+
+      rec.ondataavailable = (e) => {
+        console.log('Data available:', e.data.size);
+        if (e.data && e.data.size > 0) {
+          chunksRef.current.push(e.data);
+        }
+      };
+      
+      rec.onstop = () => {
+        console.log('Recording stopped, chunks:', chunksRef.current.length);
+        if (chunksRef.current.length > 0) {
+          const blob = new Blob(chunksRef.current, { type: rec.mimeType });
+          console.log('Created blob:', blob.size, 'bytes');
+          const videoURL = URL.createObjectURL(blob);
+          setCapturedVideo(videoURL);
+        }
+        setRecording(false);
+      };
+      
+      rec.onerror = (e) => {
+        console.error('MediaRecorder error:', e);
+        setError("Erreur lors de l'enregistrement");
+        setRecording(false);
+      };
+      
+      rec.start(1000); // Collect data every second
+      console.log('Recording started');
+    } catch (err) {
+      console.error('Failed to start recording:', err);
+      setError("Impossible de démarrer l'enregistrement");
       setRecording(false);
-    };
-    rec.start();
+    }
   };
 
   // Arrête et sauvegarde la vidéo
   const handleStopRecording = () => {
     if (mediaRecorderRef.current && recording) {
+      console.log('Stopping recording...');
       mediaRecorderRef.current.stop();
     }
   };
@@ -129,7 +172,7 @@ const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
 
   if (!open) return null;
 
-  // MENU d’options : photo ou vidéo
+  // MENU d'options : photo ou vidéo
   if (mode === "menu") {
     return (
       <div className="fixed z-50 inset-0 bg-black bg-opacity-80 flex items-center justify-center">
@@ -158,36 +201,57 @@ const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
           {mode === "photo" ? "Prendre une photo" : "Enregistrer une vidéo"}
         </h2>
         {error && (
-          <div className="text-red-400 mb-2">{error}</div>
+          <div className="text-red-400 mb-2 text-sm text-center">{error}</div>
         )}
+        
         {/* Affichage video stream */}
         {!capturedImage && !capturedVideo && (
-          <video ref={videoRef} autoPlay className="w-full rounded mb-4" muted={mode==="video"} />
+          <video 
+            ref={videoRef} 
+            autoPlay 
+            playsInline
+            muted 
+            className="w-full rounded mb-4 bg-gray-800" 
+            style={{ maxHeight: '300px' }}
+          />
         )}
+        
         {/* Preview photo */}
         {capturedImage && (
-          <img src={capturedImage} alt="Captured" className="w-full rounded mb-4" />
+          <img src={capturedImage} alt="Captured" className="w-full rounded mb-4" style={{ maxHeight: '300px' }} />
         )}
+        
         {/* Preview vidéo */}
         {capturedVideo && (
-          <video src={capturedVideo} controls className="w-full rounded mb-4" />
+          <video 
+            src={capturedVideo} 
+            controls 
+            className="w-full rounded mb-4" 
+            style={{ maxHeight: '300px' }}
+            onLoadStart={() => console.log('Video loading started')}
+            onCanPlay={() => console.log('Video can play')}
+            onError={(e) => console.error('Video error:', e)}
+          />
         )}
+        
         <div className="flex gap-2 w-full">
           {mode === "photo" && !capturedImage && (
             <Button onClick={handleCapturePhoto} className="flex-1 bg-[#25d366]">
               Capturer
             </Button>
           )}
+          
           {mode === "video" && !capturedVideo && (
             !recording ?
               <Button onClick={handleStartRecording} className="flex-1 bg-[#25d366]">
-                Démarrer l’enregistrement
+                Démarrer l'enregistrement
               </Button>
               :
               <Button onClick={handleStopRecording} variant="destructive" className="flex-1">
-                Arrêter
+                Arrêter ({Math.floor(Date.now() / 1000) % 60}s)
               </Button>
           )}
+          
           {/* Valider ou recommencer */}
           {mode === "photo" && capturedImage && (
             <>
@@ -199,16 +263,21 @@ const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
               </Button>
             </>
           )}
+          
           {mode === "video" && capturedVideo && (
             <>
               <Button onClick={handleUseVideo} className="flex-1 bg-[#25d366]">
                 Utiliser la vidéo
               </Button>
-              <Button onClick={() => { setCapturedVideo(null); setVideoChunks([]); }} variant="ghost" className="flex-1">
+              <Button onClick={() => { 
+                setCapturedVideo(null); 
+                chunksRef.current = []; 
+              }} variant="ghost" className="flex-1">
                 Recommencer
               </Button>
             </>
           )}
+          
           <Button onClick={() => { setMode("menu"); }} variant="ghost" className="flex-1">
             Retour
           </Button>
@@ -222,4 +291,3 @@ const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
 };
 
 export default CameraCaptureModal;
-
