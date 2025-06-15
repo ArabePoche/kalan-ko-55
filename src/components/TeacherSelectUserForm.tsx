@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -86,7 +85,11 @@ const TeacherSelectUserForm = ({
             <SelectValue placeholder="Sélectionner un utilisateur" />
           </SelectTrigger>
           <SelectContent>
-            {profiles.length === 0 && <SelectItem value="" disabled>Aucun utilisateur trouvé</SelectItem>}
+            {profiles.length === 0 && (
+              <SelectItem value="__none" disabled>
+                Aucun utilisateur trouvé
+              </SelectItem>
+            )}
             {profiles.map((u) => (
               <SelectItem value={u.id} key={u.id}>
                 {u.first_name} {u.last_name} ({u.username ?? u.id})
@@ -102,7 +105,11 @@ const TeacherSelectUserForm = ({
             <SelectValue placeholder="Sélectionner une formation" />
           </SelectTrigger>
           <SelectContent>
-            {formations.length === 0 && <SelectItem value="" disabled>Aucune formation</SelectItem>}
+            {formations.length === 0 && (
+              <SelectItem value="__none" disabled>
+                Aucune formation
+              </SelectItem>
+            )}
             {formations.map((f) => (
               <SelectItem value={f.id} key={f.id}>
                 {f.title}
