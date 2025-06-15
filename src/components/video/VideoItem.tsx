@@ -1,3 +1,4 @@
+
 import React, { forwardRef } from 'react';
 import { Heart, MessageCircle, Share2, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -71,7 +72,18 @@ const VideoItem = forwardRef<HTMLDivElement, VideoItemProps>(({
               </p>
             )}
 
-            {/* Stats - Removed like and comment stats, keeping only views */}
+            {/* Buy button with price under description */}
+            {video.product && (
+              <Button
+                onClick={handleBuy}
+                className="bg-green-600 hover:bg-green-700 text-white mb-3 px-4 py-2 rounded-full"
+              >
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Acheter - {video.product.price}€
+              </Button>
+            )}
+
+            {/* Stats - Only views */}
             <div className="flex items-center space-x-4 text-white text-sm">
               <span>{video.views_count || 0} vues</span>
             </div>
@@ -114,18 +126,6 @@ const VideoItem = forwardRef<HTMLDivElement, VideoItemProps>(({
               <Share2 className="w-6 h-6 mb-1" />
               <span className="text-xs">Partager</span>
             </Button>
-
-            {video.product && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBuy}
-                className="text-white hover:bg-white/20 flex-col h-auto py-2"
-              >
-                <ShoppingCart className="w-6 h-6 mb-1" />
-                <span className="text-xs">Acheter</span>
-              </Button>
-            )}
           </div>
         </div>
       </div>
