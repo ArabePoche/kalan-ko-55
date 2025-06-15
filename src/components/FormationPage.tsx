@@ -9,6 +9,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import VideoPlayer from './VideoPlayer';
 import { toast } from '@/hooks/use-toast';
 import { useTemporaryAccess } from '@/hooks/useTemporaryAccess';
+// --- Ajout des imports refactor ---
+import FormationMobileHeader from './FormationMobileHeader';
+import FormationDesktopHeader from './FormationDesktopHeader';
 
 interface Lesson {
   id: string;
@@ -176,37 +179,19 @@ const FormationPage = () => {
     // Version mobile améliorée
     return (
       <div className="h-screen bg-background flex flex-col overflow-hidden" style={{ scrollBehavior: 'smooth' }}>
-        <div className="flex-shrink-0 p-3 border-b border-border bg-[#075e54] safe-area-top">
-          <div className="flex items-center space-x-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="text-white p-2">
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div className="flex-1 min-w-0">
-              <h2 className="font-semibold text-white text-base truncate">{formation.title}</h2>
-              <p className="text-sm text-white/80 truncate">{formation.instructor}</p>
-            </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleOrderClick}
-              className="text-white p-2"
-            >
-              <ShoppingCart className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
-
+        <FormationMobileHeader
+          title={formation.title}
+          instructor={formation.instructor}
+          onOrderClick={handleOrderClick}
+        />
         <div className="p-4" style={{ scrollBehavior: 'smooth' }}>
-          {/* Affiche la bannière d'accès temporaire seulement quand aucune leçon n'est sélectionnée */}
           {hasAccess && !selectedLesson && (
             <TemporaryAccessBanner 
               timeLeft={timeLeft} 
               onExpired={handleAccessExpired}
             />
           )}
-          {/* Formation details + bouton commande supprimés */}
         </div>
-
         <div className="flex-1 overflow-hidden" style={{ scrollBehavior: 'smooth' }}>
           {hasAccess ? (
             selectedLesson ? (
@@ -266,35 +251,21 @@ const FormationPage = () => {
         hasAccess={hasAccess}
       />
       <div className="flex-1 flex flex-col bg-[#0b141a]" style={{ scrollBehavior: 'smooth' }}>
-        {/* Bannière accès temporaire desktop : seulement si aucune leçon n’est ouverte */}
-        <div className="bg-[#202c33] border-b border-[#313d44] px-6 py-3">
-          {hasAccess && !selectedLesson && (
-            <TemporaryAccessBanner 
-              timeLeft={timeLeft} 
-              onExpired={handleAccessExpired}
-            />
-          )}
-          <div className="flex items-center justify-between min-h-[85px] max-h-[140px]">
-            <div className="overflow-hidden">
-              <h2 className="text-xl font-semibold text-white truncate">{formation.title}</h2>
-              <p className="text-[#8696a0] text-sm truncate">{formation.description}</p>
-              <p className="text-primary text-base font-bold mt-1">{formation.price}€</p>
-            </div>
-            <div className="flex space-x-2 ml-2">
-              {!hasAccess && (
-                <Button onClick={handleStartTrial} variant="outline" size="sm" className="px-3 py-1 h-8 text-xs">
-                  <Clock className="w-4 h-4 mr-1" />
-                  Essai 15min
-                </Button>
-              )}
-              <Button onClick={handleOrderClick} className="bg-primary hover:bg-primary/90 px-3 py-1 h-8 text-xs" size="sm">
-                <ShoppingCart className="w-4 h-4 mr-1" />
-                Passer commande
-              </Button>
-            </div>
-          </div>
-        </div>
-
+        {/* Header desktop factorisé */}
+        <FormationDesktopHeader
+          title={formation.title}
+          description={formation.description}
+          price={formation.price}
+          hasAccess={hasAccess}
+          onOrderClick={handleOrderClick}
+          onStartTrial={handleStartTrial}
+        />
+      {hasAccess && !selectedLesson && (
+        <TemporaryAccessBanner 
+          timeLeft={timeLeft} 
+          onExpired={handleAccessExpired}
+        />
+      )}
         {hasAccess ? (
           selectedLesson ? (
             <VideoPlayer 
