@@ -11,6 +11,7 @@ import { Plus, Video, BookOpen, Users, Upload, Eye, TrendingUp, DollarSign, More
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { toast } from '@/components/ui/use-toast';
 
 const fetchUsers = async () => {
   const { data, error } = await supabase
@@ -27,6 +28,7 @@ const AdminDashboard = () => {
   const [selectedTab, setSelectedTab] = useState('overview');
   const [newVideo, setNewVideo] = useState({ title: '', description: '', price: '', url: '' });
   const [newFormation, setNewFormation] = useState({ title: '', description: '', price: '' });
+  const [isCreatingFormation, setIsCreatingFormation] = useState(false);
 
   const { data: users, isLoading: isLoadingUsers, error: usersError } = useQuery({
     queryKey: ['admin-users'],
@@ -64,6 +66,55 @@ const AdminDashboard = () => {
       ]
     }
   ];
+
+  // Nouvelle fonction pour ajouter une formation
+  const handleCreateFormation = async () => {
+    setIsCreatingFormation(true);
+    try {
+      if (!newFormation.title || !newFormation.description || !newFormation.price) {
+        toast({
+          title: "Champs manquants",
+          description: "Veuillez renseigner tous les champs.",
+          variant: "destructive"
+        });
+        setIsCreatingFormation(false);
+        return;
+      }
+      // Insère la formation dans Supabase
+      const { data, error } = await supabase
+        .from('products')
+        .insert([
+          {
+            title: newFormation.title,
+            description: newFormation.description,
+            price: Number(newFormation.price),
+            product_type: 'formation', // à adapter selon votre enum
+            // ajouter d'autres champs si nécessaires, ex: image_url
+          }
+        ]);
+      if (error) {
+        toast({
+          title: "Erreur",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Formation créée",
+          description: "La formation a bien été ajoutée.",
+        });
+        setNewFormation({ title: '', description: '', price: '' });
+        // TODO: mettre à jour la liste des formations sans reload
+      }
+    } catch (e: any) {
+      toast({
+        title: "Erreur",
+        description: e.message || "Une erreur s'est produite.",
+        variant: "destructive"
+      });
+    }
+    setIsCreatingFormation(false);
+  };
 
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -241,20 +292,29 @@ const AdminDashboard = () => {
               <Input
                 placeholder="Titre de la formation"
                 value={newFormation.title}
-                onChange={(e) => setNewFormation({...newFormation, title: e.target.value})}
+                onChange={(e) => setNewFormation({ ...newFormation, title: e.target.value })}
+                disabled={isCreatingFormation}
               />
               <Textarea
                 placeholder="Description"
                 value={newFormation.description}
-                onChange={(e) => setNewFormation({...newFormation, description: e.target.value})}
+                onChange={(e) => setNewFormation({ ...newFormation, description: e.target.value })}
+                disabled={isCreatingFormation}
               />
               <Input
                 placeholder="Prix (€)"
                 type="number"
                 value={newFormation.price}
-                onChange={(e) => setNewFormation({...newFormation, price: e.target.value})}
+                onChange={(e) => setNewFormation({ ...newFormation, price: e.target.value })}
+                disabled={isCreatingFormation}
               />
-              <Button className="w-full">Créer Formation</Button>
+              <Button
+                className="w-full"
+                onClick={handleCreateFormation}
+                disabled={isCreatingFormation}
+              >
+                {isCreatingFormation ? "Création..." : "Créer Formation"}
+              </Button>
             </CardContent>
           </Card>
 
@@ -271,7 +331,19 @@ const AdminDashboard = () => {
                         <h3 className="font-medium">{formation.title}</h3>
                         <p className="text-sm text-muted-foreground">{formation.students} étudiants</p>
                       </div>
-                      <Button variant="outline" size="sm">Modifier</Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          toast({
+                            title: "Modification à venir",
+                            description:
+                              "La fonction de modification de formation arrive bientôt.",
+                          })
+                        }
+                      >
+                        Modifier
+                      </Button>
                     </div>
                     
                     <div className="space-y-2">
