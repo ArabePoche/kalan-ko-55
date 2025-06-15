@@ -7,8 +7,16 @@ export const useCartQueries = () => {
   const { data: dbCartItems = [], isLoading } = useQuery({
     queryKey: ['cart'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      console.log('=== CART QUERY ===');
+      
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      console.log('Cart query - User:', user);
+      console.log('Cart query - User error:', userError);
+      
+      if (!user) {
+        console.log('No user authenticated, returning empty cart');
+        return [];
+      }
 
       console.log('Fetching cart items from database for user:', user.id);
 
@@ -30,14 +38,15 @@ export const useCartQueries = () => {
         `)
         .eq('user_id', user.id);
 
+      console.log('Database cart query result - Data:', data);
+      console.log('Database cart query result - Error:', error);
+
       if (error) {
         console.error('Error fetching cart items:', error);
         throw error;
       }
       
-      console.log('Database cart items:', data);
-      
-      return data.map(item => ({
+      const mappedItems = data.map(item => ({
         id: item.product_id,
         title: item.products?.title || 'Produit',
         price: item.products?.price || 0,
@@ -49,9 +58,16 @@ export const useCartQueries = () => {
         type: item.products?.product_type || 'formation',
         quantity: item.quantity
       })) as CartItem[];
+      
+      console.log('Mapped cart items:', mappedItems);
+      return mappedItems;
     },
     enabled: true
   });
+
+  console.log('=== CART QUERIES HOOK ===');
+  console.log('DB Cart Items:', dbCartItems);
+  console.log('Is Loading:', isLoading);
 
   return {
     dbCartItems,
