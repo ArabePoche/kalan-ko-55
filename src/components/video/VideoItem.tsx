@@ -5,28 +5,38 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Video } from '@/types/video';
 import { VideoFeedbackButton } from './VideoFeedbackButton';
+import { useVideoViewTracking } from '@/hooks/useVideoViewTracking';
 
 interface VideoItemProps {
   video: Video;
   index: number;
+  currentVideoIndex: number;
   iframeRef: (el: HTMLIFrameElement | null) => void;
   onLike: (videoId: string) => void;
   onComment: (videoId: string) => void;
   onShare: (videoId: string) => void;
   onFeedback: (video: Video) => void;
   onBuyClick: (video: Video) => void;
+  onViewCountIncrement: (videoId: string) => void;
 }
 
 const VideoItem = forwardRef<HTMLDivElement, VideoItemProps>(({
   video,
   index,
+  currentVideoIndex,
   iframeRef,
   onLike,
   onComment,
   onShare,
   onFeedback,
-  onBuyClick
+  onBuyClick,
+  onViewCountIncrement
 }, ref) => {
+  const isCurrentVideo = index === currentVideoIndex;
+  
+  // Track view time and increment count after 10 seconds
+  useVideoViewTracking(video.id, isCurrentVideo, onViewCountIncrement);
+
   const handleLike = () => onLike(video.id);
   const handleComment = () => onComment(video.id);
   const handleShare = () => onShare(video.id);
@@ -89,42 +99,44 @@ const VideoItem = forwardRef<HTMLDivElement, VideoItemProps>(({
             </div>
           </div>
 
-          {/* Right side - Action buttons */}
-          <div className="flex flex-col space-y-4">
+          {/* Right side - Action buttons (larger size) */}
+          <div className="flex flex-col space-y-6">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleLike}
-              className="text-white hover:bg-white/20 flex-col h-auto py-2"
+              className="text-white hover:bg-white/20 flex-col h-auto py-3 px-3"
             >
-              <Heart className="w-6 h-6 mb-1" />
-              <span className="text-xs">{video.likes_count || 0}</span>
+              <Heart 
+                className={`w-8 h-8 mb-1 ${video.isLiked ? 'text-red-500 fill-red-500' : 'text-white'}`} 
+              />
+              <span className="text-sm">{video.likes_count || 0}</span>
             </Button>
 
             <Button
               variant="ghost"
               size="sm"
               onClick={handleComment}
-              className="text-white hover:bg-white/20 flex-col h-auto py-2"
+              className="text-white hover:bg-white/20 flex-col h-auto py-3 px-3"
             >
-              <MessageCircle className="w-6 h-6 mb-1" />
-              <span className="text-xs">{video.comments_count || 0}</span>
+              <MessageCircle className="w-8 h-8 mb-1" />
+              <span className="text-sm">{video.comments_count || 0}</span>
             </Button>
 
             <VideoFeedbackButton
               videoId={video.id}
               videoTitle={video.title}
-              className="flex-col h-auto py-2"
+              className="flex-col h-auto py-3 px-3"
             />
 
             <Button
               variant="ghost"
               size="sm"
               onClick={handleShare}
-              className="text-white hover:bg-white/20 flex-col h-auto py-2"
+              className="text-white hover:bg-white/20 flex-col h-auto py-3 px-3"
             >
-              <Share2 className="w-6 h-6 mb-1" />
-              <span className="text-xs">Partager</span>
+              <Share2 className="w-8 h-8 mb-1" />
+              <span className="text-sm">Partager</span>
             </Button>
           </div>
         </div>

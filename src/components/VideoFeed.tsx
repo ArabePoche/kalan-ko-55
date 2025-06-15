@@ -25,12 +25,6 @@ const VideoFeed = () => {
       if (newIndex !== currentVideoIndex && newIndex >= 0 && newIndex < videos.length) {
         setCurrentVideoIndex(newIndex);
         updateVideoPlayback(newIndex);
-        
-        // Increment view count when video changes
-        const video = videos[newIndex];
-        if (video) {
-          updateVideoViews(video.id);
-        }
       }
     }
   };
@@ -43,13 +37,6 @@ const VideoFeed = () => {
     }
   }, [currentVideoIndex, videos]);
 
-  // Increment view for the first video when component mounts
-  useEffect(() => {
-    if (videos.length > 0 && currentVideoIndex === 0) {
-      updateVideoViews(videos[0].id);
-    }
-  }, [videos]);
-
   const handleComment = (videoId: string) => {
     setCurrentVideoId(videoId);
     setCommentsOpen(true);
@@ -61,6 +48,11 @@ const VideoFeed = () => {
 
   const handleCommentAdded = () => {
     updateVideoCommentCount(currentVideoId);
+  };
+
+  // This will be called after 10 seconds of viewing
+  const handleViewCountIncrement = (videoId: string) => {
+    updateVideoViews(videoId);
   };
 
   if (loading) {
@@ -102,12 +94,14 @@ const VideoFeed = () => {
             key={video.id}
             video={video}
             index={index}
+            currentVideoIndex={currentVideoIndex}
             iframeRef={(el) => (iframeRefs.current[index] = el)}
             onLike={handleLike}
             onComment={handleComment}
             onShare={handleShare}
             onFeedback={handleFeedback}
             onBuyClick={handleBuyClick}
+            onViewCountIncrement={handleViewCountIncrement}
           />
         ))}
       </div>
