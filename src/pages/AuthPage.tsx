@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -41,6 +40,8 @@ const AuthPage = () => {
   const handleSignUp = async (values: z.infer<typeof signUpSchema>) => {
     setLoading(true);
     try {
+      console.log('Tentative d\'inscription avec:', values.email);
+      
       const { data, error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -53,8 +54,12 @@ const AuthPage = () => {
         },
       });
 
+      console.log('Réponse Supabase signUp:', { data, error });
+
       if (error) {
         console.error('Erreur d\'inscription:', error);
+        
+        // Gestion spécifique des différents types d'erreurs
         if (error.message.includes('User already registered')) {
           toast({ 
             title: 'Compte existant', 
@@ -67,28 +72,54 @@ const AuthPage = () => {
             description: 'Veuillez vérifier votre boîte email et cliquer sur le lien de confirmation.',
             variant: 'destructive' 
           });
+        } else if (error.message.includes('Password should be at least')) {
+          toast({ 
+            title: 'Mot de passe trop faible', 
+            description: 'Le mot de passe doit contenir au moins 6 caractères.',
+            variant: 'destructive' 
+          });
+        } else if (error.message.includes('Invalid email')) {
+          toast({ 
+            title: 'Email invalide', 
+            description: 'Veuillez saisir une adresse email valide.',
+            variant: 'destructive' 
+          });
         } else {
           toast({ 
             title: 'Erreur d\'inscription', 
-            description: error.message,
+            description: `Erreur: ${error.message}`,
             variant: 'destructive' 
           });
         }
-      } else if (data?.user && !data.user.email_confirmed_at) {
-        toast({ 
-          title: 'Vérification requise', 
-          description: 'Un email de confirmation a été envoyé à votre adresse. Veuillez vérifier votre boîte email et cliquer sur le lien pour activer votre compte.',
-          duration: 6000
-        });
-      } else if (data?.user?.email_confirmed_at) {
-        toast({ 
-          title: 'Inscription réussie', 
-          description: 'Votre compte a été créé avec succès !',
-        });
-        navigate('/');
+      } else {
+        // Vérifier si l'utilisateur a été créé avec succès
+        if (data?.user) {
+          console.log('Utilisateur créé:', data.user);
+          
+          // Vérifier si l'email a été confirmé automatiquement ou non
+          if (data.user.email_confirmed_at) {
+            toast({ 
+              title: 'Inscription réussie', 
+              description: 'Votre compte a été créé et confirmé avec succès !',
+            });
+            navigate('/');
+          } else {
+            toast({ 
+              title: 'Vérification requise', 
+              description: 'Un email de confirmation a été envoyé à votre adresse. Veuillez vérifier votre boîte email et cliquer sur le lien pour activer votre compte.',
+              duration: 8000
+            });
+          }
+        } else {
+          toast({ 
+            title: 'Erreur inattendue', 
+            description: 'Une erreur s\'est produite lors de la création du compte.',
+            variant: 'destructive' 
+          });
+        }
       }
     } catch (error) {
-      console.error('Erreur inattendue:', error);
+      console.error('Erreur inattendue lors de l\'inscription:', error);
       toast({ 
         title: 'Erreur', 
         description: 'Une erreur inattendue s\'est produite. Veuillez réessayer.',
@@ -102,13 +133,18 @@ const AuthPage = () => {
   const handleSignIn = async (values: z.infer<typeof signInSchema>) => {
     setLoading(true);
     try {
+      console.log('Tentative de connexion avec:', values.email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       });
 
+      console.log('Réponse Supabase signIn:', { data, error });
+
       if (error) {
         console.error('Erreur de connexion:', error);
+        
         if (error.message.includes('Email not confirmed')) {
           toast({ 
             title: 'Email non confirmé', 
@@ -124,11 +160,12 @@ const AuthPage = () => {
         } else {
           toast({ 
             title: 'Erreur de connexion', 
-            description: error.message,
+            description: `Erreur: ${error.message}`,
             variant: 'destructive' 
           });
         }
       } else if (data?.user) {
+        console.log('Connexion réussie pour:', data.user.email);
         toast({ 
           title: 'Connexion réussie', 
           description: 'Bienvenue !',
@@ -136,7 +173,7 @@ const AuthPage = () => {
         navigate('/');
       }
     } catch (error) {
-      console.error('Erreur inattendue:', error);
+      console.error('Erreur inattendue lors de la connexion:', error);
       toast({ 
         title: 'Erreur', 
         description: 'Une erreur inattendue s\'est produite. Veuillez réessayer.',

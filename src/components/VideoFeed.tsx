@@ -42,9 +42,9 @@ const VideoFeed = () => {
     setCommentsOpen(true);
   };
 
-  const handleFeedback = (videoId: string) => {
-    // Cette fonction peut rester simple car le feedback est géré directement dans VideoItem
-    console.log('Feedback pour la vidéo:', videoId);
+  const handleFeedback = (video: any) => {
+    // Cette fonction reçoit maintenant l'objet video complet
+    console.log('Feedback pour la vidéo:', video.id);
   };
 
   const handleCommentAdded = () => {
