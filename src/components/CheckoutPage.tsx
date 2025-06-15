@@ -24,6 +24,10 @@ const CheckoutPage = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Utilisateur non connecté');
 
+      console.log('Creating order for user:', user.id);
+      console.log('Order items:', items);
+      console.log('Total amount:', getTotalPrice());
+
       // Créer la commande
       const { data: order, error: orderError } = await supabase
         .from('orders')
@@ -35,7 +39,12 @@ const CheckoutPage = () => {
         .select()
         .single();
 
-      if (orderError) throw orderError;
+      if (orderError) {
+        console.error('Error creating order:', orderError);
+        throw orderError;
+      }
+
+      console.log('Order created successfully:', order);
 
       // Créer les items de commande
       const orderItems = items.map(item => ({
@@ -45,15 +54,23 @@ const CheckoutPage = () => {
         price: item.price
       }));
 
+      console.log('Creating order items:', orderItems);
+
       const { error: itemsError } = await supabase
         .from('order_items')
         .insert(orderItems);
 
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        console.error('Error creating order items:', itemsError);
+        throw itemsError;
+      }
+
+      console.log('Order items created successfully');
 
       return order;
     },
-    onSuccess: () => {
+    onSuccess: (order) => {
+      console.log('Order process completed successfully:', order);
       toast({
         title: "Commande passée avec succès !",
         description: "Votre commande a été soumise et sera examinée par un administrateur.",
@@ -74,6 +91,7 @@ const CheckoutPage = () => {
   });
 
   const handlePlaceOrder = () => {
+    console.log('Placing order...');
     createOrderMutation.mutate();
   };
 

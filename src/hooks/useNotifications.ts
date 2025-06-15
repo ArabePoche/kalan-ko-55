@@ -54,8 +54,30 @@ export const useNotifications = () => {
     }
   });
 
+  const markAllAsReadMutation = useMutation({
+    mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .or(`user_id.eq.${user.id},is_for_all_admins.eq.true`)
+        .eq('is_read', false);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    }
+  });
+
   const markAsRead = (notificationId: string) => {
     markAsReadMutation.mutate(notificationId);
+  };
+
+  const markAllAsRead = () => {
+    markAllAsReadMutation.mutate();
   };
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
@@ -64,6 +86,7 @@ export const useNotifications = () => {
     notifications,
     loading,
     markAsRead,
+    markAllAsRead,
     unreadCount
   };
 };

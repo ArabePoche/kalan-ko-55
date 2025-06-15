@@ -2,11 +2,13 @@
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useVideoLikes } from '@/hooks/useVideoLikes';
+import { useCart } from '@/hooks/useCart';
 
 export const useVideoActions = (onLikeUpdate: (videoId: string, isLiked: boolean, newCount: number) => void) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { toggleLike } = useVideoLikes();
+  const { addToCart } = useCart();
 
   const handleLike = async (videoId: string) => {
     console.log('Attempting to like/unlike video:', videoId);
@@ -67,7 +69,32 @@ export const useVideoActions = (onLikeUpdate: (videoId: string, isLiked: boolean
   };
 
   const handleBuyClick = (video: any) => {
-    navigate(`/formation/${video.id}`);
+    console.log('Buy button clicked for video:', video);
+    
+    if (video.product) {
+      console.log('Adding product to cart:', video.product);
+      
+      // Add the product to cart
+      addToCart({
+        id: video.product.id || video.id,
+        title: video.product.title || video.title,
+        price: video.product.price,
+        instructor: video.product.instructor || 'Instructeur',
+        image: video.product.image_url || video.thumbnail_url || '/placeholder.svg',
+        type: video.product.product_type || 'formation'
+      });
+      
+      toast({
+        title: "Produit ajouté au panier !",
+        description: "Le produit a été ajouté à votre panier.",
+      });
+      
+      // Navigate to checkout
+      navigate('/checkout');
+    } else {
+      // Fallback to formation page
+      navigate(`/formation/${video.id}`);
+    }
   };
 
   return {
