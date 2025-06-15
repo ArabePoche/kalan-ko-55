@@ -68,7 +68,6 @@ export const useRealTimeSession = () => {
     const endSession = async () => {
       if (currentSessionId.current) {
         try {
-          const startTime = new Date();
           await supabase
             .from('user_sessions')
             .update({ 
@@ -90,13 +89,18 @@ export const useRealTimeSession = () => {
     // Gérer la fermeture du navigateur/onglet
     const handleBeforeUnload = () => {
       if (currentSessionId.current) {
-        // Utiliser sendBeacon pour s'assurer que la requête est envoyée même si la page se ferme
-        navigator.sendBeacon(
-          `${supabase.supabaseUrl}/rest/v1/user_sessions?id=eq.${currentSessionId.current}`,
-          JSON.stringify({ 
-            ended_at: new Date().toISOString() 
-          })
-        );
+        // Utiliser une requête synchrone pour s'assurer qu'elle est envoyée
+        const data = new FormData();
+        data.append('sessionId', currentSessionId.current);
+        data.append('endTime', new Date().toISOString());
+        
+        // Fallback avec navigator.sendBeacon si disponible
+        if (navigator.sendBeacon) {
+          const payload = JSON.stringify({
+            ended_at: new Date().toISOString()
+          });
+          navigator.sendBeacon('/api/end-session', payload);
+        }
       }
     };
 
