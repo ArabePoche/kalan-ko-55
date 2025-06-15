@@ -95,28 +95,40 @@ export default function FormationEditModal({
       setLoading(false);
       return;
     }
-    // Correction ici : on ne sauvegarde plus “levels”, pour éviter l’erreur.
+
+    // On prépare un payload propre, converti et sans valeurs vides
+    const payload: Record<string, any> = {
+      title: form.title,
+      description: form.description ?? null,
+      price: form.price !== "" && form.price !== null ? parseFloat(form.price) : null,
+      original_price: form.original_price !== "" && form.original_price !== null ? parseFloat(form.original_price) : null,
+      image_url: form.image_url ?? null,
+      badge: form.badge ?? null,
+      rating: form.rating !== "" && form.rating !== null ? parseFloat(form.rating) : 0,
+      students_count: form.students_count !== "" && form.students_count !== null ? parseInt(form.students_count) : 0,
+      instructor_id: form.instructor_id && form.instructor_id !== "" ? form.instructor_id : null,
+      discount_percentage: form.discount_percentage !== "" && form.discount_percentage !== null
+        ? parseInt(form.discount_percentage)
+        : null,
+      duration: form.duration !== "" && form.duration !== null ? parseInt(form.duration) : null,
+      // Ne pas envoyer 'levels'
+    };
+
+    // On retire les clefs qui ne sont pas attendues par la table
+    Object.keys(payload).forEach((key) => {
+      if (payload[key] === undefined) {
+        delete payload[key];
+      }
+    });
+
+    // Debug visuel côté dev si besoin
+    console.log("Payload update formations:", payload);
+
     const { error, data } = await supabase
       .from("formations")
-      .update({
-        title: form.title,
-        description: form.description,
-        price: form.price ? parseFloat(form.price) : null,
-        original_price: form.original_price
-          ? parseFloat(form.original_price)
-          : null,
-        image_url: form.image_url || null,
-        badge: form.badge || null,
-        rating: form.rating ? parseFloat(form.rating) : 0,
-        students_count: form.students_count ? parseInt(form.students_count) : 0,
-        instructor_id: form.instructor_id || null,
-        discount_percentage: form.discount_percentage
-          ? parseInt(form.discount_percentage)
-          : null,
-        duration: form.duration ? parseInt(form.duration) : null,
-      })
+      .update(payload)
       .eq("id", formation.id)
-      .select(); // <--- Ajout pour obtenir le retour
+      .select();
 
     if (error) {
       toast({
