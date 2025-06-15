@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Dialog,
@@ -148,18 +147,26 @@ export default function FormationEditModal({
           {/* ScrollArea pour un défilement agréable */}
           <ScrollArea className="h-[60vh]">
             <div className="space-y-3">
+              {/* TITRE */}
+              <label className="block text-sm font-medium mb-1">Titre</label>
               <Input
                 placeholder="Titre"
                 value={form.title ?? ""}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 disabled={loading}
               />
+
+              {/* DESCRIPTION */}
+              <label className="block text-sm font-medium mb-1">Description</label>
               <Textarea
                 placeholder="Description"
                 value={form.description ?? ""}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 disabled={loading}
               />
+
+              {/* PRIX */}
+              <label className="block text-sm font-medium mb-1">Prix (€)</label>
               <Input
                 placeholder="Prix (€)"
                 type="number"
@@ -167,6 +174,9 @@ export default function FormationEditModal({
                 onChange={(e) => setForm({ ...form, price: e.target.value })}
                 disabled={loading}
               />
+
+              {/* PRIX ORIGINAL */}
+              <label className="block text-sm font-medium mb-1">Prix original (€) (optionnel)</label>
               <Input
                 placeholder="Prix original (€) (optionnel)"
                 type="number"
@@ -176,18 +186,27 @@ export default function FormationEditModal({
                 }
                 disabled={loading}
               />
+
+              {/* IMAGE */}
+              <label className="block text-sm font-medium mb-1">URL de l’image (optionnel)</label>
               <Input
                 placeholder="URL de l’image (optionnel)"
                 value={form.image_url ?? ""}
                 onChange={(e) => setForm({ ...form, image_url: e.target.value })}
                 disabled={loading}
               />
+
+              {/* BADGE */}
+              <label className="block text-sm font-medium mb-1">Badge (optionnel)</label>
               <Input
                 placeholder="Badge (optionnel)"
                 value={form.badge ?? ""}
                 onChange={(e) => setForm({ ...form, badge: e.target.value })}
                 disabled={loading}
               />
+
+              {/* NOTE */}
+              <label className="block text-sm font-medium mb-1">Note (optionnel)</label>
               <Input
                 placeholder="Note (optionnel)"
                 type="number"
@@ -196,6 +215,9 @@ export default function FormationEditModal({
                 onChange={(e) => setForm({ ...form, rating: e.target.value })}
                 disabled={loading}
               />
+
+              {/* NB ÉTUDIANTS */}
+              <label className="block text-sm font-medium mb-1">Nombre d’étudiants (optionnel)</label>
               <Input
                 placeholder="Nb étudiants (optionnel)"
                 type="number"
@@ -205,12 +227,18 @@ export default function FormationEditModal({
                 }
                 disabled={loading}
               />
+
+              {/* FORMATEUR */}
+              <label className="block text-sm font-medium mb-1">ID formateur (optionnel)</label>
               <Input
                 placeholder="ID formateur (optionnel)"
                 value={form.instructor_id ?? ""}
                 onChange={(e) => setForm({ ...form, instructor_id: e.target.value })}
                 disabled={loading}
               />
+
+              {/* RÉDUCTION */}
+              <label className="block text-sm font-medium mb-1">Réduction % (optionnel)</label>
               <Input
                 placeholder="Réduction % (optionnel)"
                 type="number"
@@ -220,6 +248,9 @@ export default function FormationEditModal({
                 }
                 disabled={loading}
               />
+
+              {/* DURÉE */}
+              <label className="block text-sm font-medium mb-1">Durée (en minutes, optionnel)</label>
               <Input
                 placeholder="Durée (en minutes, optionnel)"
                 type="number"
@@ -227,6 +258,7 @@ export default function FormationEditModal({
                 onChange={(e) => setForm({ ...form, duration: e.target.value })}
                 disabled={loading}
               />
+
               {/* GESTION DES NIVEAUX */}
               <div className="border-t pt-3 mt-4">
                 <div className="flex justify-between items-center">
@@ -238,6 +270,8 @@ export default function FormationEditModal({
                 <div className="space-y-4 mt-2">
                   {levels.map((level, li) => (
                     <div key={li} className="border rounded-md p-2 space-y-2 bg-muted/50">
+                      {/* Titre du niveau */}
+                      <label className="block text-xs font-medium mb-1">Titre du niveau</label>
                       <div className="flex items-center gap-2">
                         <Input
                           placeholder="Titre du niveau"
@@ -261,20 +295,24 @@ export default function FormationEditModal({
                         <div className="space-y-2">
                           {level.lessons.map((lesson, lesIdx) => (
                             <div key={lesIdx} className="flex items-center gap-2">
-                              <Input
-                                placeholder="Titre de la leçon"
-                                value={lesson.title}
-                                onChange={e => handleLessonChange(li, lesIdx, "title", e.target.value)}
-                                className="flex-1"
-                                disabled={loading}
-                              />
-                              <Input
-                                placeholder="URL vidéo"
-                                value={lesson.video_url}
-                                onChange={e => handleLessonChange(li, lesIdx, "video_url", e.target.value)}
-                                className="flex-1"
-                                disabled={loading}
-                              />
+                              <div className="flex-1">
+                                <label className="block text-xs font-medium mb-1">Titre de la leçon</label>
+                                <Input
+                                  placeholder="Titre de la leçon"
+                                  value={lesson.title}
+                                  onChange={e => handleLessonChange(li, lesIdx, "title", e.target.value)}
+                                  disabled={loading}
+                                />
+                              </div>
+                              <div className="flex-1">
+                                <label className="block text-xs font-medium mb-1">URL vidéo</label>
+                                <Input
+                                  placeholder="URL vidéo"
+                                  value={lesson.video_url}
+                                  onChange={e => handleLessonChange(li, lesIdx, "video_url", e.target.value)}
+                                  disabled={loading}
+                                />
+                              </div>
                               <Button
                                 type="button"
                                 variant="destructive"
