@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -42,7 +43,7 @@ const App = () => (
             <Route path="/formation/:id" element={
               <div className="min-h-screen bg-background">
                 <GlobalNavigation />
-                <div className="pt-16">
+                <div className="pt-12">
                   <FormationPage />
                 </div>
               </div>
@@ -51,7 +52,7 @@ const App = () => (
             <Route path="/order/:videoId" element={
               <div className="min-h-screen bg-background">
                 <GlobalNavigation />
-                <div className="pt-16">
+                <div className="pt-12">
                   <OrderPage />
                 </div>
               </div>
@@ -60,7 +61,7 @@ const App = () => (
             <Route path="/cart" element={
               <div className="min-h-screen bg-background">
                 <GlobalNavigation />
-                <div className="pt-16">
+                <div className="pt-12">
                   <Cart />
                 </div>
               </div>
@@ -69,7 +70,7 @@ const App = () => (
             <Route path="/checkout" element={
               <div className="min-h-screen bg-background">
                 <GlobalNavigation />
-                <div className="pt-16">
+                <div className="pt-12">
                   <CheckoutPage />
                 </div>
               </div>

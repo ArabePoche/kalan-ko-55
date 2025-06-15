@@ -34,7 +34,7 @@ const VideoActionButtons = ({
   };
 
   return (
-    <div className="w-16 flex flex-col justify-end items-center pb-20 space-y-6 z-10">
+    <div className="w-16 flex flex-col justify-center items-center pb-32 space-y-6 z-10">
       <button 
         className="flex flex-col items-center"
         onClick={() => handleAction(onLike)}

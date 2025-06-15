@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Play } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface Formation {
@@ -134,13 +134,7 @@ const PromotionalFormations = ({ onBuyClick }: PromotionalFormationsProps) => {
                   </div>
                 </div>
 
-                <Button 
-                  onClick={() => onBuyClick(formation)}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white"
-                >
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Acheter la formation
-                </Button>
+                {/* Masquer le bouton acheter pour les vidéos promo */}
               </div>
             </CardContent>
           </Card>
