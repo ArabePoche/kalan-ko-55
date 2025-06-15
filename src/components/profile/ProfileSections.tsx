@@ -1,7 +1,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import CoursesPage from "../CoursesPage";
-import NotificationsFeed from "../NotificationsFeed";
 
 export const ProfileSections = () => {
   return (
@@ -17,10 +16,6 @@ export const ProfileSections = () => {
             <p>Vous n'avez aucune commande récente.</p>
           </CardContent>
         </Card>
-      </div>
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Notifications</h2>
-        <NotificationsFeed />
       </div>
     </div>
   );

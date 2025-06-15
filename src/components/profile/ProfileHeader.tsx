@@ -70,7 +70,7 @@ export const ProfileHeader = ({ profile, user, signOut }: ProfileHeaderProps) =>
     <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6 mb-8">
       <div className="relative cursor-pointer" onClick={() => setIsAvatarDialogOpen(true)}>
         <Avatar className="w-24 h-24">
-          <AvatarImage src={profile?.avatar_url || "https://github.com/shadcn.png"} alt="@shadcn" />
+          <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.username || 'avatar'} />
           <AvatarFallback>{userInitials}</AvatarFallback>
         </Avatar>
       </div>
@@ -78,7 +78,7 @@ export const ProfileHeader = ({ profile, user, signOut }: ProfileHeaderProps) =>
         <h1 className="text-2xl font-bold">{profile?.first_name} {profile?.last_name}</h1>
         <p className="text-muted-foreground">@{profile?.username || user.email}</p>
       </div>
-      <div className="flex gap-2 md:ml-auto">
+      <div className="flex flex-wrap items-center justify-center gap-2 mt-4 md:mt-0 md:ml-auto">
         {profile?.role === 'admin' && (
           <Button onClick={() => navigate('/admin')}>
             <LayoutDashboard className="mr-2 h-4 w-4" />
