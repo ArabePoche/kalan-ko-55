@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -106,6 +105,90 @@ export const useFormationUpdate = () => {
       setLoading(false);
       return;
     }
+
+    // --- START: NEW LOGIC FOR LEVELS AND LESSONS ---
+    console.log("[DEBUG] Mise à jour des niveaux et leçons...");
+    const newLevelsData = form.levels || [];
+
+    // 1. Delete old levels and lessons
+    const { data: oldLevels, error: getOldLevelsError } = await supabase
+      .from('levels')
+      .select('id')
+      .eq('formation_id', formationId);
+
+    if (getOldLevelsError) {
+      console.error("[DEBUG] Erreur récupération anciens niveaux:", getOldLevelsError);
+      toast({ title: "Erreur technique", description: "Impossible de lire les anciens niveaux." });
+      setLoading(false);
+      return;
+    }
+
+    if (oldLevels && oldLevels.length > 0) {
+      const oldLevelIds = oldLevels.map(l => l.id);
+
+      const { error: deleteLessonsError } = await supabase
+        .from('lessons')
+        .delete()
+        .in('level_id', oldLevelIds);
+
+      if (deleteLessonsError) {
+        console.error("[DEBUG] Erreur suppression anciennes leçons:", deleteLessonsError);
+        toast({ title: "Erreur technique", description: "Impossible de supprimer les anciennes leçons." });
+        setLoading(false);
+        return;
+      }
+
+      const { error: deleteLevelsError } = await supabase
+        .from('levels')
+        .delete()
+        .eq('formation_id', formationId);
+
+      if (deleteLevelsError) {
+        console.error("[DEBUG] Erreur suppression anciens niveaux:", deleteLevelsError);
+        toast({ title: "Erreur technique", description: "Impossible de supprimer les anciens niveaux." });
+        setLoading(false);
+        return;
+      }
+    }
+
+    // 2. Insert new levels and lessons
+    for (const [levelIndex, levelData] of newLevelsData.entries()) {
+      const { data: newLevel, error: insertLevelError } = await supabase
+        .from('levels')
+        .insert({
+          title: levelData.title,
+          formation_id: formationId,
+          order_index: levelIndex + 1,
+        })
+        .select('id')
+        .single();
+
+      if (insertLevelError) {
+        console.error("[DEBUG] Erreur insertion niveau:", insertLevelError);
+        toast({ title: "Erreur technique", description: `Erreur à l'ajout du niveau: ${levelData.title}` });
+        setLoading(false);
+        return;
+      }
+
+      if (newLevel && levelData.lessons && levelData.lessons.length > 0) {
+        const lessonsToInsert = levelData.lessons.map((lesson, lessonIndex) => ({
+          level_id: newLevel.id,
+          title: lesson.title,
+          video_url: lesson.video_url,
+          order_index: lessonIndex + 1,
+        }));
+
+        const { error: insertLessonsError } = await supabase.from('lessons').insert(lessonsToInsert);
+        if (insertLessonsError) {
+          console.error("[DEBUG] Erreur insertion leçons:", insertLessonsError);
+          toast({ title: "Erreur technique", description: "Erreur à l'ajout des leçons." });
+          setLoading(false);
+          return;
+        }
+      }
+    }
+    console.log("[DEBUG] Niveaux et leçons mis à jour.");
+    // --- END: NEW LOGIC FOR LEVELS AND LESSONS ---
 
     // Si l'update a réussi, on récupère les données modifiées
     console.log("[DEBUG] Update réussi, récupération des données...");
