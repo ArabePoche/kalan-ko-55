@@ -25,16 +25,24 @@ export const useUserSessions = () => {
         .from('user_sessions')
         .select(`
           *,
-          profiles!inner(first_name, last_name, username)
+          profiles(first_name, last_name, username)
         `)
         .order('started_at', { ascending: false })
         .limit(50);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching user sessions:', error);
+        return [];
+      }
+      if (!data) {
+        return [];
+      }
 
-      return data.map(session => ({
+      const validSessions = data.filter(session => session.profiles);
+
+      return validSessions.map(session => ({
         ...session,
-        user_profile: session.profiles
+        user_profile: session.profiles as { first_name: string | null; last_name: string | null; username: string | null; }
       })) as UserSession[];
     },
     refetchInterval: 30000
