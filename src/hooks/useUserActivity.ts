@@ -21,22 +21,33 @@ export const useUserActivity = () => {
   return useQuery({
     queryKey: ['user-activity'],
     queryFn: async () => {
+      console.log('Fetching user activity...');
+      
       // Récupérer les profils utilisateurs
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
+      }
+
+      console.log('Profiles fetched:', profiles.length);
 
       // Pour chaque utilisateur, récupérer les données de session
       const usersWithActivity = await Promise.all(profiles.map(async (profile) => {
         // Récupérer les sessions de l'utilisateur
-        const { data: sessions } = await supabase
+        const { data: sessions, error: sessionsError } = await supabase
           .from('user_sessions')
           .select('*')
           .eq('user_id', profile.id)
           .order('started_at', { ascending: false });
+
+        if (sessionsError) {
+          console.error(`Error fetching sessions for user ${profile.id}:`, sessionsError);
+        }
 
         // Calculer les métriques d'activité
         const now = new Date();
@@ -55,11 +66,15 @@ export const useUserActivity = () => {
         // Dernière connexion réelle
         const lastSignInAt = sessions?.[0]?.started_at || profile.created_at;
 
-        // Utilisateur en ligne (session active dans les 5 dernières minutes)
-        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-        const isOnline = sessions?.some(session => 
-          !session.ended_at && new Date(session.started_at) > fiveMinutesAgo
-        ) || false;
+        // Utilisateur en ligne (session active dans les 10 dernières minutes)
+        const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+        const isOnline = sessions?.some(session => {
+          const sessionActive = !session.ended_at && new Date(session.started_at) > tenMinutesAgo;
+          if (sessionActive) {
+            console.log(`User ${profile.username} is online - session started at ${session.started_at}`);
+          }
+          return sessionActive;
+        }) || false;
 
         // Score d'activité basé sur les données réelles
         const daysSinceCreation = profile.created_at 
@@ -81,6 +96,8 @@ export const useUserActivity = () => {
           sessions_today: sessionsToday,
         } as UserActivity;
       }));
+
+      console.log('Users with activity calculated:', usersWithActivity.filter(u => u.is_online).length, 'online users');
 
       // Trier par score d'activité décroissant
       return usersWithActivity.sort((a, b) => b.activity_score - a.activity_score);

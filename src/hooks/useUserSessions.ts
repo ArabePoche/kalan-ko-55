@@ -21,6 +21,8 @@ export const useUserSessions = () => {
   return useQuery({
     queryKey: ['user-sessions'],
     queryFn: async () => {
+      console.log('Fetching user sessions...');
+      
       const { data, error } = await supabase
         .from('user_sessions')
         .select(`
@@ -35,10 +37,14 @@ export const useUserSessions = () => {
         return [];
       }
       if (!data) {
+        console.log('No session data returned');
         return [];
       }
 
+      console.log('Raw session data:', data);
+
       const validSessions = data.filter(session => session.profiles);
+      console.log('Valid sessions with profiles:', validSessions);
 
       return validSessions.map(session => ({
         ...session,
@@ -56,11 +62,19 @@ export const useUserSessionStats = () => {
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
       
+      console.log('Fetching session stats...');
+      
       // Sessions actives (pas encore terminées)
-      const { count: activeSessions } = await supabase
+      const { count: activeSessions, error: activeError } = await supabase
         .from('user_sessions')
         .select('*', { count: 'exact', head: true })
         .is('ended_at', null);
+
+      if (activeError) {
+        console.error('Error fetching active sessions:', activeError);
+      } else {
+        console.log('Active sessions count:', activeSessions);
+      }
 
       // Temps moyen de session aujourd'hui
       const { data: todaySessions } = await supabase
@@ -79,11 +93,15 @@ export const useUserSessionStats = () => {
         .select('*', { count: 'exact', head: true })
         .gte('started_at', todayStart);
 
-      return {
+      const stats = {
         activeSessions: activeSessions || 0,
         avgSessionTime: Math.round(avgSessionTime),
         todaySessionsCount: todaySessionsCount || 0
       };
+
+      console.log('Session stats:', stats);
+
+      return stats;
     },
     refetchInterval: 30000
   });
