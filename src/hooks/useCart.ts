@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { CartItem } from '@/types/cart';
 import { useCartQueries } from './useCartQueries';
@@ -58,55 +57,50 @@ export const useCart = () => {
   }, [items, user, isInitialized]);
 
   const addToCart = (item: Omit<CartItem, 'quantity'>) => {
-    // Optimistically update the local state.
-    setItems(prev => {
-      const existingItem = prev.find(i => i.id === item.id);
-      if (existingItem) {
-        return prev.map(i => 
-          i.id === item.id 
-            ? { ...i, quantity: i.quantity + 1 }
-            : i
-        );
-      }
-      return [...prev, { ...item, quantity: 1 }];
-    });
-
-    // If the user is logged in, trigger the database mutation.
     if (user) {
       addToCartMutation.mutate(item);
+    } else {
+      setItems(prev => {
+        const existingItem = prev.find(i => i.id === item.id);
+        if (existingItem) {
+          return prev.map(i => 
+            i.id === item.id 
+              ? { ...i, quantity: i.quantity + 1 }
+              : i
+          );
+        }
+        return [...prev, { ...item, quantity: 1 }];
+      });
     }
   };
 
   const removeFromCart = (id: string) => {
-    setItems(prev => prev.filter(item => item.id !== id));
-    
     if (user) {
       removeFromCartMutation.mutate(id);
+    } else {
+      setItems(prev => prev.filter(item => item.id !== id));
     }
   };
 
   const updateQuantity = (id: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(id);
-      return;
-    }
-    
-    setItems(prev => {
-      return prev.map(item => 
-        item.id === id ? { ...item, quantity } : item
-      );
-    });
-    
     if (user) {
       updateQuantityMutation.mutate({ productId: id, quantity });
+    } else {
+      if (quantity <= 0) {
+        setItems(prev => prev.filter(item => item.id !== id));
+      } else {
+        setItems(prev => prev.map(item => 
+          item.id === id ? { ...item, quantity } : item
+        ));
+      }
     }
   };
 
   const clearCart = () => {
-    setItems([]);
-    // If user is logged in, also clear the cart in the database.
     if (user) {
       clearCartMutation.mutate();
+    } else {
+      setItems([]);
     }
   };
 
