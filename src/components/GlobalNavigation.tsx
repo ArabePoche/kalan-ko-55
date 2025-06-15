@@ -10,12 +10,14 @@ const GlobalNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const { totalItems } = useCart();
+  const { getTotalItems } = useCart();
 
   const navItems = [
     { icon: Home, label: 'Accueil', path: '/' },
     { icon: BookOpen, label: 'Formations', path: '/shop' },
   ];
+
+  const totalItems = getTotalItems();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background border-b h-12 flex items-center px-4">

@@ -30,11 +30,11 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       {/* Navigation globale pour les pages principales, sauf la page d'accueil */}
       {isMainLayout && !isHomePage && (
-        <GlobalNavigation showBackButton={false} />
+        <GlobalNavigation />
       )}
 
       {/* Main Content - Pas de padding pour la page d'accueil (VideoFeed) */}
-      <div className={`${isMainLayout && !isHomePage ? 'pt-16 pb-20' : ''}`}>
+      <div className={`${isMainLayout && !isHomePage ? 'pt-12 pb-20' : ''}`}>
         <Outlet />
       </div>
 
