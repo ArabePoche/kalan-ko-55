@@ -105,7 +105,7 @@ const AdminDashboard = () => {
     }
   ];
 
-  // Nouvelle fonction pour ajouter une formation
+  // Nouvelle fonction pour ajouter une formation (corrigée pour FK products)
   const handleCreateFormation = async () => {
     setIsCreatingFormation(true);
     try {
@@ -118,10 +118,43 @@ const AdminDashboard = () => {
         setIsCreatingFormation(false);
         return;
       }
-      // Génération d'un id unique
+      // Génération d'un id unique partagé
       const id = crypto.randomUUID();
-      const toInsert = {
+
+      // Étape 1 : création du produit
+      const productInsert = {
         id,
+        title: newFormation.title,
+        description: newFormation.description,
+        price: newFormation.price ? parseFloat(newFormation.price) : 0,
+        original_price: newFormation.original_price ? parseFloat(newFormation.original_price) : null,
+        badge: newFormation.badge || null,
+        image_url: newFormation.image_url || null,
+        rating: newFormation.rating ? parseFloat(newFormation.rating) : 0,
+        students_count: newFormation.students_count ? parseInt(newFormation.students_count) : 0,
+        instructor_id: newFormation.instructor_id || null,
+        category_id: newFormation.category_id || null,
+        discount_percentage: newFormation.discount_percentage ? parseInt(newFormation.discount_percentage) : null,
+        promo_video_url: newFormation.promoVideoUrl || null,
+        // Ajouts nécessaires
+        product_type: "formation", // obligatoire
+        is_active: true
+      };
+
+      const { error: productError } = await supabase.from('products').insert([productInsert]);
+      if (productError) {
+        toast({
+          title: "Erreur création produit",
+          description: productError.message,
+          variant: "destructive"
+        });
+        setIsCreatingFormation(false);
+        return;
+      }
+      
+      // Étape 2 : création de la formation, sur le même id
+      const toInsert = {
+        id, // même id que pour products
         title: newFormation.title,
         description: newFormation.description,
         price: newFormation.price ? parseFloat(newFormation.price) : null,
@@ -130,7 +163,6 @@ const AdminDashboard = () => {
         video_promo_id: newFormation.promoVideoUrl || null,
         category: newFormation.category_id || null,
         duration: newFormation.duration ? parseInt(newFormation.duration) : null,
-        // Pour compatibilité avec anciens champs
         badge: newFormation.badge || null,
         category_id: newFormation.category_id || null,
         promo_video_url: newFormation.promoVideoUrl || null,
@@ -141,34 +173,36 @@ const AdminDashboard = () => {
         discount_percentage: newFormation.discount_percentage ? parseInt(newFormation.discount_percentage) : null,
         is_active: true
       };
+
       const { error } = await supabase.from('formations').insert([toInsert]);
       if (error) {
         toast({
-          title: "Erreur",
+          title: "Erreur formation",
           description: error.message,
           variant: "destructive"
         });
-      } else {
-        toast({
-          title: "Formation créée",
-          description: "La formation a bien été ajoutée.",
-        });
-        setNewFormation({
-          title: '',
-          description: '',
-          price: '',
-          original_price: '',
-          promoVideoUrl: '',
-          badge: '',
-          image_url: '',
-          rating: '',
-          students_count: '',
-          instructor_id: '',
-          category_id: '',
-          discount_percentage: '',
-          duration: ''
-        });
+        setIsCreatingFormation(false);
+        return;
       }
+      toast({
+        title: "Formation créée",
+        description: "La formation a bien été ajoutée.",
+      });
+      setNewFormation({
+        title: '',
+        description: '',
+        price: '',
+        original_price: '',
+        promoVideoUrl: '',
+        badge: '',
+        image_url: '',
+        rating: '',
+        students_count: '',
+        instructor_id: '',
+        category_id: '',
+        discount_percentage: '',
+        duration: ''
+      });
     } catch (e: any) {
       toast({
         title: "Erreur",
