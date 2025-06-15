@@ -100,25 +100,25 @@ const AdminDashboard = () => {
     { id: '2', title: 'Règles de Tajwid', views: 856, status: 'En révision' }
   ];
 
-  const formations = [
-    {
-      id: '1',
-      title: 'Formation Coran Complet',
-      students: 45,
-      levels: [
-        {
-          id: '1',
-          title: 'Niveau 1 - Bases',
-          lessons: ['Introduction', 'Alphabet arabe', 'Première sourate']
-        },
-        {
-          id: '2',
-          title: 'Niveau 2 - Intermédiaire',
-          lessons: ['Règles de lecture', 'Tajwid débutant']
-        }
-      ]
-    }
-  ];
+  // const formations = [
+  //   {
+  //     id: '1',
+  //     title: 'Formation Coran Complet',
+  //     students: 45,
+  //     levels: [
+  //       {
+  //         id: '1',
+  //         title: 'Niveau 1 - Bases',
+  //         lessons: ['Introduction', 'Alphabet arabe', 'Première sourate']
+  //       },
+  //       {
+  //         id: '2',
+  //         title: 'Niveau 2 - Intermédiaire',
+  //         lessons: ['Règles de lecture', 'Tajwid débutant']
+  //       }
+  //     ]
+  //   }
+  // ];
 
   // Nouvelle fonction pour ajouter une formation (corrigée pour FK products)
   const handleCreateFormation = async () => {
@@ -615,12 +615,14 @@ const AdminDashboard = () => {
               {formationError && <p className="text-destructive">Erreur: {formationError.message}</p>}
               {formations && (
                 <div className="space-y-4">
-                  {formations.map((formation: any) => (
+                  {(formations as any[]).map((formation) => (
                     <div key={formation.id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-start mb-3">
                         <div>
                           <h3 className="font-medium">{formation.title ?? "Sans titre"}</h3>
-                          <p className="text-sm text-muted-foreground">{formation.students_count ?? 0} étudiants</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formation.students_count ?? 0} étudiants
+                          </p>
                         </div>
                         <Button
                           variant="outline"
@@ -631,7 +633,6 @@ const AdminDashboard = () => {
                           Modifier
                         </Button>
                       </div>
-                      {/* Niveaux : pour l’instant non affichés quand connecté au vrai back. */}
                     </div>
                   ))}
                 </div>
