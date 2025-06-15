@@ -83,6 +83,13 @@ export default function FormationEditModal({
     setLevels(updated);
   };
 
+  // Helper : debug visuel pour contenu de la formation originale
+  const logDiff = (original: any, update: any) => {
+    if (!original) return;
+    const diff = Object.entries(update).filter(([key, val]) => original[key] !== val);
+    console.log("Comparatif AVANT vs APRES:", { changes: diff });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -95,8 +102,18 @@ export default function FormationEditModal({
       setLoading(false);
       return;
     }
+    // Vérif existence d’id
+    if (!formation?.id) {
+      toast({
+        title: "Erreur technique",
+        description: "Impossible de retrouver l'identifiant formation.",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
 
-    // On prépare un payload propre, converti et sans valeurs vides
+    // Préparation du payload
     const payload: Record<string, any> = {
       title: form.title,
       description: form.description ?? null,
@@ -111,25 +128,25 @@ export default function FormationEditModal({
         ? parseInt(form.discount_percentage)
         : null,
       duration: form.duration !== "" && form.duration !== null ? parseInt(form.duration) : null,
-      // Ne pas envoyer 'levels'
+      // levels ignoré ici !
     };
-
-    // On retire les clefs qui ne sont pas attendues par la table
     Object.keys(payload).forEach((key) => {
       if (payload[key] === undefined) {
         delete payload[key];
       }
     });
 
-    // Debug visuel côté dev si besoin
-    console.log("Payload update formations:", payload);
+    // Log : voir la différence avec l’original
+    logDiff(formation, payload);
 
+    // On lance la requête de mise à jour
     const { error, data } = await supabase
       .from("formations")
       .update(payload)
       .eq("id", formation.id)
       .select();
 
+    // Gestion des cas : erreur, rien modifié, succès vraiment modifié
     if (error) {
       toast({
         title: "Erreur lors de la modification",
@@ -139,22 +156,24 @@ export default function FormationEditModal({
       setLoading(false);
       return;
     }
+    // Cas : aucune ligne modifiée
     if (!data || data.length === 0) {
       toast({
         title: "Aucune modification",
-        description: "Aucune formation n’a été modifiée. Vérifiez vos modifications.",
+        description: "Aucune donnée n’a été modifiée en base (à vérifier : la formation existe bien, et les valeurs ne sont pas exactement identiques à l’existant).",
         variant: "destructive",
       });
       setLoading(false);
       return;
     }
+    // Succès confirmé
     toast({
       title: "Formation modifiée",
       description: "Les changements ont été enregistrés.",
     });
     setLoading(false);
     onOpenChange(false);
-    onUpdated();
+    onUpdated && onUpdated();
   };
 
   return (
