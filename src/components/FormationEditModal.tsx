@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   Dialog,
@@ -6,6 +7,7 @@ import {
   DialogTitle,
   DialogFooter,
   DialogClose,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -83,7 +85,7 @@ export default function FormationEditModal({
     setLevels(updated);
   };
 
-  // Helper : debug visuel pour contenu de la formation originale
+  // Helper : debug visuel pour contenu de la formation originale
   const logDiff = (original: any, update: any) => {
     if (!original) return;
     const diff = Object.entries(update).filter(([key, val]) => original[key] !== val);
@@ -107,15 +109,18 @@ export default function FormationEditModal({
     // Vérification et log de l'id
     const formationId = formation?.id ?? null;
     console.log("[DEBUG] id utilisé pour update formation:", formationId, typeof formationId);
-    if (!formationId || typeof formationId !== "string" && typeof formationId !== "number") {
+    if (!formationId) {
       toast({
         title: "Erreur technique",
-        description: `Impossible de retrouver un id formation valide (${String(formationId)}). Merci de recharger la page ou contacter l’admin.`,
+        description: `Impossible de retrouver un id formation valide. Merci de recharger la page ou contacter l'admin.`,
         variant: "destructive",
       });
       setLoading(false);
       return;
     }
+
+    // Conversion de l'id en string pour Supabase
+    const formationIdString = String(formationId);
 
     // Préparation du payload
     const payload: Record<string, any> = {
@@ -132,7 +137,7 @@ export default function FormationEditModal({
         ? parseInt(form.discount_percentage)
         : null,
       duration: form.duration !== "" && form.duration !== null ? parseInt(form.duration) : null,
-      // levels ignoré ici !
+      // levels ignoré ici !
     };
 
     // Suppression des champs undefined
@@ -145,17 +150,20 @@ export default function FormationEditModal({
     // Debug visuel côté dev
     console.log("[DEBUG] Payload update formations:", payload);
 
-    // Log : voir la différence avec l’original
+    // Log : voir la différence avec l'original
     logDiff(formation, payload);
 
     // On lance la requête de mise à jour
     const { error, data } = await supabase
       .from("formations")
       .update(payload)
-      .eq("id", formationId)
+      .eq("id", formationIdString)
       .select();
 
+    console.log("[DEBUG] Réponse Supabase update:", { error, data });
+
     if (error) {
+      console.error("[DEBUG] Erreur Supabase:", error);
       toast({
         title: "Erreur lors de la modification",
         description: error.message,
@@ -164,15 +172,20 @@ export default function FormationEditModal({
       setLoading(false);
       return;
     }
-    if (!data || data.length === 0) {
+
+    // Vérification plus stricte de la réponse
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      console.log("[DEBUG] Pas de données retournées:", data);
       toast({
         title: "Aucune modification",
-        description: "Aucune donnée n’a été modifiée en base (l’id formation est-il correct ? L’entrée existe-t-elle ? Les valeurs sont-elles différentes ?).",
+        description: "Aucune donnée n'a été modifiée en base. Vérifiez que les valeurs sont différentes de l'existant.",
         variant: "destructive",
       });
       setLoading(false);
       return;
     }
+
+    console.log("[DEBUG] Modification réussie:", data);
     toast({
       title: "Formation modifiée",
       description: "Les changements ont été enregistrés.",
@@ -187,6 +200,9 @@ export default function FormationEditModal({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Modifier la formation</DialogTitle>
+          <DialogDescription>
+            Modifiez les informations de la formation ci-dessous.
+          </DialogDescription>
         </DialogHeader>
         <form className="space-y-3" onSubmit={handleSubmit} style={{ height: "70vh", maxHeight: "70vh" }}>
           {/* ScrollArea pour un défilement agréable */}
@@ -233,9 +249,9 @@ export default function FormationEditModal({
               />
 
               {/* IMAGE */}
-              <label className="block text-sm font-medium mb-1">URL de l’image (optionnel)</label>
+              <label className="block text-sm font-medium mb-1">URL de l'image (optionnel)</label>
               <Input
-                placeholder="URL de l’image (optionnel)"
+                placeholder="URL de l'image (optionnel)"
                 value={form.image_url ?? ""}
                 onChange={(e) => setForm({ ...form, image_url: e.target.value })}
                 disabled={loading}
@@ -262,7 +278,7 @@ export default function FormationEditModal({
               />
 
               {/* NB ÉTUDIANTS */}
-              <label className="block text-sm font-medium mb-1">Nombre d’étudiants (optionnel)</label>
+              <label className="block text-sm font-medium mb-1">Nombre d'étudiants (optionnel)</label>
               <Input
                 placeholder="Nb étudiants (optionnel)"
                 type="number"
