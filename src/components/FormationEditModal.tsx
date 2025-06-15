@@ -96,7 +96,7 @@ export default function FormationEditModal({
       return;
     }
     // Correction ici : on ne sauvegarde plus “levels”, pour éviter l’erreur.
-    const { error } = await supabase
+    const { error, data } = await supabase
       .from("formations")
       .update({
         title: form.title,
@@ -115,12 +115,22 @@ export default function FormationEditModal({
           : null,
         duration: form.duration ? parseInt(form.duration) : null,
       })
-      .eq("id", formation.id);
+      .eq("id", formation.id)
+      .select(); // <--- Ajout pour obtenir le retour
 
     if (error) {
       toast({
         title: "Erreur lors de la modification",
         description: error.message,
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
+    if (!data || data.length === 0) {
+      toast({
+        title: "Aucune modification",
+        description: "Aucune formation n’a été modifiée. Vérifiez vos modifications.",
         variant: "destructive",
       });
       setLoading(false);
