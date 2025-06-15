@@ -205,25 +205,7 @@ const FormationPage = () => {
             />
           )}
 
-          {/* Formation Details Card : version compacte */}
-          <div className="bg-card border-b border-border rounded-lg mb-3 px-3 py-2 flex items-center justify-between min-h-[78px] max-h-[110px]">
-            <div className="flex-1 overflow-hidden">
-              <h3 className="font-semibold text-foreground text-base truncate">{formation.title}</h3>
-              <p className="text-xs text-muted-foreground truncate">{formation.description}</p>
-              <p className="text-sm font-bold text-primary mt-1">{formation.price}€</p>
-            </div>
-            <div className="flex flex-col space-y-1 ml-3">
-              {!hasAccess && (
-                <Button onClick={handleStartTrial} size="sm" variant="outline" className="py-1 px-2 text-xs h-7 min-w-0">
-                  Essai 15min
-                </Button>
-              )}
-              <Button onClick={handleOrderClick} size="sm" className="py-1 px-2 text-xs h-7 min-w-0">
-                <ShoppingCart className="w-4 h-4 mr-1" />
-                Commander
-              </Button>
-            </div>
-          </div>
+          {/* La carte "Détails formation" a été supprimée */}
         </div>
 
         <div className="flex-1 overflow-hidden" style={{ scrollBehavior: 'smooth' }}>
