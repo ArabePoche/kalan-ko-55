@@ -7,6 +7,7 @@ import ChatInput from './ChatInput';
 import AvailableTeachers from './AvailableTeachers';
 import CameraCaptureModal from "./CameraCaptureModal";
 import CallModal from './CallModal';
+import LessonCallHandler from './LessonCallHandler';
 
 interface Lesson {
   id: string;
@@ -54,7 +55,7 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [showCameraModal, setShowCameraModal] = useState(false);
   const [cameraMode, setCameraMode] = useState<"menu" | "photo" | "video">("menu");
-  const [callState, setCallState] = useState<{ open: boolean; type: "voice" | "video" } | null>(null);
+  const [callModal, setCallModal] = useState<{ open: boolean; type: "voice" | "video" } | null>(null);
 
   const [privateChatMessages, setPrivateChatMessages] = useState([
     {
@@ -219,11 +220,6 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
     }
   };
 
-  const handleCall = (type: 'voice' | 'video') => {
-    // Afficher la modale d'appel
-    setCallState({ open: true, type });
-  };
-
   // ==> Nouveau handler pour capture caméra (photo/vidéo)
   const handleCameraCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -299,14 +295,13 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
 
   return (
     <div className="relative flex flex-col h-full bg-[#0b141a] overflow-hidden">
-      {/* Call Modal Overlay */}
-      <CallModal
-        open={!!callState?.open}
-        type={callState?.type || "voice"}
+      {/* Overlay vrai appel */}
+      <LessonCallHandler
+        open={!!callModal?.open}
+        type={callModal?.type || "voice"}
         instructor={lesson.instructor}
-        onClose={() => setCallState(null)}
+        onClose={() => setCallModal(null)}
       />
-      {/* Timer accès temporaire par-dessus la vidéo si actif */}
       {timerElement}
       <div className="flex-shrink-0">
         <ChatHeader
