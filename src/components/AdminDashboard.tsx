@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,6 +17,8 @@ import FormationCreateForm from "./FormationCreateForm";
 import VideoCreateForm from "./VideoCreateForm";
 import UsersTable from "./UsersTable";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import UserActivityStats from "./UserActivityStats";
+import { useUserActivity } from "@/hooks/useUserActivity";
 
 // Charger les catégories depuis Supabase
 const fetchCategories = async () => {
@@ -82,10 +83,7 @@ const AdminDashboard = () => {
     queryFn: fetchCategories
   });
 
-  const { data: users, isLoading: isLoadingUsers, error: usersError } = useQuery({
-    queryKey: ['admin-users'],
-    queryFn: fetchUsers
-  });
+  const { data: users, isLoading: isLoadingUsers, error: usersError } = useUserActivity();
 
   const { data: formations, isLoading: loadingFormations, error: formationError, refetch: refetchFormations } = useQuery({
     queryKey: ['admin-formations'],
@@ -442,17 +440,23 @@ const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="users" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Gestion des Utilisateurs</h2>
+          </div>
+          
+          {users && <UserActivityStats users={users} />}
+          
           <Card>
             <CardHeader>
-              <CardTitle>Gestion des Utilisateurs</CardTitle>
+              <CardTitle>Utilisateurs de la plateforme</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Visualisez et gérez les utilisateurs de la plateforme.
+                Visualisez l'activité et gérez les utilisateurs de la plateforme.
               </p>
             </CardHeader>
             <CardContent>
               {isLoadingUsers && <p>Chargement des utilisateurs...</p>}
               {usersError instanceof Error && <p className="text-destructive">Erreur: {usersError.message}</p>}
-              {users && <UsersTable users={users} />}
+              {users && <UsersTable users={users} loading={isLoadingUsers} />}
             </CardContent>
           </Card>
         </TabsContent>
