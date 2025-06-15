@@ -3,10 +3,12 @@ import { useState, useEffect } from 'react';
 import { CartItem } from '@/types/cart';
 import { useCartQueries } from './useCartQueries';
 import { useCartMutations } from './useCartMutations';
+import { useAuth } from '@/contexts/AuthProvider';
 
 export const useCart = () => {
   const [localItems, setLocalItems] = useState<CartItem[]>([]);
   const { dbCartItems, isLoading } = useCartQueries();
+  const { user, loading: authLoading } = useAuth();
   const { 
     addToCartMutation, 
     removeFromCartMutation, 
@@ -18,20 +20,30 @@ export const useCart = () => {
   console.log('DB Cart Items:', dbCartItems);
   console.log('Local Items:', localItems);
   console.log('Is Loading:', isLoading);
+  console.log('Auth Loading:', authLoading);
+  console.log('User:', user);
 
   // Synchroniser les données de la DB avec le state local
   useEffect(() => {
     console.log('=== CART SYNC EFFECT ===');
     console.log('DB Items:', dbCartItems);
     console.log('Is Loading:', isLoading);
+    console.log('Auth Loading:', authLoading);
+    console.log('User exists:', !!user);
     
-    if (dbCartItems.length > 0) {
-      console.log('Syncing database items to local state:', dbCartItems);
+    // Ne pas synchroniser si l'auth est en cours de chargement
+    if (authLoading) {
+      console.log('Auth loading, skipping sync');
+      return;
+    }
+    
+    if (user && dbCartItems.length > 0) {
+      console.log('User authenticated and has DB items, syncing to local state:', dbCartItems);
       setLocalItems(dbCartItems);
-    } else if (!isLoading) {
-      // Charger depuis localStorage seulement si pas d'items en DB et que le chargement est terminé
+    } else if (!user && !isLoading && !authLoading) {
+      // Charger depuis localStorage seulement si pas d'utilisateur et que les chargements sont terminés
       const savedCart = localStorage.getItem('cart');
-      console.log('Saved cart from localStorage:', savedCart);
+      console.log('No user, loading from localStorage:', savedCart);
       
       if (savedCart) {
         try {
@@ -48,19 +60,21 @@ export const useCart = () => {
         setLocalItems([]);
       }
     }
-  }, [dbCartItems, isLoading]);
+  }, [dbCartItems, isLoading, authLoading, user]);
 
   // Sauvegarder le panier dans localStorage seulement si pas en cours de chargement
   useEffect(() => {
     console.log('=== LOCALSTORAGE SAVE EFFECT ===');
     console.log('Is Loading:', isLoading);
+    console.log('Auth Loading:', authLoading);
     console.log('Local Items to save:', localItems);
     
-    if (!isLoading) {
+    // Ne pas sauvegarder si l'auth ou les données sont en cours de chargement
+    if (!isLoading && !authLoading) {
       localStorage.setItem('cart', JSON.stringify(localItems));
       console.log('Saved to localStorage:', JSON.stringify(localItems));
     }
-  }, [localItems, isLoading]);
+  }, [localItems, isLoading, authLoading]);
 
   const addToCart = (item: Omit<CartItem, 'quantity'>) => {
     console.log('=== ADD TO CART ===');
@@ -87,8 +101,12 @@ export const useCart = () => {
     });
 
     // Essayer d'ajouter à la base de données si connecté
-    console.log('Triggering database mutation...');
-    addToCartMutation.mutate(item);
+    if (user) {
+      console.log('User authenticated, triggering database mutation...');
+      addToCartMutation.mutate(item);
+    } else {
+      console.log('No user authenticated, only saving locally');
+    }
   };
 
   const removeFromCart = (id: string) => {
@@ -102,7 +120,9 @@ export const useCart = () => {
       return newItems;
     });
     
-    removeFromCartMutation.mutate(id);
+    if (user) {
+      removeFromCartMutation.mutate(id);
+    }
   };
 
   const updateQuantity = (id: string, quantity: number) => {
@@ -122,7 +142,9 @@ export const useCart = () => {
       return newItems;
     });
     
-    updateQuantityMutation.mutate({ productId: id, quantity });
+    if (user) {
+      updateQuantityMutation.mutate({ productId: id, quantity });
+    }
   };
 
   const clearCart = () => {
@@ -137,8 +159,10 @@ export const useCart = () => {
     localStorage.removeItem('cart');
     console.log('Cleared localStorage');
     
-    // Vider la base de données
-    clearCartMutation.mutate();
+    // Vider la base de données si utilisateur connecté
+    if (user) {
+      clearCartMutation.mutate();
+    }
   };
 
   const getTotalPrice = () => {
@@ -165,7 +189,7 @@ export const useCart = () => {
     clearCart,
     getTotalPrice,
     getTotalItems,
-    isLoading
+    isLoading: isLoading || authLoading
   };
 };
 

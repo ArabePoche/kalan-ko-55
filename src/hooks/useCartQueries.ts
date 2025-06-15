@@ -2,19 +2,18 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CartItem } from '@/types/cart';
+import { useAuth } from '@/contexts/AuthProvider';
 
 export const useCartQueries = () => {
+  const { user, loading: authLoading } = useAuth();
+
   const { data: dbCartItems = [], isLoading } = useQuery({
-    queryKey: ['cart'],
+    queryKey: ['cart', user?.id],
     queryFn: async () => {
       console.log('=== CART QUERY ===');
       
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      console.log('Cart query - User:', user);
-      console.log('Cart query - User error:', userError);
-      
       if (!user) {
-        console.log('No user authenticated, returning empty cart');
+        console.log('No user in query context, returning empty cart');
         return [];
       }
 
@@ -62,15 +61,17 @@ export const useCartQueries = () => {
       console.log('Mapped cart items:', mappedItems);
       return mappedItems;
     },
-    enabled: true
+    enabled: !!user && !authLoading
   });
 
   console.log('=== CART QUERIES HOOK ===');
   console.log('DB Cart Items:', dbCartItems);
   console.log('Is Loading:', isLoading);
+  console.log('Auth Loading:', authLoading);
+  console.log('User ID:', user?.id);
 
   return {
     dbCartItems,
-    isLoading
+    isLoading: isLoading || authLoading
   };
 };
