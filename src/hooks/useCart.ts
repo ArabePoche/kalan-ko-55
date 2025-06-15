@@ -18,31 +18,14 @@ export const useCart = () => {
   const [localItems, setLocalItems] = useState<CartItem[]>([]);
   const queryClient = useQueryClient();
 
-  // Charger le panier depuis localStorage au démarrage
-  useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      try {
-        const parsedCart = JSON.parse(savedCart);
-        setLocalItems(parsedCart);
-      } catch (error) {
-        console.error('Error parsing cart from localStorage:', error);
-        localStorage.removeItem('cart');
-      }
-    }
-  }, []);
-
-  // Sauvegarder le panier dans localStorage
-  useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(localItems));
-  }, [localItems]);
-
   // Hook pour récupérer le panier depuis Supabase (si utilisateur connecté)
-  const { data: dbCartItems = [] } = useQuery({
+  const { data: dbCartItems = [], isLoading } = useQuery({
     queryKey: ['cart'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
+
+      console.log('Fetching cart items from database for user:', user.id);
 
       const { data, error } = await supabase
         .from('cart_items')
@@ -62,29 +45,62 @@ export const useCart = () => {
         `)
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching cart items:', error);
+        throw error;
+      }
+      
+      console.log('Database cart items:', data);
       
       return data.map(item => ({
         id: item.product_id,
-        title: item.products.title,
-        price: item.products.price,
-        instructor: item.products.profiles?.[0] ? 
+        title: item.products?.title || 'Produit',
+        price: item.products?.price || 0,
+        instructor: item.products?.profiles?.[0] ? 
           `${item.products.profiles[0].first_name || ''} ${item.products.profiles[0].last_name || ''}`.trim() || 
           item.products.profiles[0].username || 'Instructeur'
           : 'Instructeur',
-        image: item.products.image_url || '/placeholder.svg',
-        type: item.products.product_type,
+        image: item.products?.image_url || '/placeholder.svg',
+        type: item.products?.product_type || 'formation',
         quantity: item.quantity
       }));
     },
-    enabled: false // Désactivé par défaut, sera activé quand l'utilisateur se connecte
+    enabled: true // Activer la requête
   });
+
+  // Synchroniser les données de la DB avec le state local
+  useEffect(() => {
+    if (dbCartItems.length > 0) {
+      console.log('Syncing database items to local state:', dbCartItems);
+      setLocalItems(dbCartItems);
+    } else {
+      // Charger depuis localStorage seulement si pas d'items en DB
+      const savedCart = localStorage.getItem('cart');
+      if (savedCart) {
+        try {
+          const parsedCart = JSON.parse(savedCart);
+          console.log('Loading from localStorage:', parsedCart);
+          setLocalItems(parsedCart);
+        } catch (error) {
+          console.error('Error parsing cart from localStorage:', error);
+          localStorage.removeItem('cart');
+        }
+      }
+    }
+  }, [dbCartItems]);
+
+  // Sauvegarder le panier dans localStorage
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(localItems));
+  }, [localItems]);
 
   const addToCartMutation = useMutation({
     mutationFn: async (item: Omit<CartItem, 'quantity'>) => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
+        console.log('Adding item to database cart:', item);
+        
         // Si utilisateur connecté, ajouter à la base de données
         const { data: existingItem } = await supabase
           .from('cart_items')
@@ -133,7 +149,9 @@ export const useCart = () => {
   });
 
   const addToCart = (item: Omit<CartItem, 'quantity'>) => {
-    // Toujours ajouter au panier local
+    console.log('Adding item to cart:', item);
+    
+    // Toujours ajouter au panier local d'abord
     setLocalItems(prev => {
       const existingItem = prev.find(i => i.id === item.id);
       if (existingItem) {
@@ -185,6 +203,7 @@ export const useCart = () => {
     updateQuantity,
     clearCart,
     getTotalPrice,
-    getTotalItems
+    getTotalItems,
+    isLoading
   };
 };
