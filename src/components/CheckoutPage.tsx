@@ -1,18 +1,19 @@
 
-import { ArrowLeft, CreditCard, MapPin, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCart } from '@/hooks/useCart';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
+import { useOrderMutation } from '@/hooks/useOrderMutation';
+import CheckoutHeader from './checkout/CheckoutHeader';
+import DeliveryInfo from './checkout/DeliveryInfo';
+import PaymentInfo from './checkout/PaymentInfo';
+import OrderItems from './checkout/OrderItems';
+import OrderSummary from './checkout/OrderSummary';
+import PlaceOrderSection from './checkout/PlaceOrderSection';
 
 const CheckoutPage = () => {
   const { items, getTotalPrice, clearCart } = useCart();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (items.length === 0) {
@@ -20,84 +21,7 @@ const CheckoutPage = () => {
     }
   }, [items.length, navigate]);
 
-  const createOrderMutation = useMutation({
-    mutationFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Utilisateur non connecté');
-
-      console.log('Creating order for user:', user.id);
-      console.log('Order items:', items);
-      console.log('Total amount:', getTotalPrice());
-
-      // Créer la commande
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user.id,
-          total_amount: getTotalPrice(),
-          status: 'pending'
-        })
-        .select()
-        .single();
-
-      if (orderError) {
-        console.error('Error creating order:', orderError);
-        throw orderError;
-      }
-
-      console.log('Order created successfully:', order);
-
-      // Créer les items de commande
-      const orderItems = items.map(item => ({
-        order_id: order.id,
-        product_id: item.id,
-        quantity: item.quantity,
-        price: item.price
-      }));
-
-      console.log('Creating order items:', orderItems);
-
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) {
-        console.error('Error creating order items:', itemsError);
-        throw itemsError;
-      }
-
-      console.log('Order items created successfully');
-
-      return order;
-    },
-    onSuccess: (order) => {
-      console.log('Order process completed successfully:', order);
-      
-      // Vider le panier immédiatement après succès
-      clearCart();
-      
-      // Invalider les requêtes pour forcer la mise à jour
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      
-      toast({
-        title: "Commande passée avec succès !",
-        description: "Votre commande a été soumise et sera examinée par un administrateur.",
-      });
-      
-      setTimeout(() => {
-        navigate('/');
-      }, 2000);
-    },
-    onError: (error) => {
-      console.error('Error creating order:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de passer la commande. Veuillez réessayer.",
-        variant: "destructive"
-      });
-    }
-  });
+  const createOrderMutation = useOrderMutation(items, getTotalPrice, clearCart, navigate);
 
   const handlePlaceOrder = () => {
     console.log('Placing order with items:', items);
@@ -118,140 +42,18 @@ const CheckoutPage = () => {
 
   return (
     <div className="max-w-md mx-auto bg-background min-h-screen">
-      {/* Header */}
-      <div className="p-4 pt-16 bg-[#232F3E] text-white">
-        <div className="flex items-center space-x-3">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => navigate('/cart')}
-            className="text-white"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h1 className="text-xl font-bold">Commande</h1>
-            <p className="text-white/80 text-sm">Vérifiez et confirmez</p>
-          </div>
-        </div>
-      </div>
+      <CheckoutHeader itemsCount={items.length} />
 
       <div className="p-4 space-y-4">
-        {/* Adresse de livraison */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <MapPin className="w-5 h-5" />
-              <span>Adresse de livraison</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-sm text-blue-800">
-                <strong>Note :</strong> Pour les formations numériques, l'accès sera fourni directement dans votre compte après validation de la commande.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Méthode de paiement */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <CreditCard className="w-5 h-5" />
-              <span>Méthode de paiement</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <p className="text-sm text-yellow-800">
-                <strong>Paiement après validation :</strong> Le paiement sera traité une fois votre commande approuvée par un administrateur.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Articles commandés */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Vos articles ({items.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {items.map((item) => (
-                <div key={item.id} className="flex space-x-3 pb-3 border-b last:border-b-0">
-                  <img 
-                    src={item.image} 
-                    alt={item.title}
-                    className="w-12 h-12 object-cover rounded"
-                  />
-                  <div className="flex-1">
-                    <h4 className="font-medium text-sm">{item.title}</h4>
-                    <p className="text-xs text-muted-foreground">{item.instructor}</p>
-                    <div className="flex justify-between items-center mt-1">
-                      <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                        Qté: {item.quantity}
-                      </span>
-                      <span className="font-bold text-primary">{item.price}€</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Résumé de commande */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Résumé de la commande</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Articles ({items.reduce((sum, item) => sum + item.quantity, 0)})</span>
-                <span>{getTotalPrice().toFixed(2)}€</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Livraison et traitement</span>
-                <span className="text-green-600">Gratuits</span>
-              </div>
-              <div className="flex justify-between">
-                <span>TVA incluse</span>
-                <span>{(getTotalPrice() * 0.2).toFixed(2)}€</span>
-              </div>
-              <hr />
-              <div className="flex justify-between font-bold text-lg text-red-600">
-                <span>Total de la commande</span>
-                <span>{getTotalPrice().toFixed(2)}€</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Bouton de commande */}
-        <Card className="bg-yellow-50 border-yellow-200">
-          <CardContent className="p-4">
-            <div className="text-center space-y-3">
-              <div className="flex items-center justify-center space-x-2 text-yellow-800">
-                <User className="w-5 h-5" />
-                <span className="font-medium">Commande liée à votre compte</span>
-              </div>
-              <p className="text-sm text-yellow-700">
-                En passant cette commande, vous acceptez nos conditions de vente. 
-                Votre commande sera examinée et vous recevrez une confirmation.
-              </p>
-              <Button 
-                onClick={handlePlaceOrder} 
-                className="w-full bg-[#FF9900] hover:bg-[#FF9900]/90 text-black" 
-                size="lg"
-                disabled={createOrderMutation.isPending}
-              >
-                {createOrderMutation.isPending ? 'Traitement...' : `Passer la commande - ${getTotalPrice().toFixed(2)}€`}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <DeliveryInfo />
+        <PaymentInfo />
+        <OrderItems items={items} />
+        <OrderSummary items={items} totalPrice={getTotalPrice()} />
+        <PlaceOrderSection 
+          totalPrice={getTotalPrice()}
+          isLoading={createOrderMutation.isPending}
+          onPlaceOrder={handlePlaceOrder}
+        />
       </div>
     </div>
   );
