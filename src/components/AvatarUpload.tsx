@@ -64,21 +64,32 @@ export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, userInitials }:
         throw new Error('Le stockage pour les avatars n\'est pas configuré. Contactez l\'administrateur.');
       }
 
+      console.log('Avatars bucket found:', avatarsBucket);
+
       // First, delete any existing avatar for this user
-      const { data: existingFiles } = await supabase.storage
+      const { data: existingFiles, error: listError } = await supabase.storage
         .from('avatars')
         .list(user.id);
 
-      if (existingFiles && existingFiles.length > 0) {
+      if (listError) {
+        console.error('Error listing existing files:', listError);
+        // Don't throw here, just log and continue
+      } else if (existingFiles && existingFiles.length > 0) {
         console.log('Deleting existing files:', existingFiles);
         for (const existingFile of existingFiles) {
-          await supabase.storage
+          const { error: deleteError } = await supabase.storage
             .from('avatars')
             .remove([`${user.id}/${existingFile.name}`]);
+          
+          if (deleteError) {
+            console.error('Error deleting existing file:', deleteError);
+            // Don't throw here, just log and continue
+          }
         }
       }
 
       // Upload new file to Supabase Storage
+      console.log('Uploading file...');
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, {
@@ -88,7 +99,7 @@ export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, userInitials }:
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
-        throw uploadError;
+        throw new Error(`Erreur lors du téléchargement: ${uploadError.message}`);
       }
 
       console.log('Upload successful:', uploadData);
@@ -101,6 +112,19 @@ export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, userInitials }:
       console.log('Generated public URL:', data.publicUrl);
 
       if (data.publicUrl) {
+        // Test if the URL is accessible
+        try {
+          const response = await fetch(data.publicUrl, { method: 'HEAD' });
+          console.log('URL accessibility test:', response.status);
+          
+          if (!response.ok) {
+            throw new Error('L\'URL générée n\'est pas accessible.');
+          }
+        } catch (fetchError) {
+          console.error('URL accessibility test failed:', fetchError);
+          throw new Error('Impossible de vérifier l\'accessibilité de l\'image.');
+        }
+
         onAvatarUpdate(data.publicUrl);
         
         toast({
@@ -114,7 +138,7 @@ export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, userInitials }:
       console.error('Avatar upload error:', error);
       toast({
         variant: "destructive",
-        title: "Erreur",
+        title: "Erreur de téléchargement",
         description: error instanceof Error ? error.message : "Une erreur est survenue lors du téléchargement.",
       });
     } finally {
