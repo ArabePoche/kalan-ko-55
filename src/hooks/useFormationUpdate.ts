@@ -8,6 +8,13 @@ export const useFormationUpdate = () => {
   const updateFormation = async (formation: any, form: any, onUpdated?: () => void, onClose?: () => void) => {
     setLoading(true);
 
+    const { data: { user } } = await supabase.auth.getUser();
+    console.log("[DEBUG] Current user for update:", user);
+    if (user) {
+      const { data: isAdmin, error } = await supabase.rpc('has_role', { user_id: user.id, role: 'admin' });
+      console.log('[DEBUG] Admin check from client:', { isAdmin, error });
+    }
+
     if (!form.title || !form.price) {
       toast({
         title: "Champs requis",
