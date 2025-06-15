@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Video, GraduationCap, Plus, List } from "lucide-react";
+import { Video, GraduationCap, Plus, List, Users } from "lucide-react";
 import FormationCreateForm from "./FormationCreateForm";
 import VideoCreateForm from "./VideoCreateForm";
 import FormationsList from "./FormationsList";
@@ -11,6 +10,7 @@ import VideosList from "./VideosList";
 import { useCategories } from "@/hooks/useCategories";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import TeachersAdminPanel from "./TeachersAdminPanel";
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState<'create' | 'list'>('create');
@@ -85,7 +85,7 @@ const AdminDashboard = () => {
 
         {/* Contenu principal */}
         <Tabs defaultValue="formations" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="formations" className="flex items-center space-x-2">
               <GraduationCap className="w-4 h-4" />
               <span>Formations</span>
@@ -93,6 +93,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="videos" className="flex items-center space-x-2">
               <Video className="w-4 h-4" />
               <span>Vidéos</span>
+            </TabsTrigger>
+            <TabsTrigger value="teachers" className="flex items-center space-x-2">
+              <Users className="w-4 h-4" />
+              <span>Profs</span>
             </TabsTrigger>
           </TabsList>
 
@@ -166,6 +170,11 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          {/* Section Profs */}
+          <TabsContent value="teachers">
+            <TeachersAdminPanel />
           </TabsContent>
         </Tabs>
       </div>
