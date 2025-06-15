@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -65,7 +64,7 @@ export const useCart = () => {
         quantity: item.quantity
       }));
     },
-    enabled: true // Activer la requête
+    enabled: true
   });
 
   // Synchroniser les données de la DB avec le state local
@@ -148,6 +147,108 @@ export const useCart = () => {
     }
   });
 
+  const removeFromCartMutation = useMutation({
+    mutationFn: async (productId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        console.log('Removing item from database cart:', productId);
+        
+        const { error } = await supabase
+          .from('cart_items')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('product_id', productId);
+          
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    },
+    onError: (error) => {
+      console.error('Error removing from cart:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le produit du panier.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const updateQuantityMutation = useMutation({
+    mutationFn: async ({ productId, quantity }: { productId: string; quantity: number }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        console.log('Updating quantity in database cart:', productId, quantity);
+        
+        if (quantity <= 0) {
+          // Supprimer l'item si quantité = 0
+          const { error } = await supabase
+            .from('cart_items')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('product_id', productId);
+            
+          if (error) throw error;
+        } else {
+          // Mettre à jour la quantité
+          const { error } = await supabase
+            .from('cart_items')
+            .update({ quantity })
+            .eq('user_id', user.id)
+            .eq('product_id', productId);
+            
+          if (error) throw error;
+        }
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    },
+    onError: (error) => {
+      console.error('Error updating quantity:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour la quantité.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const clearCartMutation = useMutation({
+    mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        console.log('Clearing cart from database for user:', user.id);
+        
+        const { error } = await supabase
+          .from('cart_items')
+          .delete()
+          .eq('user_id', user.id);
+          
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      toast({
+        title: "Panier vidé",
+        description: "Votre panier a été vidé avec succès.",
+      });
+    },
+    onError: (error) => {
+      console.error('Error clearing cart:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de vider le panier.",
+        variant: "destructive"
+      });
+    }
+  });
+
   const addToCart = (item: Omit<CartItem, 'quantity'>) => {
     console.log('Adding item to cart:', item);
     
@@ -170,6 +271,7 @@ export const useCart = () => {
 
   const removeFromCart = (id: string) => {
     setLocalItems(prev => prev.filter(item => item.id !== id));
+    removeFromCartMutation.mutate(id);
   };
 
   const updateQuantity = (id: string, quantity: number) => {
@@ -182,10 +284,12 @@ export const useCart = () => {
         item.id === id ? { ...item, quantity } : item
       )
     );
+    updateQuantityMutation.mutate({ productId: id, quantity });
   };
 
   const clearCart = () => {
     setLocalItems([]);
+    clearCartMutation.mutate();
   };
 
   const getTotalPrice = () => {
