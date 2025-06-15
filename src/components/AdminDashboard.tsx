@@ -36,6 +36,16 @@ const fetchUsers = async () => {
   return data;
 };
 
+// Fonction de chargement des formations depuis Supabase :
+const fetchFormations = async () => {
+  const { data, error } = await supabase
+    .from('formations')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return data;
+};
+
 const AdminDashboard = () => {
   const [selectedTab, setSelectedTab] = useState('overview');
   const [newVideo, setNewVideo] = useState({ 
@@ -71,6 +81,11 @@ const AdminDashboard = () => {
   const { data: users, isLoading: isLoadingUsers, error: usersError } = useQuery({
     queryKey: ['admin-users'],
     queryFn: fetchUsers
+  });
+
+  const { data: formations, isLoading: loadingFormations, error: formationError, refetch: refetchFormations } = useQuery({
+    queryKey: ['admin-formations'],
+    queryFn: fetchFormations
   });
 
   const stats = [
@@ -203,6 +218,8 @@ const AdminDashboard = () => {
         discount_percentage: '',
         duration: ''
       });
+      // Après succès, refetch la liste des formations dynamiques
+      await refetchFormations();
     } catch (e: any) {
       toast({
         title: "Erreur",
@@ -594,43 +611,31 @@ const AdminDashboard = () => {
               <CardTitle>Formations Existantes</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {formations.map((formation) => (
-                  <div key={formation.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h3 className="font-medium">{formation.title ?? "Sans titre"}</h3>
-                        <p className="text-sm text-muted-foreground">{formation.students ?? 0} étudiants</p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          toast({
-                            title: "Fonction à venir",
-                            description:
-                              "La modification d'une formation sera disponible bientôt.",
-                          })
-                        }
-                      >
-                        Modifier
-                      </Button>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium">Niveaux:</h4>
-                      {formation.levels.map((level) => (
-                        <div key={level.id} className="ml-4 p-2 bg-muted rounded">
-                          <p className="text-sm font-medium">{level.title}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {level.lessons.length} leçons: {level.lessons.join(', ')}
-                          </p>
+              {loadingFormations && <p>Chargement…</p>}
+              {formationError && <p className="text-destructive">Erreur: {formationError.message}</p>}
+              {formations && (
+                <div className="space-y-4">
+                  {formations.map((formation: any) => (
+                    <div key={formation.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-medium">{formation.title ?? "Sans titre"}</h3>
+                          <p className="text-sm text-muted-foreground">{formation.students_count ?? 0} étudiants</p>
                         </div>
-                      ))}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled
+                          className="opacity-50 cursor-not-allowed"
+                        >
+                          Modifier
+                        </Button>
+                      </div>
+                      {/* Niveaux : pour l’instant non affichés quand connecté au vrai back. */}
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
