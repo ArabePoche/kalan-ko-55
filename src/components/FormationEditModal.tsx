@@ -95,8 +95,7 @@ export default function FormationEditModal({
       setLoading(false);
       return;
     }
-    // Vous devrez gérer la sauvegarde des levels/lessons avec une logique spécifique si la structure réelle l'exige (table à part).
-    // Ici on stocke côté formation sous levels, à adapter à vos specs backend.
+    // Correction ici : on ne sauvegarde plus “levels”, pour éviter l’erreur.
     const { error } = await supabase
       .from("formations")
       .update({
@@ -115,7 +114,6 @@ export default function FormationEditModal({
           ? parseInt(form.discount_percentage)
           : null,
         duration: form.duration ? parseInt(form.duration) : null,
-        levels: levels, // <- dépend des specs/requêtes backend
       })
       .eq("id", formation.id);
 
