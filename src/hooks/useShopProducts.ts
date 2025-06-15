@@ -29,7 +29,7 @@ export const useShopProducts = (categoryFilter?: CategoryFilter) => {
         .from('products')
         .select(`
           *,
-          profiles:instructor_id (
+          profiles (
             first_name,
             last_name,
             username
@@ -75,7 +75,7 @@ export const useShopProducts = (categoryFilter?: CategoryFilter) => {
         .from('formations')
         .select(`
           *,
-          profiles:instructor_id (
+          profiles!instructor_id (
             first_name,
             last_name,
             username
