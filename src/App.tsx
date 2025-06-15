@@ -19,6 +19,7 @@ import ShopPage from "./components/ShopPage";
 import CoursesPage from "./components/CoursesPage";
 import NotificationsFeed from "./components/NotificationsFeed";
 import ProfilePage from "./components/ProfilePage";
+import GlobalNavigation from "./components/GlobalNavigation";
 
 const queryClient = new QueryClient();
 
@@ -39,12 +40,62 @@ const App = () => (
             </Route>
 
             <Route path="/auth" element={<AuthPage />} />
-            <Route path="/formation/:id" element={<FormationPage />} />
-            <Route path="/order/:videoId" element={<OrderPage />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/feedback" element={<FeedbackSystem />} />
+            
+            {/* Pages avec navigation globale */}
+            <Route path="/formation/:id" element={
+              <div className="min-h-screen bg-background">
+                <GlobalNavigation />
+                <div className="pt-16">
+                  <FormationPage />
+                </div>
+              </div>
+            } />
+            
+            <Route path="/order/:videoId" element={
+              <div className="min-h-screen bg-background">
+                <GlobalNavigation />
+                <div className="pt-16">
+                  <OrderPage />
+                </div>
+              </div>
+            } />
+            
+            <Route path="/cart" element={
+              <div className="min-h-screen bg-background">
+                <GlobalNavigation />
+                <div className="pt-16">
+                  <Cart />
+                </div>
+              </div>
+            } />
+            
+            <Route path="/checkout" element={
+              <div className="min-h-screen bg-background">
+                <GlobalNavigation />
+                <div className="pt-16">
+                  <CheckoutPage />
+                </div>
+              </div>
+            } />
+            
+            <Route path="/admin" element={
+              <div className="min-h-screen bg-background">
+                <GlobalNavigation />
+                <div className="pt-16">
+                  <AdminDashboard />
+                </div>
+              </div>
+            } />
+            
+            <Route path="/admin/feedback" element={
+              <div className="min-h-screen bg-background">
+                <GlobalNavigation />
+                <div className="pt-16">
+                  <FeedbackSystem />
+                </div>
+              </div>
+            } />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
