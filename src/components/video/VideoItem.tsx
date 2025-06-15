@@ -1,4 +1,3 @@
-
 import React, { forwardRef } from 'react';
 import { Heart, MessageCircle, Share2, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,7 @@ interface VideoItemProps {
   onLike: (videoId: string) => void;
   onComment: (videoId: string) => void;
   onShare: (videoId: string) => void;
-  onFeedback: (videoId: string) => void;
+  onFeedback: (video: Video) => void;
   onBuyClick: (video: Video) => void;
 }
 
@@ -30,6 +29,7 @@ const VideoItem = forwardRef<HTMLDivElement, VideoItemProps>(({
   const handleLike = () => onLike(video.id);
   const handleComment = () => onComment(video.id);
   const handleShare = () => onShare(video.id);
+  const handleFeedback = () => onFeedback(video);
   const handleBuy = () => onBuyClick(video);
 
   return (
@@ -71,16 +71,8 @@ const VideoItem = forwardRef<HTMLDivElement, VideoItemProps>(({
               </p>
             )}
 
-            {/* Stats */}
+            {/* Stats - Removed like and comment stats, keeping only views */}
             <div className="flex items-center space-x-4 text-white text-sm">
-              <span className="flex items-center">
-                <Heart className="w-4 h-4 mr-1" />
-                {video.likes_count || 0}
-              </span>
-              <span className="flex items-center">
-                <MessageCircle className="w-4 h-4 mr-1" />
-                {video.comments_count || 0}
-              </span>
               <span>{video.views_count || 0} vues</span>
             </div>
           </div>
