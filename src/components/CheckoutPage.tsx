@@ -1,3 +1,4 @@
+
 import { useCart } from '@/hooks/useCart';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
@@ -35,7 +36,7 @@ const CheckoutPage = () => {
     }
   }, [items, user, authLoading, navigate]);
 
-  const createOrderMutation = useOrderMutation(items, getTotalPrice, clearCart, navigate);
+  const createOrderMutation = useOrderMutation(clearCart, navigate);
 
   const handlePlaceOrder = () => {
     console.log('=== PLACE ORDER BUTTON CLICKED ===');
@@ -53,7 +54,7 @@ const CheckoutPage = () => {
     }
     
     console.log('Starting order mutation...');
-    createOrderMutation.mutate();
+    createOrderMutation.mutate({ items, totalPrice: getTotalPrice() });
   };
 
   if (authLoading || (!user && items.length > 0)) {

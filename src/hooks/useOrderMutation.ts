@@ -5,18 +5,16 @@ import { toast } from '@/hooks/use-toast';
 import { CartItem } from '@/types/cart';
 
 export const useOrderMutation = (
-  items: CartItem[], 
-  getTotalPrice: () => number, 
   clearCart: () => void, 
   navigate: (path: string) => void
 ) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({ items, totalPrice }: { items: CartItem[], totalPrice: number }) => {
       console.log('=== STARTING ORDER CREATION ===');
       console.log('Cart items:', items);
-      console.log('Total price:', getTotalPrice());
+      console.log('Total price:', totalPrice);
 
       // Vérifier l'authentification
       const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -35,7 +33,7 @@ export const useOrderMutation = (
 
       console.log('User authenticated successfully:', user.id);
 
-      const totalAmount = getTotalPrice();
+      const totalAmount = totalPrice;
       console.log('Creating order with amount:', totalAmount);
 
       // Créer la commande
@@ -88,51 +86,7 @@ export const useOrderMutation = (
       }
 
       console.log('Order items created successfully');
-
-      // Créer les notifications manuellement
-      console.log('Creating notifications for order:', order.id);
-
-      // Notification pour tous les admins
-      const { data: adminNotificationData, error: adminNotificationError } = await supabase
-        .from('notifications')
-        .insert({
-          title: 'Nouvelle commande à valider',
-          message: `Une nouvelle commande d'un montant de ${order.total_amount}€ nécessite votre validation.`,
-          type: 'order',
-          is_for_all_admins: true,
-          order_id: order.id
-        })
-        .select();
-
-      console.log('Admin notification creation result - Data:', adminNotificationData);
-      console.log('Admin notification creation result - Error:', adminNotificationError);
-
-      if (adminNotificationError) {
-        console.error('Error creating admin notification:', adminNotificationError);
-        // Ne pas faire échouer la commande pour une erreur de notification
-      }
-
-      // Notification pour l'acheteur
-      const { data: buyerNotificationData, error: buyerNotificationError } = await supabase
-        .from('notifications')
-        .insert({
-          title: 'Commande passée avec succès',
-          message: `Votre commande d'un montant de ${order.total_amount}€ a été soumise et sera examinée par un administrateur.`,
-          type: 'order',
-          user_id: user.id,
-          order_id: order.id
-        })
-        .select();
-
-      console.log('Buyer notification creation result - Data:', buyerNotificationData);
-      console.log('Buyer notification creation result - Error:', buyerNotificationError);
-
-      if (buyerNotificationError) {
-        console.error('Error creating buyer notification:', buyerNotificationError);
-        // Ne pas faire échouer la commande pour une erreur de notification
-      }
-
-      console.log('Notifications created successfully');
+      console.log('Notifications will be created by a database trigger.');
       console.log('=== ORDER CREATION COMPLETED ===');
 
       return order;
