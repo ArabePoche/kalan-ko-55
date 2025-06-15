@@ -21,13 +21,20 @@ export const useUserActivity = () => {
   return useQuery({
     queryKey: ['user-activity'],
     queryFn: async () => {
+      console.log('Fetching user activity data...');
+      
       // Récupérer les profils utilisateurs
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
+      }
+
+      console.log('Profiles fetched:', profiles.length);
 
       // Pour chaque utilisateur, récupérer les données de session
       const usersWithActivity = await Promise.all(profiles.map(async (profile) => {
@@ -55,17 +62,22 @@ export const useUserActivity = () => {
         // Dernière connexion réelle
         const lastSignInAt = sessions?.[0]?.started_at || profile.created_at;
 
-        // Utilisateur en ligne (session active dans les 5 dernières minutes)
-        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-        const isOnline = sessions?.some(session => 
-          !session.ended_at && new Date(session.started_at) > fiveMinutesAgo
-        ) || false;
+        // Utilisateur en ligne (session active dans les 10 dernières minutes)
+        const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+        const isOnline = sessions?.some(session => {
+          const sessionStart = new Date(session.started_at);
+          const isRecent = sessionStart > tenMinutesAgo;
+          const isActive = !session.ended_at;
+          return isRecent && isActive;
+        }) || false;
+
+        console.log(`User ${profile.username} online status:`, {
+          hasRecentSessions: sessions?.some(s => new Date(s.started_at) > tenMinutesAgo),
+          hasActiveSessions: sessions?.some(s => !s.ended_at),
+          isOnline
+        });
 
         // Score d'activité basé sur les données réelles
-        const daysSinceCreation = profile.created_at 
-          ? Math.floor((Date.now() - new Date(profile.created_at).getTime()) / (1000 * 60 * 60 * 24))
-          : 0;
-        
         const recentActivity = sessions?.filter(s => 
           new Date(s.started_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
         ).length || 0;
@@ -82,9 +94,11 @@ export const useUserActivity = () => {
         } as UserActivity;
       }));
 
+      console.log('Users with online status:', usersWithActivity.filter(u => u.is_online).length);
+
       // Trier par score d'activité décroissant
       return usersWithActivity.sort((a, b) => b.activity_score - a.activity_score);
     },
-    refetchInterval: 30000, // Actualiser toutes les 30 secondes
+    refetchInterval: 15000, // Actualiser toutes les 15 secondes pour voir les changements d'état
   });
 };

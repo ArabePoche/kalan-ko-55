@@ -8,6 +8,7 @@ import { useUserActivity } from "@/hooks/useUserActivity";
 import { useAdminStats } from "@/hooks/useAdminStats";
 import { useRecentActivity } from "@/hooks/useRecentActivity";
 import { useUserSessions, useUserSessionStats } from "@/hooks/useUserSessions";
+import { useSessionSimulator } from "@/hooks/useSessionSimulator";
 import AdminOverview from './admin/AdminOverview';
 import AdminVideosTab from './admin/AdminVideosTab';
 import AdminFormationsTab from './admin/AdminFormationsTab';
@@ -36,6 +37,9 @@ const fetchFormations = async () => {
 
 const AdminDashboard = () => {
   const [selectedTab, setSelectedTab] = useState('overview');
+
+  // Utiliser le simulateur de session pour créer une session active
+  useSessionSimulator();
 
   const { data: categories, isLoading: loadingCategories } = useQuery({
     queryKey: ['categories'],

@@ -21,20 +21,32 @@ export const useUserSessions = () => {
   return useQuery({
     queryKey: ['user-sessions'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: sessions, error } = await supabase
         .from('user_sessions')
-        .select(`
-          *,
-          profiles!inner(first_name, last_name, username)
-        `)
+        .select('*')
         .order('started_at', { ascending: false })
         .limit(50);
 
       if (error) throw error;
 
-      return data.map(session => ({
+      // Récupérer les profils séparément
+      const userIds = [...new Set(sessions.map(s => s.user_id))];
+      
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, username')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Combiner les données
+      return sessions.map(session => ({
         ...session,
-        user_profile: session.profiles
+        user_profile: profiles.find(p => p.id === session.user_id) || {
+          first_name: null,
+          last_name: null,
+          username: null
+        }
       })) as UserSession[];
     },
     refetchInterval: 30000
