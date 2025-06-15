@@ -27,15 +27,36 @@ export const useVideoActions = (onLikeUpdate: (videoId: string, isLiked: boolean
 
   const handleShare = (videoId: string) => {
     console.log('Partage de la vidéo:', videoId);
+    const currentUrl = `${window.location.origin}/?video=${videoId}`;
+    
     if (navigator.share) {
       navigator.share({
         title: 'Regardez cette vidéo',
-        url: window.location.href,
+        url: currentUrl,
+      }).then(() => {
+        toast({
+          description: "Vidéo partagée avec succès!",
+        });
+      }).catch((error) => {
+        console.error('Erreur lors du partage:', error);
+        // Fallback to clipboard
+        navigator.clipboard.writeText(currentUrl);
+        toast({
+          description: "Lien copié dans le presse-papiers!",
+        });
       });
     } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast({
-        description: "Lien copié dans le presse-papiers!",
+      // Fallback to clipboard if Web Share API is not available
+      navigator.clipboard.writeText(currentUrl).then(() => {
+        toast({
+          description: "Lien copié dans le presse-papiers!",
+        });
+      }).catch((error) => {
+        console.error('Erreur lors de la copie:', error);
+        toast({
+          variant: "destructive",
+          description: "Erreur lors de la copie du lien.",
+        });
       });
     }
   };
@@ -45,8 +66,8 @@ export const useVideoActions = (onLikeUpdate: (videoId: string, isLiked: boolean
     navigate('/admin/feedback');
   };
 
-  const handleBuyClick = (videoId: string) => {
-    navigate(`/formation/${videoId}`);
+  const handleBuyClick = (video: any) => {
+    navigate(`/formation/${video.id}`);
   };
 
   return {
