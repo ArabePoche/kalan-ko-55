@@ -40,7 +40,7 @@ export default function VideoCreateForm({ onCreated }: VideoCreateFormProps) {
     description: '',
     video_url: '',
     thumbnail_url: '',
-    video_type: undefined,
+    video_type: undefined, // default should always be undefined if unset
     product_id: '',
   });
   const [isCreating, setIsCreating] = useState(false);
@@ -147,7 +147,10 @@ export default function VideoCreateForm({ onCreated }: VideoCreateFormProps) {
 
       <Select
         value={newVideo.video_type}
-        onValueChange={(value: 'promo' | 'educational' | 'testimonial') => setNewVideo({ ...newVideo, video_type: value })}
+        // Only allow the correct TS types, and never ""
+        onValueChange={(value: 'promo' | 'educational' | 'testimonial') =>
+          setNewVideo({ ...newVideo, video_type: value })
+        }
         disabled={isCreating}
       >
         <SelectTrigger className="w-full">
@@ -180,3 +183,5 @@ export default function VideoCreateForm({ onCreated }: VideoCreateFormProps) {
     </div>
   );
 }
+
+// No <SelectItem value=""> is ever rendered; only valid values

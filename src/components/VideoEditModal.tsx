@@ -179,3 +179,5 @@ const VideoEditModal = ({ open, onOpenChange, video, onUpdated }: VideoEditModal
 };
 
 export default VideoEditModal;
+
+// As above: only valid values, never an empty string used for value
