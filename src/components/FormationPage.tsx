@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import SidebarLevels from './SidebarLevels';
 import LessonSelectorMobile from './LessonSelectorMobile';
 import TemporaryAccessBanner from './TemporaryAccessBanner';
+import TeachersList from './TeachersList'; // ← AJOUT
 import { ArrowLeft, Play, MessageCircle, ShoppingCart, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -185,6 +186,8 @@ const FormationPage = () => {
           onOrderClick={handleOrderClick}
         />
         <div className="p-4" style={{ scrollBehavior: 'smooth' }}>
+          {/* Affichage TEACHERS (mobile) */}
+          <TeachersList formationId={formationId || '1'} />
           {hasAccess && !selectedLesson && (
             <TemporaryAccessBanner 
               timeLeft={timeLeft} 
@@ -260,12 +263,14 @@ const FormationPage = () => {
           onOrderClick={handleOrderClick}
           onStartTrial={handleStartTrial}
         />
-      {hasAccess && !selectedLesson && (
-        <TemporaryAccessBanner 
-          timeLeft={timeLeft} 
-          onExpired={handleAccessExpired}
-        />
-      )}
+        {/* Affichage TEACHERS (desktop) */}
+        <TeachersList formationId={formationId || '1'} />
+        {hasAccess && !selectedLesson && (
+          <TemporaryAccessBanner 
+            timeLeft={timeLeft} 
+            onExpired={handleAccessExpired}
+          />
+        )}
         {hasAccess ? (
           selectedLesson ? (
             <VideoPlayer 

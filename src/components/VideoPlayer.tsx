@@ -184,31 +184,31 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
     return () => clearInterval(interval);
   }, [localTimeLeft]);
 
-  // -- Limite le temps d'enregistrement vocal à 3 secondes
+  // -- Limite le temps d'enregistrement vocal à 3 minutes
   const handleVoiceRecord = () => {
     if (!isRecording) {
       setIsRecording(true);
+      // Timer fixé à 3 minutes (180000 ms)
       const recordTimeout = setTimeout(() => {
         setIsRecording(false);
         const newMessage = {
           id: Date.now().toString(),
           user: 'Vous',
-          message: '🎵 Message vocal (0:03)',
+          message: '🎵 Message vocal (3:00)',
           time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
           isStudent: true,
           type: 'voice',
-          avatar: '/placeholder.svg'
+          avatar: '/placeholder.svg',
+          // Pour la vraie implémentation, ajouter le blob d’audio ici
         };
         setPrivateChatMessages(prev => [...prev, newMessage]);
-      }, 3000); // Limite à 3s
+      }, 180000); // 3 minutes
 
       // Clean-up si interruption manuelle
       const stopEarly = () => {
         clearTimeout(recordTimeout);
         setIsRecording(false);
       };
-      // Optionnel, selon si on veut permettre interruption manuelle
-      // window.addEventListener('mouseup', stopEarly, { once: true });
     } else {
       setIsRecording(false);
     }
