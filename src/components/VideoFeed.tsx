@@ -1,14 +1,18 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { useVideoPlayback } from '@/hooks/useVideoPlayback';
 import { useVideoFeed } from '@/hooks/useVideoFeed';
 import { useVideoActions } from '@/hooks/useVideoActions';
 import VideoItem from './video/VideoItem';
 import VideoComments from './VideoComments';
+import VideoFeedTabs from './video/VideoFeedTabs';
+import PostsFeed from './PostsFeed';
 
 const VideoFeed = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [currentVideoId, setCurrentVideoId] = useState<string>('');
+  const [activeTab, setActiveTab] = useState('videos');
   const containerRef = useRef<HTMLDivElement>(null);
   
   const { videos, loading, updateVideoLike, updateVideoCommentCount, updateVideoViews } = useVideoFeed();
@@ -45,7 +49,6 @@ const VideoFeed = () => {
     updateVideoCommentCount(currentVideoId);
   };
 
-  // This will be called after 10 seconds of viewing
   const handleViewCountIncrement = (videoId: string) => {
     updateVideoViews(videoId);
   };
@@ -71,34 +74,44 @@ const VideoFeed = () => {
 
   return (
     <>
-      <div 
-        ref={containerRef}
-        className="h-screen overflow-y-scroll snap-y snap-mandatory bg-black"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      >
-        <style>
-          {`
-            div::-webkit-scrollbar {
-              display: none;
-            }
-          `}
-        </style>
-        
-        {videos.map((video, index) => (
-          <VideoItem
-            key={video.id}
-            video={video}
-            index={index}
-            currentVideoIndex={currentVideoIndex}
-            iframeRef={(el) => (iframeRefs.current[index] = el)}
-            onLike={handleLike}
-            onComment={handleComment}
-            onShare={handleShare}
-            onBuyClick={handleBuyClick}
-            onViewCountIncrement={handleViewCountIncrement}
-          />
-        ))}
-      </div>
+      {/* Navigation par onglets transparents */}
+      <VideoFeedTabs activeTab={activeTab} onTabChange={setActiveTab} />
+
+      {/* Contenu en fonction de l'onglet actif */}
+      {activeTab === 'videos' ? (
+        <div 
+          ref={containerRef}
+          className="h-screen overflow-y-scroll snap-y snap-mandatory bg-black"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          <style>
+            {`
+              div::-webkit-scrollbar {
+                display: none;
+              }
+            `}
+          </style>
+          
+          {videos.map((video, index) => (
+            <VideoItem
+              key={video.id}
+              video={video}
+              index={index}
+              currentVideoIndex={currentVideoIndex}
+              iframeRef={(el) => (iframeRefs.current[index] = el)}
+              onLike={handleLike}
+              onComment={handleComment}
+              onShare={handleShare}
+              onBuyClick={handleBuyClick}
+              onViewCountIncrement={handleViewCountIncrement}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="h-screen bg-black">
+          <PostsFeed />
+        </div>
+      )}
 
       {/* Comments Modal */}
       <VideoComments 
