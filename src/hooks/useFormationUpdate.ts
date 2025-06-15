@@ -32,6 +32,28 @@ export const useFormationUpdate = () => {
       return;
     }
 
+    // NOUVEAU: Vérifier d'abord si la formation existe
+    console.log("[DEBUG] Vérification existence de la formation...");
+    const { data: existingFormation, error: checkError } = await supabase
+      .from("formations")
+      .select("id, title, description, price")
+      .eq("id", formationId)
+      .single();
+
+    console.log("[DEBUG] Formation existante:", existingFormation);
+    console.log("[DEBUG] Erreur de vérification:", checkError);
+
+    if (checkError || !existingFormation) {
+      console.error("[DEBUG] Formation non trouvée:", checkError);
+      toast({
+        title: "Formation introuvable",
+        description: `La formation avec l'ID ${formationId} n'existe pas en base de données.`,
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
+
     // Préparation du payload
     const payload: Record<string, any> = {
       title: form.title,
@@ -65,12 +87,14 @@ export const useFormationUpdate = () => {
       console.log("Comparatif AVANT vs APRES:", { changes: diff });
     }
 
-    // On lance la requête de mise à jour
+    // NOUVEAU: Test avec .maybeSingle() au lieu de .select()
+    console.log("[DEBUG] Lancement de la requête UPDATE...");
     const { error, data } = await supabase
       .from("formations")
       .update(payload)
       .eq("id", formationId)
-      .select();
+      .select()
+      .maybeSingle();
 
     console.log("[DEBUG] Réponse Supabase update:", { error, data });
 
@@ -86,11 +110,21 @@ export const useFormationUpdate = () => {
     }
 
     // Vérification plus stricte de la réponse
-    if (!data || !Array.isArray(data) || data.length === 0) {
-      console.log("[DEBUG] Pas de données retournées:", data);
+    if (!data) {
+      console.log("[DEBUG] Aucune donnée retournée. Possible cause: valeurs identiques ou permissions insuffisantes");
+      
+      // Vérification finale : la formation a-t-elle réellement été modifiée ?
+      const { data: updatedFormation } = await supabase
+        .from("formations")
+        .select("*")
+        .eq("id", formationId)
+        .single();
+      
+      console.log("[DEBUG] Formation après tentative de mise à jour:", updatedFormation);
+      
       toast({
-        title: "Aucune modification",
-        description: "Aucune donnée n'a été modifiée en base. Vérifiez que les valeurs sont différentes de l'existant.",
+        title: "Aucune modification détectée",
+        description: "Les valeurs sont peut-être identiques à celles déjà en base, ou vous n'avez pas les permissions nécessaires.",
         variant: "destructive",
       });
       setLoading(false);
