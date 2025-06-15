@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Video, BookOpen, Users, Upload, Eye, TrendingUp, DollarSign, MoreHorizontal } from 'lucide-react';
+import { Plus, Video, BookOpen, Users, Upload, Eye, TrendingUp, DollarSign, MoreHorizontal, Youtube } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -25,7 +25,7 @@ const fetchUsers = async () => {
 
 const AdminDashboard = () => {
   const [selectedTab, setSelectedTab] = useState('overview');
-  const [newVideo, setNewVideo] = useState({ title: '', description: '', price: '' });
+  const [newVideo, setNewVideo] = useState({ title: '', description: '', price: '', url: '' });
   const [newFormation, setNewFormation] = useState({ title: '', description: '', price: '' });
 
   const { data: users, isLoading: isLoadingUsers, error: usersError } = useQuery({
@@ -170,13 +170,32 @@ const AdminDashboard = () => {
                 value={newVideo.price}
                 onChange={(e) => setNewVideo({...newVideo, price: e.target.value})}
               />
-              <div className="flex space-x-2">
-                <Button variant="outline" className="flex-1">
-                  <Upload className="w-4 h-4 mr-2" />
-                  Télécharger Vidéo
-                </Button>
-                <Button className="flex-1">Publier</Button>
-              </div>
+              <Tabs defaultValue="url" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="url">Lien Externe</TabsTrigger>
+                  <TabsTrigger value="upload">Télécharger</TabsTrigger>
+                </TabsList>
+                <TabsContent value="url" className="pt-4">
+                  <div className="relative flex items-center">
+                    <span className="absolute left-3 z-10">
+                      <Youtube className="h-5 w-5 text-muted-foreground" />
+                    </span>
+                    <Input
+                      placeholder="URL de la vidéo (YouTube, Vimeo...)"
+                      value={newVideo.url}
+                      onChange={(e) => setNewVideo({ ...newVideo, url: e.target.value })}
+                      className="pl-10"
+                    />
+                  </div>
+                </TabsContent>
+                <TabsContent value="upload" className="pt-4">
+                  <Button variant="outline" className="w-full justify-center">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Choisir un fichier vidéo
+                  </Button>
+                </TabsContent>
+              </Tabs>
+              <Button className="w-full">Publier</Button>
             </CardContent>
           </Card>
 
