@@ -1,17 +1,37 @@
-
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Video, BookOpen, Users, Upload, Eye, TrendingUp, DollarSign } from 'lucide-react';
+import { Plus, Video, BookOpen, Users, Upload, Eye, TrendingUp, DollarSign, MoreHorizontal } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+
+const fetchUsers = async () => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data;
+};
 
 const AdminDashboard = () => {
   const [selectedTab, setSelectedTab] = useState('overview');
   const [newVideo, setNewVideo] = useState({ title: '', description: '', price: '' });
   const [newFormation, setNewFormation] = useState({ title: '', description: '', price: '' });
+
+  const { data: users, isLoading: isLoadingUsers, error: usersError } = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: fetchUsers
+  });
 
   const stats = [
     { title: 'Total Vidéos', value: '124', icon: Video, color: 'text-blue-600' },
@@ -75,6 +95,7 @@ const AdminDashboard = () => {
           <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
           <TabsTrigger value="videos">Gestion Vidéos</TabsTrigger>
           <TabsTrigger value="formations">Gestion Formations</TabsTrigger>
+          <TabsTrigger value="users">Gestion Utilisateurs</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -248,6 +269,81 @@ const AdminDashboard = () => {
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="users" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Gestion des Utilisateurs</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Visualisez et gérez les utilisateurs de la plateforme.
+              </p>
+            </CardHeader>
+            <CardContent>
+              {isLoadingUsers && <p>Chargement des utilisateurs...</p>}
+              {usersError instanceof Error && <p className="text-destructive">Erreur: {usersError.message}</p>}
+              {users && (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Utilisateur</TableHead>
+                      <TableHead>Rôle</TableHead>
+                      <TableHead className="hidden md:table-cell">Inscrit le</TableHead>
+                      <TableHead>
+                        <span className="sr-only">Actions</span>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {users.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar>
+                              <AvatarImage src={user.avatar_url ?? undefined} />
+                              <AvatarFallback>
+                                {user.first_name?.[0]?.toUpperCase() ?? ''}
+                                {user.last_name?.[0]?.toUpperCase() ?? ''}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium">{user.first_name} {user.last_name}</p>
+                              <p className="text-sm text-muted-foreground">@{user.username}</p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                            {user.role}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Ouvrir le menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>Voir le profil</DropdownMenuItem>
+                              <DropdownMenuItem>Changer le rôle</DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive">
+                                Suspendre l'utilisateur
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
