@@ -21,35 +21,23 @@ export const useUserSessions = () => {
   return useQuery({
     queryKey: ['user-sessions'],
     queryFn: async () => {
-      const { data: sessions, error } = await supabase
+      const { data, error } = await supabase
         .from('user_sessions')
-        .select('*')
+        .select(`
+          *,
+          profiles!inner(first_name, last_name, username)
+        `)
         .order('started_at', { ascending: false })
-        .limit(100); // Augmenter la limite pour voir plus de sessions
+        .limit(50);
 
       if (error) throw error;
 
-      // Récupérer les profils séparément
-      const userIds = [...new Set(sessions.map(s => s.user_id))];
-      
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, username')
-        .in('id', userIds);
-
-      if (profilesError) throw profilesError;
-
-      // Combiner les données
-      return sessions.map(session => ({
+      return data.map(session => ({
         ...session,
-        user_profile: profiles.find(p => p.id === session.user_id) || {
-          first_name: null,
-          last_name: null,
-          username: null
-        }
+        user_profile: session.profiles
       })) as UserSession[];
     },
-    refetchInterval: 5000 // Rafraîchir toutes les 5 secondes pour voir les changements rapidement
+    refetchInterval: 30000
   });
 };
 
@@ -59,16 +47,14 @@ export const useUserSessionStats = () => {
     queryFn: async () => {
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
       
-      // Sessions réellement actives (avec heartbeat récent et pas terminées)
+      // Sessions actives (pas encore terminées)
       const { count: activeSessions } = await supabase
         .from('user_sessions')
         .select('*', { count: 'exact', head: true })
-        .is('ended_at', null)
-        .gte('started_at', twoMinutesAgo.toISOString());
+        .is('ended_at', null);
 
-      // Temps moyen de session aujourd'hui (seulement les sessions terminées)
+      // Temps moyen de session aujourd'hui
       const { data: todaySessions } = await supabase
         .from('user_sessions')
         .select('duration_minutes')
@@ -91,6 +77,6 @@ export const useUserSessionStats = () => {
         todaySessionsCount: todaySessionsCount || 0
       };
     },
-    refetchInterval: 5000 // Rafraîchir toutes les 5 secondes
+    refetchInterval: 30000
   });
 };
