@@ -1,6 +1,7 @@
 import { Home, ShoppingBag, Bell, User, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/hooks/useCart';
+import { useAuth } from '@/contexts/AuthProvider';
 
 interface BottomNavigationProps {
   activeTab: string;
@@ -9,10 +10,11 @@ interface BottomNavigationProps {
 
 const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationProps) => {
   const { getTotalItems } = useCart();
+  const { user } = useAuth();
   
   const tabs = [
     { id: 'home', label: 'Accueil', icon: Home },
-    { id: 'shop', label: 'Boutique', icon: ShoppingBag, hasNotification: getTotalItems() > 0, notificationCount: getTotalItems() },
+    { id: 'shop', label: 'Boutique', icon: ShoppingBag, hasNotification: user && getTotalItems() > 0, notificationCount: user ? getTotalItems() : 0 },
     { id: 'courses', label: 'Cours', icon: null, isSpecial: true },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'profile', label: 'Profil', icon: User },

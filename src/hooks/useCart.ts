@@ -16,104 +16,67 @@ export const useCart = () => {
   } = useCartMutations();
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // This is the main effect for synchronizing the cart state.
-  // It handles both logged-in users (from DB) and guests (from localStorage).
   useEffect(() => {
-    // Wait until we know the user's auth status.
     if (authLoading) {
       return;
     }
 
     if (user) {
-      // User is logged in. The database is the source of truth.
-      // Wait for the cart data to be fetched from the DB.
       if (cartLoading) {
         return;
       }
       setItems(dbCartItems);
     } else {
-      // User is not logged in. LocalStorage is the source of truth.
-      const savedCart = localStorage.getItem('cart');
-      if (savedCart) {
-        try {
-          const parsedCart = JSON.parse(savedCart);
-          setItems(parsedCart);
-        } catch (error) {
-          console.error('Error parsing cart from localStorage:', error);
-          setItems([]);
-        }
-      } else {
-        setItems([]);
-      }
+      setItems([]);
     }
     setIsInitialized(true);
   }, [user, authLoading, cartLoading, dbCartItems]);
 
-  // This effect persists the cart to localStorage, but ONLY for guest users.
   useEffect(() => {
-    if (!user && isInitialized) {
-      localStorage.setItem('cart', JSON.stringify(items));
+    if (user) {
     }
   }, [items, user, isInitialized]);
 
   const addToCart = (item: Omit<CartItem, 'quantity'>) => {
-    if (user) {
-      addToCartMutation.mutate(item);
-    } else {
-      setItems(prev => {
-        const existingItem = prev.find(i => i.id === item.id);
-        if (existingItem) {
-          return prev.map(i => 
-            i.id === item.id 
-              ? { ...i, quantity: i.quantity + 1 }
-              : i
-          );
-        }
-        return [...prev, { ...item, quantity: 1 }];
-      });
+    if (!user) {
+      return;
     }
+    addToCartMutation.mutate(item);
   };
 
   const removeFromCart = (id: string) => {
-    if (user) {
-      removeFromCartMutation.mutate(id);
-    } else {
-      setItems(prev => prev.filter(item => item.id !== id));
+    if (!user) {
+      return;
     }
+    removeFromCartMutation.mutate(id);
   };
 
   const updateQuantity = (id: string, quantity: number) => {
-    if (user) {
-      updateQuantityMutation.mutate({ productId: id, quantity });
-    } else {
-      if (quantity <= 0) {
-        setItems(prev => prev.filter(item => item.id !== id));
-      } else {
-        setItems(prev => prev.map(item => 
-          item.id === id ? { ...item, quantity } : item
-        ));
-      }
+    if (!user) {
+      return;
     }
+    updateQuantityMutation.mutate({ productId: id, quantity });
   };
 
   const clearCart = async () => {
-    if (user) {
-      await clearCartMutation.mutateAsync();
-    } else {
-      setItems([]);
+    if (!user) {
+      return;
     }
+    await clearCartMutation.mutateAsync();
   };
 
   const getTotalPrice = () => {
+    if (!user) return 0;
     return items.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
 
   const getTotalItems = () => {
+    if (!user) return 0;
     return items.reduce((total, item) => total + item.quantity, 0);
   };
 
   return {
-    items,
+    items: user ? items : [],
     addToCart,
     removeFromCart,
     updateQuantity,

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthProvider';
@@ -37,46 +36,30 @@ export const useVideoLikes = () => {
 
       if (existingLike) {
         console.log('Removing like...');
-        // Unlike the video
+        // Unlike the video : delete like and DECREMENT likes_count only if it's > 0 nativement.
         const { error: deleteError } = await supabase
           .from('video_likes')
           .delete()
           .eq('user_id', user.id)
           .eq('video_id', videoId);
 
-        if (deleteError) {
-          console.error('Error deleting like:', deleteError);
-          throw deleteError;
-        }
+        if (deleteError) throw deleteError;
 
-        // Get current likes count and decrement
+        // Always fetch the real current like count after trigger (in case other users like at same time)
         const { data: currentVideo, error: fetchError } = await supabase
           .from('videos')
           .select('likes_count')
           .eq('id', videoId)
           .single();
 
-        if (fetchError) {
-          console.error('Error fetching video for decrement:', fetchError);
-          throw fetchError;
-        }
+        if (fetchError) throw fetchError;
 
-        const newCount = Math.max(0, (currentVideo?.likes_count || 0) - 1);
-        
-        const { error: updateError } = await supabase
-          .from('videos')
-          .update({ likes_count: newCount })
-          .eq('id', videoId);
+        // Just return new count from db...
+        const newCount = currentVideo?.likes_count || 0;
 
-        if (updateError) {
-          console.error('Error updating likes count (decrement):', updateError);
-          throw updateError;
-        }
-
-        console.log('Like removed successfully, new count:', newCount);
         return { 
           isLiked: false, 
-          newCount: newCount
+          newCount
         };
       } else {
         console.log('Adding like...');
@@ -85,39 +68,22 @@ export const useVideoLikes = () => {
           .from('video_likes')
           .insert({ user_id: user.id, video_id: videoId });
 
-        if (insertError) {
-          console.error('Error inserting like:', insertError);
-          throw insertError;
-        }
+        if (insertError) throw insertError;
 
-        // Get current likes count and increment
+        // Always fetch the updated like count from db
         const { data: currentVideo, error: fetchError } = await supabase
           .from('videos')
           .select('likes_count')
           .eq('id', videoId)
           .single();
 
-        if (fetchError) {
-          console.error('Error fetching video for increment:', fetchError);
-          throw fetchError;
-        }
+        if (fetchError) throw fetchError;
 
-        const newCount = (currentVideo?.likes_count || 0) + 1;
-        
-        const { error: updateError } = await supabase
-          .from('videos')
-          .update({ likes_count: newCount })
-          .eq('id', videoId);
+        const newCount = currentVideo?.likes_count || 1;
 
-        if (updateError) {
-          console.error('Error updating likes count (increment):', updateError);
-          throw updateError;
-        }
-
-        console.log('Like added successfully, new count:', newCount);
         return { 
           isLiked: true, 
-          newCount: newCount
+          newCount
         };
       }
     } catch (error) {

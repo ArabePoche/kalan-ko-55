@@ -1,11 +1,12 @@
-
 import { Filter, Search, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/hooks/useCart';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 const ShopHeader = () => {
   const { getTotalItems } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   return (
@@ -23,7 +24,7 @@ const ShopHeader = () => {
             onClick={() => navigate('/cart')}
           >
             <ShoppingCart className="w-5 h-5" />
-            {getTotalItems() > 0 && (
+            {user && getTotalItems() > 0 && (
               <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                 {getTotalItems()}
               </span>
