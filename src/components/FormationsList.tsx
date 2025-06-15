@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 
 interface FormationsListProps {
@@ -31,8 +30,7 @@ const FormationsList = ({ formations, loading, error }: FormationsListProps) => 
             <Button
               variant="outline"
               size="sm"
-              disabled
-              className="opacity-50 cursor-not-allowed"
+              // Bouton maintenant actif
             >
               Modifier
             </Button>
