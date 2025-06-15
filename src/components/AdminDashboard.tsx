@@ -13,7 +13,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from '@/components/ui/use-toast';
 import FormationsList from "./FormationsList";
-// Ajout : Select shadcn
+import FormationCreateForm from "./FormationCreateForm";
+import VideoCreateForm from "./VideoCreateForm";
+import UsersTable from "./UsersTable";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Charger les catégories depuis Supabase
@@ -361,94 +363,18 @@ const AdminDashboard = () => {
               Nouvelle Vidéo
             </Button>
           </div>
-
           <Card>
             <CardHeader>
               <CardTitle>Ajouter une nouvelle vidéo</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <Input
-                placeholder="Titre de la vidéo"
-                value={newVideo.title}
-                onChange={(e) => setNewVideo({ ...newVideo, title: e.target.value })}
-                disabled={isCreatingVideo}
+            <CardContent>
+              <VideoCreateForm
+                categories={categories || []}
+                loadingCategories={!!loadingCategories}
+                onCreated={() => {/* Optionally could trigger refetch of videos here */}}
               />
-              <Textarea
-                placeholder="Description"
-                value={newVideo.description}
-                onChange={(e) => setNewVideo({ ...newVideo, description: e.target.value })}
-                disabled={isCreatingVideo}
-              />
-              {/* Sélecteur de type de vidéo */}
-              <Select
-                value={newVideo.videoType}
-                onValueChange={(v) => setNewVideo({ ...newVideo, videoType: v })}
-                disabled={isCreatingVideo}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Type de vidéo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="promo">Promotion</SelectItem>
-                  <SelectItem value="educational">Éducative</SelectItem>
-                  <SelectItem value="testimonial">Témoignage</SelectItem>
-                </SelectContent>
-              </Select>
-              {/* Sélecteur de catégorie */}
-              <Select
-                value={newVideo.categoryId}
-                onValueChange={(v) => setNewVideo({ ...newVideo, categoryId: v })}
-                disabled={isCreatingVideo || loadingCategories}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Catégorie" />
-                </SelectTrigger>
-                <SelectContent>
-                  {loadingCategories && (
-                    <SelectItem value="" disabled>Chargement...</SelectItem>
-                  )}
-                  {categories && categories.map((cat: any) => (
-                    <SelectItem value={cat.id} key={cat.id}>
-                      {cat.label ?? cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Tabs defaultValue="url" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="url">Lien Externe</TabsTrigger>
-                  <TabsTrigger value="upload">Télécharger</TabsTrigger>
-                </TabsList>
-                <TabsContent value="url" className="pt-4">
-                  <div className="relative flex items-center">
-                    <span className="absolute left-3 z-10">
-                      <Youtube className="h-5 w-5 text-muted-foreground" />
-                    </span>
-                    <Input
-                      placeholder="URL de la vidéo (YouTube, Vimeo...)"
-                      value={newVideo.url}
-                      onChange={(e) => setNewVideo({ ...newVideo, url: e.target.value })}
-                      disabled={isCreatingVideo}
-                      className="pl-10"
-                    />
-                  </div>
-                </TabsContent>
-                <TabsContent value="upload" className="pt-4">
-                  <Button variant="outline" className="w-full justify-center" disabled>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Choisir un fichier vidéo
-                  </Button>
-                  <span className="text-xs text-muted-foreground block mt-1">
-                    (Fonctionnalité à venir)
-                  </span>
-                </TabsContent>
-              </Tabs>
-              <Button className="w-full" onClick={handleCreateVideo} disabled={isCreatingVideo}>
-                {isCreatingVideo ? "Création..." : "Publier"}
-              </Button>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader>
               <CardTitle>Vidéos Existantes</CardTitle>
@@ -482,122 +408,18 @@ const AdminDashboard = () => {
               Nouvelle Formation
             </Button>
           </div>
-
           <Card>
             <CardHeader>
               <CardTitle>Ajouter une nouvelle formation</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <Input
-                placeholder="Titre de la formation"
-                value={newFormation.title}
-                onChange={(e) => setNewFormation({ ...newFormation, title: e.target.value })}
-                disabled={isCreatingFormation}
+            <CardContent>
+              <FormationCreateForm
+                categories={categories || []}
+                loadingCategories={!!loadingCategories}
+                onCreated={refetchFormations}
               />
-              <Textarea
-                placeholder="Description"
-                value={newFormation.description}
-                onChange={(e) => setNewFormation({ ...newFormation, description: e.target.value })}
-                disabled={isCreatingFormation}
-              />
-              <Input
-                placeholder="Prix (€)"
-                type="number"
-                value={newFormation.price}
-                onChange={(e) => setNewFormation({ ...newFormation, price: e.target.value })}
-                disabled={isCreatingFormation}
-              />
-              <Input
-                placeholder="Prix original (€) (optionnel)"
-                type="number"
-                value={newFormation.original_price}
-                onChange={(e) => setNewFormation({ ...newFormation, original_price: e.target.value })}
-                disabled={isCreatingFormation}
-              />
-              {/* Sélecteur de catégorie */}
-              <Select
-                value={newFormation.category_id}
-                onValueChange={v => setNewFormation({ ...newFormation, category_id: v })}
-                disabled={isCreatingFormation || !categories}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Catégorie" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories && categories.map((cat: any) => (
-                    <SelectItem value={cat.id} key={cat.id}>{cat.label ?? cat.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Input
-                placeholder="ID formateur (optionnel)"
-                value={newFormation.instructor_id}
-                onChange={(e) => setNewFormation({ ...newFormation, instructor_id: e.target.value })}
-                disabled={isCreatingFormation}
-              />
-              <Input
-                placeholder="URL de l’image de formation (optionnel)"
-                value={newFormation.image_url}
-                onChange={(e) => setNewFormation({ ...newFormation, image_url: e.target.value })}
-                disabled={isCreatingFormation}
-              />
-              <Input
-                placeholder="Badge spécial (ex : Nouveau, Bestseller) (optionnel)"
-                value={newFormation.badge}
-                onChange={(e) => setNewFormation({ ...newFormation, badge: e.target.value })}
-                disabled={isCreatingFormation}
-              />
-              <Input
-                placeholder="Note moyenne (ex : 4.7) (optionnel)"
-                type="number"
-                step="0.01"
-                value={newFormation.rating}
-                onChange={(e) => setNewFormation({ ...newFormation, rating: e.target.value })}
-                disabled={isCreatingFormation}
-              />
-              <Input
-                placeholder="Nombre d’étudiants (optionnel)"
-                type="number"
-                value={newFormation.students_count}
-                onChange={(e) => setNewFormation({ ...newFormation, students_count: e.target.value })}
-                disabled={isCreatingFormation}
-              />
-              <Input
-                placeholder="Pourcentage de réduction (optionnel)"
-                type="number"
-                value={newFormation.discount_percentage}
-                onChange={(e) => setNewFormation({ ...newFormation, discount_percentage: e.target.value })}
-                disabled={isCreatingFormation}
-              />
-              <Input
-                placeholder="Durée (en minutes) (optionnel)"
-                type="number"
-                value={newFormation.duration}
-                onChange={(e) => setNewFormation({ ...newFormation, duration: e.target.value })}
-                disabled={isCreatingFormation}
-              />
-              <div className="relative flex items-center">
-                <span className="absolute left-3 z-10">
-                  <Video className="h-5 w-5 text-muted-foreground" />
-                </span>
-                <Input
-                  placeholder="URL de la vidéo promotionnelle (optionnel)"
-                  value={newFormation.promoVideoUrl}
-                  onChange={(e) => setNewFormation({ ...newFormation, promoVideoUrl: e.target.value })}
-                  disabled={isCreatingFormation}
-                  className="pl-10"
-                />
-              </div>
-              <Button
-                className="w-full"
-                onClick={handleCreateFormation}
-                disabled={isCreatingFormation}
-              >
-                {isCreatingFormation ? "Création..." : "Créer Formation"}
-              </Button>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader>
               <CardTitle>Formations Existantes</CardTitle>
@@ -623,66 +445,7 @@ const AdminDashboard = () => {
             <CardContent>
               {isLoadingUsers && <p>Chargement des utilisateurs...</p>}
               {usersError instanceof Error && <p className="text-destructive">Erreur: {usersError.message}</p>}
-              {users && (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Utilisateur</TableHead>
-                      <TableHead>Rôle</TableHead>
-                      <TableHead className="hidden md:table-cell">Inscrit le</TableHead>
-                      <TableHead>
-                        <span className="sr-only">Actions</span>
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarImage src={user.avatar_url ?? undefined} />
-                              <AvatarFallback>
-                                {user.first_name?.[0]?.toUpperCase() ?? ''}
-                                {user.last_name?.[0]?.toUpperCase() ?? ''}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium">{user.first_name} {user.last_name}</p>
-                              <p className="text-sm text-muted-foreground">@{user.username}</p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
-                            {user.role}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Ouvrir le menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>Voir le profil</DropdownMenuItem>
-                              <DropdownMenuItem>Changer le rôle</DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive">
-                                Suspendre l'utilisateur
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+              {users && <UsersTable users={users} />}
             </CardContent>
           </Card>
         </TabsContent>
