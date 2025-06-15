@@ -25,13 +25,25 @@ export const useNotifications = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
+      console.log('Fetching notifications for user:', user.id);
+
+      // Récupérer les notifications pour l'utilisateur connecté
+      // Soit celles qui lui sont adressées directement, soit celles pour tous les admins (si c'est un admin)
       const { data, error } = await supabase
         .from('notifications')
-        .select('*')
+        .select(`
+          *,
+          profiles:user_id (role)
+        `)
         .or(`user_id.eq.${user.id},is_for_all_admins.eq.true`)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching notifications:', error);
+        throw error;
+      }
+      
+      console.log('Raw notifications data:', data);
       
       return data.map(notification => ({
         ...notification,
@@ -42,12 +54,17 @@ export const useNotifications = () => {
 
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
+      console.log('Marking notification as read:', notificationId);
+      
       const { error } = await supabase
         .from('notifications')
         .update({ is_read: true })
         .eq('id', notificationId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error marking notification as read:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -59,13 +76,18 @@ export const useNotifications = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      console.log('Marking all notifications as read for user:', user.id);
+
       const { error } = await supabase
         .from('notifications')
         .update({ is_read: true })
         .or(`user_id.eq.${user.id},is_for_all_admins.eq.true`)
         .eq('is_read', false);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error marking all notifications as read:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -81,6 +103,12 @@ export const useNotifications = () => {
   };
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
+
+  console.log('Notifications hook result:', { 
+    notificationsCount: notifications.length, 
+    unreadCount,
+    loading 
+  });
 
   return {
     notifications,
