@@ -283,7 +283,12 @@ const AdminDashboard = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      {/* Déplacement de la barre d'onglets en tout début de page */}
+      {/* Header d'abord */}
+      <div className="mb-3">
+        <h1 className="text-3xl font-bold text-foreground">Dashboard Administrateur</h1>
+        <p className="text-muted-foreground">Gérez vos contenus et suivez vos performances</p>
+      </div>
+      {/* Tabs juste sous le header */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
         <TabsList className="mb-6">
           <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>

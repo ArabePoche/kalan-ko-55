@@ -1,6 +1,5 @@
 
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +13,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+interface LessonForm {
+  title: string;
+  video_url: string;
+}
+
+interface LevelForm {
+  title: string;
+  lessons: LessonForm[];
+}
 
 interface FormationEditModalProps {
   open: boolean;
@@ -30,20 +40,53 @@ export default function FormationEditModal({
 }: FormationEditModalProps) {
   const [form, setForm] = useState<any>(() => ({ ...formation }));
   const [loading, setLoading] = useState(false);
+  // Nouveaux états pour niveaux et leçons
+  const [levels, setLevels] = useState<LevelForm[]>([]);
 
-  // Update form whenever a new formation is selected
-  // (no-op if formation is null)
+  // Hydrater à chaque sélection
   React.useEffect(() => {
     setForm(formation ? { ...formation } : {});
+    // On attend que les niveaux/lessons véritables viennent du backend plus tard (par ex via meta data)
+    setLevels(formation?.levels ?? []);
   }, [formation]);
 
   if (!formation) return null;
 
+  const handleLevelChange = (idx: number, key: keyof LevelForm, value: any) => {
+    const updated = [...levels];
+    (updated[idx] as any)[key] = value;
+    setLevels(updated);
+  };
+
+  const handleLessonChange = (levelIdx: number, lessonIdx: number, key: keyof LessonForm, value: any) => {
+    const updated = [...levels];
+    updated[levelIdx].lessons[lessonIdx][key] = value;
+    setLevels(updated);
+  };
+
+  const addLevel = () => {
+    setLevels([...levels, { title: "", lessons: [] }]);
+  };
+
+  const removeLevel = (i: number) => {
+    setLevels(levels.filter((_, idx) => idx !== i));
+  };
+
+  const addLesson = (levelIdx: number) => {
+    const updated = [...levels];
+    updated[levelIdx].lessons.push({ title: "", video_url: "" });
+    setLevels(updated);
+  };
+
+  const removeLesson = (levelIdx: number, lessonIdx: number) => {
+    const updated = [...levels];
+    updated[levelIdx].lessons = updated[levelIdx].lessons.filter((_, i) => i !== lessonIdx);
+    setLevels(updated);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     setLoading(true);
-    // Basic validation: title and price required
     if (!form.title || !form.price) {
       toast({
         title: "Champs requis",
@@ -53,8 +96,8 @@ export default function FormationEditModal({
       setLoading(false);
       return;
     }
-
-    // Update DB
+    // Vous devrez gérer la sauvegarde des levels/lessons avec une logique spécifique si la structure réelle l'exige (table à part).
+    // Ici on stocke côté formation sous levels, à adapter à vos specs backend.
     const { error } = await supabase
       .from("formations")
       .update({
@@ -73,6 +116,7 @@ export default function FormationEditModal({
           ? parseInt(form.discount_percentage)
           : null,
         duration: form.duration ? parseInt(form.duration) : null,
+        levels: levels, // <- dépend des specs/requêtes backend
       })
       .eq("id", formation.id);
 
@@ -100,86 +144,156 @@ export default function FormationEditModal({
         <DialogHeader>
           <DialogTitle>Modifier la formation</DialogTitle>
         </DialogHeader>
-        <form className="space-y-3" onSubmit={handleSubmit}>
-          <Input
-            placeholder="Titre"
-            value={form.title ?? ""}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-            disabled={loading}
-          />
-          <Textarea
-            placeholder="Description"
-            value={form.description ?? ""}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            disabled={loading}
-          />
-          <Input
-            placeholder="Prix (€)"
-            type="number"
-            value={form.price ?? ""}
-            onChange={(e) => setForm({ ...form, price: e.target.value })}
-            disabled={loading}
-          />
-          <Input
-            placeholder="Prix original (€) (optionnel)"
-            type="number"
-            value={form.original_price ?? ""}
-            onChange={(e) =>
-              setForm({ ...form, original_price: e.target.value })
-            }
-            disabled={loading}
-          />
-          <Input
-            placeholder="URL de l’image (optionnel)"
-            value={form.image_url ?? ""}
-            onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-            disabled={loading}
-          />
-          <Input
-            placeholder="Badge (optionnel)"
-            value={form.badge ?? ""}
-            onChange={(e) => setForm({ ...form, badge: e.target.value })}
-            disabled={loading}
-          />
-          <Input
-            placeholder="Note (optionnel)"
-            type="number"
-            step="0.01"
-            value={form.rating ?? ""}
-            onChange={(e) => setForm({ ...form, rating: e.target.value })}
-            disabled={loading}
-          />
-          <Input
-            placeholder="Nb étudiants (optionnel)"
-            type="number"
-            value={form.students_count ?? ""}
-            onChange={(e) =>
-              setForm({ ...form, students_count: e.target.value })
-            }
-            disabled={loading}
-          />
-          <Input
-            placeholder="ID formateur (optionnel)"
-            value={form.instructor_id ?? ""}
-            onChange={(e) => setForm({ ...form, instructor_id: e.target.value })}
-            disabled={loading}
-          />
-          <Input
-            placeholder="Réduction % (optionnel)"
-            type="number"
-            value={form.discount_percentage ?? ""}
-            onChange={(e) =>
-              setForm({ ...form, discount_percentage: e.target.value })
-            }
-            disabled={loading}
-          />
-          <Input
-            placeholder="Durée (en minutes, optionnel)"
-            type="number"
-            value={form.duration ?? ""}
-            onChange={(e) => setForm({ ...form, duration: e.target.value })}
-            disabled={loading}
-          />
+        <form className="space-y-3" onSubmit={handleSubmit} style={{ height: "70vh", maxHeight: "70vh" }}>
+          {/* ScrollArea pour un défilement agréable */}
+          <ScrollArea className="h-[60vh]">
+            <div className="space-y-3">
+              <Input
+                placeholder="Titre"
+                value={form.title ?? ""}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                disabled={loading}
+              />
+              <Textarea
+                placeholder="Description"
+                value={form.description ?? ""}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                disabled={loading}
+              />
+              <Input
+                placeholder="Prix (€)"
+                type="number"
+                value={form.price ?? ""}
+                onChange={(e) => setForm({ ...form, price: e.target.value })}
+                disabled={loading}
+              />
+              <Input
+                placeholder="Prix original (€) (optionnel)"
+                type="number"
+                value={form.original_price ?? ""}
+                onChange={(e) =>
+                  setForm({ ...form, original_price: e.target.value })
+                }
+                disabled={loading}
+              />
+              <Input
+                placeholder="URL de l’image (optionnel)"
+                value={form.image_url ?? ""}
+                onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+                disabled={loading}
+              />
+              <Input
+                placeholder="Badge (optionnel)"
+                value={form.badge ?? ""}
+                onChange={(e) => setForm({ ...form, badge: e.target.value })}
+                disabled={loading}
+              />
+              <Input
+                placeholder="Note (optionnel)"
+                type="number"
+                step="0.01"
+                value={form.rating ?? ""}
+                onChange={(e) => setForm({ ...form, rating: e.target.value })}
+                disabled={loading}
+              />
+              <Input
+                placeholder="Nb étudiants (optionnel)"
+                type="number"
+                value={form.students_count ?? ""}
+                onChange={(e) =>
+                  setForm({ ...form, students_count: e.target.value })
+                }
+                disabled={loading}
+              />
+              <Input
+                placeholder="ID formateur (optionnel)"
+                value={form.instructor_id ?? ""}
+                onChange={(e) => setForm({ ...form, instructor_id: e.target.value })}
+                disabled={loading}
+              />
+              <Input
+                placeholder="Réduction % (optionnel)"
+                type="number"
+                value={form.discount_percentage ?? ""}
+                onChange={(e) =>
+                  setForm({ ...form, discount_percentage: e.target.value })
+                }
+                disabled={loading}
+              />
+              <Input
+                placeholder="Durée (en minutes, optionnel)"
+                type="number"
+                value={form.duration ?? ""}
+                onChange={(e) => setForm({ ...form, duration: e.target.value })}
+                disabled={loading}
+              />
+              {/* GESTION DES NIVEAUX */}
+              <div className="border-t pt-3 mt-4">
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold text-lg">Niveaux</span>
+                  <Button size="sm" type="button" variant="outline" onClick={addLevel} disabled={loading}>
+                    + Ajouter un niveau
+                  </Button>
+                </div>
+                <div className="space-y-4 mt-2">
+                  {levels.map((level, li) => (
+                    <div key={li} className="border rounded-md p-2 space-y-2 bg-muted/50">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          placeholder="Titre du niveau"
+                          value={level.title}
+                          onChange={e => handleLevelChange(li, "title", e.target.value)}
+                          className="flex-1"
+                          disabled={loading}
+                        />
+                        <Button type="button" variant="destructive" size="icon" onClick={() => removeLevel(li)} disabled={loading}>
+                          &times;
+                        </Button>
+                      </div>
+                      {/* gestion des leçons */}
+                      <div className="ml-3">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="font-medium">Leçons</span>
+                          <Button type="button" size="sm" variant="secondary" onClick={() => addLesson(li)} disabled={loading}>
+                            + Ajouter une leçon
+                          </Button>
+                        </div>
+                        <div className="space-y-2">
+                          {level.lessons.map((lesson, lesIdx) => (
+                            <div key={lesIdx} className="flex items-center gap-2">
+                              <Input
+                                placeholder="Titre de la leçon"
+                                value={lesson.title}
+                                onChange={e => handleLessonChange(li, lesIdx, "title", e.target.value)}
+                                className="flex-1"
+                                disabled={loading}
+                              />
+                              <Input
+                                placeholder="URL vidéo"
+                                value={lesson.video_url}
+                                onChange={e => handleLessonChange(li, lesIdx, "video_url", e.target.value)}
+                                className="flex-1"
+                                disabled={loading}
+                              />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                onClick={() => removeLesson(li, lesIdx)}
+                                disabled={loading}
+                              >
+                                &times;
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </ScrollArea>
           <DialogFooter>
             <Button type="submit" disabled={loading}>
               {loading ? "Enregistrement..." : "Enregistrer"}
@@ -195,4 +309,3 @@ export default function FormationEditModal({
     </Dialog>
   );
 }
-
