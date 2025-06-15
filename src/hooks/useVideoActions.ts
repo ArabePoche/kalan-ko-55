@@ -74,24 +74,27 @@ export const useVideoActions = (onLikeUpdate: (videoId: string, isLiked: boolean
     if (video.product) {
       console.log('Adding product to cart:', video.product);
       
-      // Add the product to cart
+      // Add the product to cart with all necessary information
       addToCart({
-        id: video.product.id || video.id,
-        title: video.product.title || video.title,
+        id: video.product.id,
+        title: video.title, // Utiliser le titre de la vidéo
         price: video.product.price,
-        instructor: video.product.instructor || 'Instructeur',
-        image: video.product.image_url || video.thumbnail_url || '/placeholder.svg',
-        type: video.product.product_type || 'formation'
+        instructor: video.author?.first_name && video.author?.last_name 
+          ? `${video.author.first_name} ${video.author.last_name}`.trim()
+          : video.author?.username || 'Instructeur',
+        image: video.thumbnail_url || '/placeholder.svg',
+        type: 'formation' // Type par défaut pour les vidéos de formation
       });
       
       toast({
         title: "Produit ajouté au panier !",
-        description: "Le produit a été ajouté à votre panier.",
+        description: `${video.title} a été ajouté à votre panier.`,
       });
       
       // Navigate to checkout
       navigate('/checkout');
     } else {
+      console.log('No product found for video, navigating to formation page');
       // Fallback to formation page
       navigate(`/formation/${video.id}`);
     }
