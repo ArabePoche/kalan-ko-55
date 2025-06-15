@@ -643,6 +643,44 @@ export type Database = {
         }
         Relationships: []
       }
+      teachers: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string
+          first_name: string
+          formation_id: string
+          id: string
+          last_name: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email: string
+          first_name: string
+          formation_id: string
+          id?: string
+          last_name: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string
+          first_name?: string
+          formation_id?: string
+          id?: string
+          last_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teachers_formation_id_fkey"
+            columns: ["formation_id"]
+            isOneToOne: false
+            referencedRelation: "formations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_enrollments: {
         Row: {
           enrolled_at: string | null
