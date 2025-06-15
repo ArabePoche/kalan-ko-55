@@ -32,60 +32,48 @@ export const useVideoLikes = () => {
         throw checkError;
       }
 
-      console.log('Existing like check result:', existingLike);
+      let isLiked: boolean;
 
       if (existingLike) {
         console.log('Removing like...');
-        // Unlike the video : delete like and DECREMENT likes_count only if it's > 0 nativement.
+        // Unlike the video
         const { error: deleteError } = await supabase
           .from('video_likes')
           .delete()
           .eq('user_id', user.id)
           .eq('video_id', videoId);
-
         if (deleteError) throw deleteError;
-
-        // Always fetch the real current like count after trigger (in case other users like at same time)
-        const { data: currentVideo, error: fetchError } = await supabase
-          .from('videos')
-          .select('likes_count')
-          .eq('id', videoId)
-          .single();
-
-        if (fetchError) throw fetchError;
-
-        // Just return new count from db...
-        const newCount = currentVideo?.likes_count || 0;
-
-        return { 
-          isLiked: false, 
-          newCount
-        };
+        isLiked = false;
       } else {
         console.log('Adding like...');
         // Like the video
         const { error: insertError } = await supabase
           .from('video_likes')
           .insert({ user_id: user.id, video_id: videoId });
-
         if (insertError) throw insertError;
-
-        // Always fetch the updated like count from db
-        const { data: currentVideo, error: fetchError } = await supabase
-          .from('videos')
-          .select('likes_count')
-          .eq('id', videoId)
-          .single();
-
-        if (fetchError) throw fetchError;
-
-        const newCount = currentVideo?.likes_count || 1;
-
-        return { 
-          isLiked: true, 
-          newCount
-        };
+        isLiked = true;
       }
+
+      // Get the new count of likes for the video
+      const { count, error: countError } = await supabase
+        .from('video_likes')
+        .select('*', { count: 'exact', head: true })
+        .eq('video_id', videoId);
+
+      if (countError) throw countError;
+
+      const newCount = count || 0;
+
+      // Update the likes_count in the videos table
+      const { error: updateError } = await supabase
+        .from('videos')
+        .update({ likes_count: newCount })
+        .eq('id', videoId);
+
+      if (updateError) throw updateError;
+      
+      return { isLiked, newCount };
+
     } catch (error) {
       console.error('Error in toggleLike:', error);
       toast({
