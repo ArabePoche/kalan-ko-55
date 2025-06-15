@@ -117,7 +117,10 @@ const AdminDashboard = () => {
         setIsCreatingFormation(false);
         return;
       }
-      const toInsert: Record<string, any> = {
+      // Génération d'un id unique
+      const id = crypto.randomUUID();
+      const toInsert = {
+        id,
         title: newFormation.title,
         description: newFormation.description,
         promo_video_url: newFormation.promoVideoUrl || null,
@@ -127,7 +130,7 @@ const AdminDashboard = () => {
         students_count: newFormation.students_count ? parseInt(newFormation.students_count) : 0,
         instructor_id: newFormation.instructor_id || null,
         category_id: newFormation.category_id || null,
-        price: parseFloat(newFormation.price),
+        price: newFormation.price ? parseFloat(newFormation.price) : null,
         original_price: newFormation.original_price ? parseFloat(newFormation.original_price) : null,
         discount_percentage: newFormation.discount_percentage ? parseInt(newFormation.discount_percentage) : null,
         is_active: true
@@ -183,6 +186,13 @@ const AdminDashboard = () => {
         setIsCreatingVideo(false);
         return;
       }
+      // Force typing pour video_type
+      const videoType =
+        newVideo.videoType === "promo"
+          ? "promo"
+          : newVideo.videoType === "educational"
+            ? "educational"
+            : "testimonial";
       const { error } = await supabase
         .from('videos')
         .insert([
@@ -190,12 +200,9 @@ const AdminDashboard = () => {
             title: newVideo.title,
             description: newVideo.description || null,
             video_url: newVideo.url,
-            video_type: newVideo.videoType,
-            // Ajout de la catégorie (champ `category_id`)
+            video_type: videoType,
             category_id: newVideo.categoryId,
-            // Ajout d'un flag d'activation
             is_active: true,
-            // ajouter d'autres champs si besoin
           }
         ]);
       if (error) {
@@ -544,17 +551,17 @@ const AdminDashboard = () => {
                   <div key={formation.id} className="border rounded-lg p-4">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h3 className="font-medium">{formation.title}</h3>
-                        <p className="text-sm text-muted-foreground">{formation.students} étudiants</p>
+                        <h3 className="font-medium">{formation.title ?? "Sans titre"}</h3>
+                        <p className="text-sm text-muted-foreground">{formation.students ?? 0} étudiants</p>
                       </div>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() =>
                           toast({
-                            title: "Modification à venir",
+                            title: "Fonction à venir",
                             description:
-                              "La fonction de modification de formation arrive bientôt.",
+                              "La modification d'une formation sera disponible bientôt.",
                           })
                         }
                       >
