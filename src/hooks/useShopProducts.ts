@@ -56,9 +56,9 @@ export const useShopProducts = (categoryFilter?: CategoryFilter) => {
         price: p.price,
         originalPrice: p.original_price,
         instructor_id: p.instructor_id,
-        instructor: p.profiles?.[0]
-          ? `${p.profiles[0].first_name || ''} ${p.profiles[0].last_name || ''}`.trim() ||
-            p.profiles[0].username ||
+        instructor: p.profiles
+          ? `${p.profiles.first_name || ''} ${p.profiles.last_name || ''}`.trim() ||
+            p.profiles.username ||
             'Auteur'
           : 'Auteur',
         category_id: p.category_id,
@@ -101,9 +101,9 @@ export const useShopProducts = (categoryFilter?: CategoryFilter) => {
         price: f.price,
         originalPrice: f.original_price,
         instructor_id: f.instructor_id,
-        instructor: f.profiles?.[0]
-          ? `${f.profiles[0].first_name || ''} ${f.profiles[0].last_name || ''}`.trim() ||
-            f.profiles[0].username ||
+        instructor: f.profiles
+          ? `${f.profiles.first_name || ''} ${f.profiles.last_name || ''}`.trim() ||
+            f.profiles.username ||
             'Instructeur'
           : 'Instructeur',
         category_id: f.category_id,
