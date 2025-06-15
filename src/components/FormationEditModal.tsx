@@ -93,6 +93,7 @@ export default function FormationEditModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
     if (!form.title || !form.price) {
       toast({
         title: "Champs requis",
@@ -102,11 +103,14 @@ export default function FormationEditModal({
       setLoading(false);
       return;
     }
-    // Vérif existence d’id
-    if (!formation?.id) {
+
+    // Vérification et log de l'id
+    const formationId = formation?.id ?? null;
+    console.log("[DEBUG] id utilisé pour update formation:", formationId, typeof formationId);
+    if (!formationId || typeof formationId !== "string" && typeof formationId !== "number") {
       toast({
         title: "Erreur technique",
-        description: "Impossible de retrouver l'identifiant formation.",
+        description: `Impossible de retrouver un id formation valide (${String(formationId)}). Merci de recharger la page ou contacter l’admin.`,
         variant: "destructive",
       });
       setLoading(false);
@@ -130,11 +134,16 @@ export default function FormationEditModal({
       duration: form.duration !== "" && form.duration !== null ? parseInt(form.duration) : null,
       // levels ignoré ici !
     };
+
+    // Suppression des champs undefined
     Object.keys(payload).forEach((key) => {
       if (payload[key] === undefined) {
         delete payload[key];
       }
     });
+
+    // Debug visuel côté dev
+    console.log("[DEBUG] Payload update formations:", payload);
 
     // Log : voir la différence avec l’original
     logDiff(formation, payload);
@@ -143,10 +152,9 @@ export default function FormationEditModal({
     const { error, data } = await supabase
       .from("formations")
       .update(payload)
-      .eq("id", formation.id)
+      .eq("id", formationId)
       .select();
 
-    // Gestion des cas : erreur, rien modifié, succès vraiment modifié
     if (error) {
       toast({
         title: "Erreur lors de la modification",
@@ -156,17 +164,15 @@ export default function FormationEditModal({
       setLoading(false);
       return;
     }
-    // Cas : aucune ligne modifiée
     if (!data || data.length === 0) {
       toast({
         title: "Aucune modification",
-        description: "Aucune donnée n’a été modifiée en base (à vérifier : la formation existe bien, et les valeurs ne sont pas exactement identiques à l’existant).",
+        description: "Aucune donnée n’a été modifiée en base (l’id formation est-il correct ? L’entrée existe-t-elle ? Les valeurs sont-elles différentes ?).",
         variant: "destructive",
       });
       setLoading(false);
       return;
     }
-    // Succès confirmé
     toast({
       title: "Formation modifiée",
       description: "Les changements ont été enregistrés.",
