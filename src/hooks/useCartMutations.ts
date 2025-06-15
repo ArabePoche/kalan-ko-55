@@ -9,62 +9,37 @@ export const useCartMutations = () => {
 
   const addToCartMutation = useMutation({
     mutationFn: async (item: Omit<CartItem, 'quantity'>) => {
-      console.log('=== ADD TO CART MUTATION ===');
-      console.log('Starting mutation for item:', item);
-      
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      console.log('Auth check - User:', user);
-      console.log('Auth check - Error:', userError);
+      const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        console.log('User authenticated, adding to database cart:', item);
-        
-        const { data: existingItem, error: selectError } = await supabase
+        const { data: existingItem } = await supabase
           .from('cart_items')
-          .select('*')
+          .select('id, quantity')
           .eq('user_id', user.id)
           .eq('product_id', item.id)
           .single();
 
-        console.log('Existing item check - Data:', existingItem);
-        console.log('Existing item check - Error:', selectError);
-
         if (existingItem) {
-          console.log('Item exists, updating quantity from', existingItem.quantity, 'to', existingItem.quantity + 1);
-          
-          const { data: updateData, error: updateError } = await supabase
+          const { error: updateError } = await supabase
             .from('cart_items')
             .update({ quantity: existingItem.quantity + 1 })
-            .eq('id', existingItem.id)
-            .select();
-          
-          console.log('Update result - Data:', updateData);
-          console.log('Update result - Error:', updateError);
+            .eq('id', existingItem.id);
           
           if (updateError) throw updateError;
         } else {
-          console.log('Item does not exist, inserting new item');
-          
-          const { data: insertData, error: insertError } = await supabase
+          const { error: insertError } = await supabase
             .from('cart_items')
             .insert({
               user_id: user.id,
               product_id: item.id,
               quantity: 1
-            })
-            .select();
-          
-          console.log('Insert result - Data:', insertData);
-          console.log('Insert result - Error:', insertError);
+            });
           
           if (insertError) throw insertError;
         }
-      } else {
-        console.log('No user authenticated, skipping database operation');
       }
     },
     onSuccess: () => {
-      console.log('=== ADD TO CART SUCCESS ===');
       queryClient.invalidateQueries({ queryKey: ['cart'] });
       toast({
         title: "Produit ajouté",
@@ -72,7 +47,6 @@ export const useCartMutations = () => {
       });
     },
     onError: (error) => {
-      console.error('=== ADD TO CART ERROR ===');
       console.error('Error adding to cart:', error);
       toast({
         title: "Erreur",
@@ -84,33 +58,22 @@ export const useCartMutations = () => {
 
   const removeFromCartMutation = useMutation({
     mutationFn: async (productId: string) => {
-      console.log('=== REMOVE FROM CART MUTATION ===');
-      console.log('Removing product:', productId);
-      
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        console.log('Removing item from database cart for user:', user.id);
-        
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('cart_items')
           .delete()
           .eq('user_id', user.id)
-          .eq('product_id', productId)
-          .select();
+          .eq('product_id', productId);
           
-        console.log('Remove result - Data:', data);
-        console.log('Remove result - Error:', error);
-        
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      console.log('=== REMOVE FROM CART SUCCESS ===');
       queryClient.invalidateQueries({ queryKey: ['cart'] });
     },
     onError: (error) => {
-      console.error('=== REMOVE FROM CART ERROR ===');
       console.error('Error removing from cart:', error);
       toast({
         title: "Erreur",
@@ -122,47 +85,32 @@ export const useCartMutations = () => {
 
   const updateQuantityMutation = useMutation({
     mutationFn: async ({ productId, quantity }: { productId: string; quantity: number }) => {
-      console.log('=== UPDATE QUANTITY MUTATION ===');
-      console.log('Updating product:', productId, 'to quantity:', quantity);
-      
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        console.log('Updating quantity in database for user:', user.id);
-        
         if (quantity <= 0) {
-          const { data, error } = await supabase
+          const { error } = await supabase
             .from('cart_items')
             .delete()
             .eq('user_id', user.id)
-            .eq('product_id', productId)
-            .select();
+            .eq('product_id', productId);
             
-          console.log('Delete result - Data:', data);
-          console.log('Delete result - Error:', error);
-          
           if (error) throw error;
         } else {
-          const { data, error } = await supabase
+          const { error } = await supabase
             .from('cart_items')
             .update({ quantity })
             .eq('user_id', user.id)
-            .eq('product_id', productId)
-            .select();
+            .eq('product_id', productId);
             
-          console.log('Update result - Data:', data);
-          console.log('Update result - Error:', error);
-          
           if (error) throw error;
         }
       }
     },
     onSuccess: () => {
-      console.log('=== UPDATE QUANTITY SUCCESS ===');
       queryClient.invalidateQueries({ queryKey: ['cart'] });
     },
     onError: (error) => {
-      console.error('=== UPDATE QUANTITY ERROR ===');
       console.error('Error updating quantity:', error);
       toast({
         title: "Erreur",
@@ -174,27 +122,18 @@ export const useCartMutations = () => {
 
   const clearCartMutation = useMutation({
     mutationFn: async () => {
-      console.log('=== CLEAR CART MUTATION ===');
-      
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        console.log('Clearing cart from database for user:', user.id);
-        
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('cart_items')
           .delete()
-          .eq('user_id', user.id)
-          .select();
+          .eq('user_id', user.id);
           
-        console.log('Clear result - Data:', data);
-        console.log('Clear result - Error:', error);
-        
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      console.log('=== CLEAR CART SUCCESS ===');
       queryClient.invalidateQueries({ queryKey: ['cart'] });
       toast({
         title: "Panier vidé",
@@ -202,7 +141,6 @@ export const useCartMutations = () => {
       });
     },
     onError: (error) => {
-      console.error('=== CLEAR CART ERROR ===');
       console.error('Error clearing cart:', error);
       toast({
         title: "Erreur",

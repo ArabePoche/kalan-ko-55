@@ -10,14 +10,9 @@ export const useCartQueries = () => {
   const { data: dbCartItems = [], isLoading } = useQuery({
     queryKey: ['cart', user?.id],
     queryFn: async () => {
-      console.log('=== CART QUERY ===');
-      
       if (!user) {
-        console.log('No user in query context, returning empty cart');
         return [];
       }
-
-      console.log('Fetching cart items from database for user:', user.id);
 
       const { data, error } = await supabase
         .from('cart_items')
@@ -37,9 +32,6 @@ export const useCartQueries = () => {
         `)
         .eq('user_id', user.id);
 
-      console.log('Database cart query result - Data:', data);
-      console.log('Database cart query result - Error:', error);
-
       if (error) {
         console.error('Error fetching cart items:', error);
         throw error;
@@ -58,20 +50,13 @@ export const useCartQueries = () => {
         quantity: item.quantity
       })) as CartItem[];
       
-      console.log('Mapped cart items:', mappedItems);
       return mappedItems;
     },
     enabled: !!user && !authLoading
   });
 
-  console.log('=== CART QUERIES HOOK ===');
-  console.log('DB Cart Items:', dbCartItems);
-  console.log('Is Loading:', isLoading);
-  console.log('Auth Loading:', authLoading);
-  console.log('User ID:', user?.id);
-
   return {
     dbCartItems,
-    isLoading: isLoading || authLoading
+    isLoading
   };
 };
