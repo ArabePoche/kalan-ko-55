@@ -40,8 +40,20 @@ const CheckoutPage = () => {
 
   const handlePlaceOrder = () => {
     console.log('=== PLACE ORDER BUTTON CLICKED ===');
+    console.log('User:', user);
     console.log('Items in cart:', items);
     console.log('Total price:', getTotalPrice());
+    
+    if (!user) {
+      console.log('User not authenticated');
+      toast({
+        title: "Connexion requise",
+        description: "Veuillez vous connecter pour passer votre commande.",
+        variant: "destructive"
+      });
+      navigate('/auth');
+      return;
+    }
     
     if (items.length === 0) {
       console.log('Cart is empty, showing error');
@@ -52,13 +64,43 @@ const CheckoutPage = () => {
       });
       return;
     }
+
+    const totalPrice = getTotalPrice();
+    if (totalPrice <= 0) {
+      console.log('Invalid total price:', totalPrice);
+      toast({
+        title: "Erreur de prix",
+        description: "Le montant total doit être supérieur à 0€.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validation des articles
+    const invalidItems = items.filter(item => !item.id || !item.price || !item.quantity || item.quantity <= 0);
+    if (invalidItems.length > 0) {
+      console.log('Invalid items found:', invalidItems);
+      toast({
+        title: "Articles invalides",
+        description: "Certains articles de votre panier sont invalides. Veuillez rafraîchir la page.",
+        variant: "destructive"
+      });
+      return;
+    }
     
-    console.log('Starting order mutation...');
-    createOrderMutation.mutate({ items, totalPrice: getTotalPrice() });
+    console.log('All validations passed, starting order mutation...');
+    createOrderMutation.mutate({ items, totalPrice });
   };
 
   if (authLoading || (!user && items.length > 0)) {
-    return null; // Or a loading spinner while we check auth and redirect
+    return (
+      <div className="max-w-md mx-auto bg-background min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Chargement...</p>
+        </div>
+      </div>
+    );
   }
 
   if (items.length === 0) {
