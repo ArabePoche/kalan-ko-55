@@ -2,10 +2,13 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useFormationVideos } from "@/hooks/useFormationVideos";
 
 interface LessonForm {
   title: string;
   video_url: string;
+  selected_video_id?: string;
 }
 
 interface LevelForm {
@@ -20,6 +23,8 @@ interface LevelsAndLessonsSectionProps {
 }
 
 export default function LevelsAndLessonsSection({ levels, setLevels, loading }: LevelsAndLessonsSectionProps) {
+  const { data: videos = [], isLoading: videosLoading } = useFormationVideos();
+
   const handleLevelChange = (idx: number, key: keyof LevelForm, value: any) => {
     const updated = [...levels];
     (updated[idx] as any)[key] = value;
@@ -29,6 +34,18 @@ export default function LevelsAndLessonsSection({ levels, setLevels, loading }: 
   const handleLessonChange = (levelIdx: number, lessonIdx: number, key: keyof LessonForm, value: any) => {
     const updated = [...levels];
     updated[levelIdx].lessons[lessonIdx][key] = value;
+    setLevels(updated);
+  };
+
+  const handleVideoSelection = (levelIdx: number, lessonIdx: number, videoId: string) => {
+    const selectedVideo = videos.find(v => v.id === videoId);
+    const updated = [...levels];
+    
+    if (selectedVideo) {
+      updated[levelIdx].lessons[lessonIdx].selected_video_id = videoId;
+      updated[levelIdx].lessons[lessonIdx].video_url = selectedVideo.video_url || "";
+    }
+    
     setLevels(updated);
   };
 
@@ -42,7 +59,7 @@ export default function LevelsAndLessonsSection({ levels, setLevels, loading }: 
 
   const addLesson = (levelIdx: number) => {
     const updated = [...levels];
-    updated[levelIdx].lessons.push({ title: "", video_url: "" });
+    updated[levelIdx].lessons.push({ title: "", video_url: "", selected_video_id: "" });
     setLevels(updated);
   };
 
@@ -87,34 +104,66 @@ export default function LevelsAndLessonsSection({ levels, setLevels, loading }: 
               </div>
               <div className="space-y-2">
                 {level.lessons.map((lesson, lesIdx) => (
-                  <div key={lesIdx} className="flex items-center gap-2">
-                    <div className="flex-1">
-                      <label className="block text-xs font-medium mb-1">Titre de la leçon</label>
-                      <Input
-                        placeholder="Titre de la leçon"
-                        value={lesson.title}
-                        onChange={e => handleLessonChange(li, lesIdx, "title", e.target.value)}
+                  <div key={lesIdx} className="space-y-2 p-3 border rounded bg-background">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <label className="block text-xs font-medium mb-1">Titre de la leçon</label>
+                        <Input
+                          placeholder="Titre de la leçon"
+                          value={lesson.title}
+                          onChange={e => handleLessonChange(li, lesIdx, "title", e.target.value)}
+                          disabled={loading}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => removeLesson(li, lesIdx)}
                         disabled={loading}
-                      />
+                      >
+                        &times;
+                      </Button>
                     </div>
-                    <div className="flex-1">
-                      <label className="block text-xs font-medium mb-1">URL vidéo</label>
-                      <Input
-                        placeholder="URL vidéo"
-                        value={lesson.video_url}
-                        onChange={e => handleLessonChange(li, lesIdx, "video_url", e.target.value)}
-                        disabled={loading}
-                      />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Sélectionner une vidéo</label>
+                        <Select
+                          value={lesson.selected_video_id || ""}
+                          onValueChange={(value) => handleVideoSelection(li, lesIdx, value)}
+                          disabled={loading || videosLoading}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={videosLoading ? "Chargement..." : "Choisir une vidéo"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Aucune vidéo</SelectItem>
+                            {videos.map((video) => (
+                              <SelectItem key={video.id} value={video.id}>
+                                {video.title} ({video.video_type})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-xs font-medium mb-1">URL vidéo manuelle</label>
+                        <Input
+                          placeholder="URL vidéo (optionnel)"
+                          value={lesson.video_url}
+                          onChange={e => handleLessonChange(li, lesIdx, "video_url", e.target.value)}
+                          disabled={loading}
+                        />
+                      </div>
                     </div>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => removeLesson(li, lesIdx)}
-                      disabled={loading}
-                    >
-                      &times;
-                    </Button>
+                    
+                    {lesson.selected_video_id && (
+                      <div className="text-xs text-muted-foreground">
+                        Vidéo sélectionnée : {videos.find(v => v.id === lesson.selected_video_id)?.title}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
