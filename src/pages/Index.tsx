@@ -23,18 +23,18 @@ const Index = () => {
     navigate(path);
   };
 
-  // Pages qui utilisent le layout avec navigation
+  const isHomePage = location.pathname === '/';
   const isMainLayout = ['/', '/shop', '/courses', '/notifications', '/profile'].includes(location.pathname);
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation globale pour les pages principales */}
-      {isMainLayout && (
+      {/* Navigation globale pour les pages principales, sauf la page d'accueil */}
+      {isMainLayout && !isHomePage && (
         <GlobalNavigation showBackButton={false} />
       )}
 
-      {/* Main Content */}
-      <div className={`${isMainLayout ? 'pt-16 pb-20' : ''}`}>
+      {/* Main Content - Pas de padding pour la page d'accueil (VideoFeed) */}
+      <div className={`${isMainLayout && !isHomePage ? 'pt-16 pb-20' : ''}`}>
         <Outlet />
       </div>
 
