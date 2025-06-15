@@ -1,5 +1,5 @@
 
-import { ShoppingCart, User, Home, BookOpen, Bell } from 'lucide-react';
+import { ShoppingCart, User, Home, BookOpen, Bell, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -41,6 +41,19 @@ const GlobalNavigation = () => {
       </div>
 
       <div className="flex items-center space-x-2">
+        {/* Bouton Admin visible pour tout le monde. 
+          Pour réserver aux admins, il suffit de rajouter par exemple un check: user?.role === 'admin'
+        */}
+        <Button
+          variant={location.pathname === '/admin' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => navigate('/admin')}
+          className="h-8 w-8 p-0"
+          aria-label="Dashboard Admin"
+        >
+          <List className="w-4 h-4" />
+        </Button>
+
         <Button
           variant="ghost"
           size="sm"
@@ -78,3 +91,4 @@ const GlobalNavigation = () => {
 };
 
 export default GlobalNavigation;
+
