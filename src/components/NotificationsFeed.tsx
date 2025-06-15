@@ -1,50 +1,84 @@
 
-import { Bell } from "lucide-react";
+import { Bell, Clock, ShoppingCart } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useNotifications } from "@/hooks/useNotifications";
+import { formatDistanceToNow } from "date-fns";
+import { fr } from "date-fns/locale";
 
-const notifications = [
-  {
-    id: 1,
-    title: "Votre commande est en cours de validation",
-    description: "Un administrateur examine votre demande.",
-    date: "Aujourd'hui",
-    seen: false,
-  },
-  {
-    id: 2,
-    title: "Bienvenue sur la plateforme !",
-    description: "Merci de rejoindre notre communauté.",
-    date: "Hier",
-    seen: true,
-  },
-];
+const NotificationsFeed = () => {
+  const { notifications, loading, markAsRead } = useNotifications();
 
-const NotificationsFeed = () => (
-  <div className="pt-20 max-w-md mx-auto">
-    <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
-      <Bell className="w-5 h-5 text-primary" /> Notifications
-    </h2>
-    <div className="space-y-3">
-      {notifications.length === 0 && (
-        <div className="text-muted-foreground text-center py-6">
-          Aucune notification pour l'instant.
-        </div>
-      )}
-      {notifications.map((notif) => (
-        <div
-          key={notif.id}
-          className={`rounded-lg border p-4 bg-background transition-all ${
-            !notif.seen ? "border-primary/50 bg-primary/5" : ""
-          }`}
-        >
-          <div className="flex justify-between items-center">
-            <div className="font-medium">{notif.title}</div>
-            <span className="text-xs text-muted-foreground">{notif.date}</span>
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'order':
+        return <ShoppingCart className="w-5 h-5 text-orange-500" />;
+      default:
+        return <Bell className="w-5 h-5 text-blue-500" />;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="pt-20 max-w-md mx-auto p-4">
+        <div className="text-center py-6">Chargement des notifications...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="pt-20 max-w-md mx-auto p-4">
+      <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
+        <Bell className="w-5 h-5 text-primary" /> Notifications
+      </h2>
+      
+      <div className="space-y-3">
+        {notifications.length === 0 ? (
+          <div className="text-muted-foreground text-center py-6">
+            Aucune notification pour l'instant.
           </div>
-          <div className="text-sm text-muted-foreground mt-1">{notif.description}</div>
-        </div>
-      ))}
+        ) : (
+          notifications.map((notification) => (
+            <Card
+              key={notification.id}
+              className={`cursor-pointer transition-all ${
+                !notification.is_read ? "border-primary/50 bg-primary/5" : ""
+              }`}
+              onClick={() => !notification.is_read && markAsRead(notification.id)}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  {getNotificationIcon(notification.type)}
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start mb-1">
+                      <div className="font-medium">{notification.title}</div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Clock className="w-3 h-3" />
+                          {formatDistanceToNow(new Date(notification.created_at), { 
+                            addSuffix: true, 
+                            locale: fr 
+                          })}
+                        </div>
+                        {!notification.is_read && (
+                          <Badge variant="secondary" className="text-xs">
+                            Nouveau
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {notification.message}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default NotificationsFeed;
