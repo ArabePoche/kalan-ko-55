@@ -32,7 +32,7 @@ export const useFormationUpdate = () => {
       return;
     }
 
-    // NOUVEAU: Vérifier d'abord si la formation existe
+    // Vérifier d'abord si la formation existe
     console.log("[DEBUG] Vérification existence de la formation...");
     const { data: existingFormation, error: checkError } = await supabase
       .from("formations")
@@ -87,51 +87,44 @@ export const useFormationUpdate = () => {
       console.log("Comparatif AVANT vs APRES:", { changes: diff });
     }
 
-    // NOUVEAU: Test avec .maybeSingle() au lieu de .select()
-    console.log("[DEBUG] Lancement de la requête UPDATE...");
-    const { error, data } = await supabase
+    // Tentative d'update sans .select() d'abord pour éviter l'erreur 406
+    console.log("[DEBUG] Lancement de la requête UPDATE (sans select)...");
+    const { error: updateError } = await supabase
       .from("formations")
       .update(payload)
-      .eq("id", formationId)
-      .select()
-      .maybeSingle();
+      .eq("id", formationId);
 
-    console.log("[DEBUG] Réponse Supabase update:", { error, data });
+    console.log("[DEBUG] Erreur update (sans select):", updateError);
 
-    if (error) {
-      console.error("[DEBUG] Erreur Supabase:", error);
+    if (updateError) {
+      console.error("[DEBUG] Erreur Supabase:", updateError);
       toast({
         title: "Erreur lors de la modification",
-        description: error.message,
+        description: updateError.message,
         variant: "destructive",
       });
       setLoading(false);
       return;
     }
 
-    // Vérification plus stricte de la réponse
-    if (!data) {
-      console.log("[DEBUG] Aucune donnée retournée. Possible cause: valeurs identiques ou permissions insuffisantes");
-      
-      // Vérification finale : la formation a-t-elle réellement été modifiée ?
-      const { data: updatedFormation } = await supabase
-        .from("formations")
-        .select("*")
-        .eq("id", formationId)
-        .single();
-      
-      console.log("[DEBUG] Formation après tentative de mise à jour:", updatedFormation);
-      
-      toast({
-        title: "Aucune modification détectée",
-        description: "Les valeurs sont peut-être identiques à celles déjà en base, ou vous n'avez pas les permissions nécessaires.",
-        variant: "destructive",
-      });
-      setLoading(false);
-      return;
+    // Si l'update a réussi, on récupère les données modifiées
+    console.log("[DEBUG] Update réussi, récupération des données...");
+    const { data: updatedData, error: selectError } = await supabase
+      .from("formations")
+      .select("*")
+      .eq("id", formationId)
+      .single();
+
+    console.log("[DEBUG] Données récupérées après update:", updatedData);
+    console.log("[DEBUG] Erreur select après update:", selectError);
+
+    if (selectError) {
+      // L'update a réussi mais on ne peut pas récupérer les données
+      // Ce n'est pas bloquant
+      console.warn("[DEBUG] Impossible de récupérer les données après update:", selectError);
     }
 
-    console.log("[DEBUG] Modification réussie:", data);
+    console.log("[DEBUG] Modification réussie");
     toast({
       title: "Formation modifiée",
       description: "Les changements ont été enregistrés.",
