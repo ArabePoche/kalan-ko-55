@@ -1,4 +1,3 @@
-
 import ProductCard from './ProductCard';
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
@@ -6,15 +5,16 @@ import { useCategories } from '@/hooks/useCategories';
 interface ProductGridProps {
   onAddToCart: (product: any) => void;
   selectedCategory: string;
+  products: any[];
+  isLoading: boolean;
 }
 
-const ProductGrid = ({ onAddToCart, selectedCategory }: ProductGridProps) => {
-  const { data: products = [], isLoading: productsLoading } = useProducts(selectedCategory);
+const ProductGrid = ({ onAddToCart, selectedCategory, products, isLoading }: ProductGridProps) => {
   const { data: categories = [] } = useCategories();
 
   const selectedCategoryLabel = categories.find(c => c.name === selectedCategory)?.label || 'Tous';
 
-  if (productsLoading) {
+  if (isLoading) {
     return (
       <div className="p-4 space-y-4">
         <div className="flex items-center justify-between">

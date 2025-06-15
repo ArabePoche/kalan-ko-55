@@ -1,4 +1,3 @@
-
 import { useCart } from '@/hooks/useCart';
 import { toast } from '@/hooks/use-toast';
 import { useState } from 'react';
@@ -8,6 +7,7 @@ import ProductGrid from './shop/ProductGrid';
 import { Product } from '@/hooks/useProducts';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useNavigate } from 'react-router-dom';
+import { useShopProducts } from '@/hooks/useShopProducts';
 
 const ShopPage = () => {
   const { addToCart } = useCart();
@@ -15,7 +15,10 @@ const ShopPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const handleAddToCart = (product: Product) => {
+  // Utilisation du nouveau hook
+  const { data: products = [], isLoading } = useShopProducts(selectedCategory);
+
+  const handleAddToCart = (product: any) => {
     if (!user) {
       toast({
         title: "Connexion requise",
@@ -31,7 +34,7 @@ const ShopPage = () => {
       price: product.price,
       instructor: product.instructor,
       image: product.image,
-      type: product.type
+      type: product.type,
     });
   };
 
@@ -45,6 +48,8 @@ const ShopPage = () => {
       <ProductGrid 
         onAddToCart={handleAddToCart}
         selectedCategory={selectedCategory}
+        products={products}
+        isLoading={isLoading}
       />
     </div>
   );
