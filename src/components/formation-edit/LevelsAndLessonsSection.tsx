@@ -44,6 +44,9 @@ export default function LevelsAndLessonsSection({ levels, setLevels, loading }: 
     if (selectedVideo) {
       updated[levelIdx].lessons[lessonIdx].selected_video_id = videoId;
       updated[levelIdx].lessons[lessonIdx].video_url = selectedVideo.video_url || "";
+    } else {
+      // Si sélectionnée "aucune vidéo" (donc valeur undefined)
+      updated[levelIdx].lessons[lessonIdx].selected_video_id = undefined;
     }
     
     setLevels(updated);
@@ -59,7 +62,7 @@ export default function LevelsAndLessonsSection({ levels, setLevels, loading }: 
 
   const addLesson = (levelIdx: number) => {
     const updated = [...levels];
-    updated[levelIdx].lessons.push({ title: "", video_url: "", selected_video_id: "" });
+    updated[levelIdx].lessons.push({ title: "", video_url: "", selected_video_id: undefined });
     setLevels(updated);
   };
 
@@ -130,7 +133,7 @@ export default function LevelsAndLessonsSection({ levels, setLevels, loading }: 
                       <div>
                         <label className="block text-xs font-medium mb-1">Sélectionner une vidéo</label>
                         <Select
-                          value={lesson.selected_video_id || ""}
+                          value={lesson.selected_video_id ?? undefined}
                           onValueChange={(value) => handleVideoSelection(li, lesIdx, value)}
                           disabled={loading || videosLoading}
                         >
@@ -138,7 +141,8 @@ export default function LevelsAndLessonsSection({ levels, setLevels, loading }: 
                             <SelectValue placeholder={videosLoading ? "Chargement..." : "Choisir une vidéo"} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">Aucune vidéo</SelectItem>
+                            {/* Retirer SelectItem avec valeur vide */}
+                            {/* Pas de SelectItem avec value="" */}
                             {videos.map((video) => (
                               <SelectItem key={video.id} value={video.id}>
                                 {video.title} ({video.video_type})
