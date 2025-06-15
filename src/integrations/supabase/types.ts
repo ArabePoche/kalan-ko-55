@@ -214,32 +214,88 @@ export type Database = {
       }
       formations: {
         Row: {
+          badge: string | null
+          category_id: string | null
           completion_rate: number | null
+          created_at: string | null
+          description: string | null
+          discount_percentage: number | null
           duration_hours: number | null
           id: string
+          image_url: string | null
+          instructor_id: string | null
+          is_active: boolean | null
           level_count: number | null
+          original_price: number | null
+          price: number | null
+          promo_video_url: string | null
+          rating: number | null
+          students_count: number | null
           total_lessons: number | null
+          updated_at: string | null
         }
         Insert: {
+          badge?: string | null
+          category_id?: string | null
           completion_rate?: number | null
+          created_at?: string | null
+          description?: string | null
+          discount_percentage?: number | null
           duration_hours?: number | null
           id: string
+          image_url?: string | null
+          instructor_id?: string | null
+          is_active?: boolean | null
           level_count?: number | null
+          original_price?: number | null
+          price?: number | null
+          promo_video_url?: string | null
+          rating?: number | null
+          students_count?: number | null
           total_lessons?: number | null
+          updated_at?: string | null
         }
         Update: {
+          badge?: string | null
+          category_id?: string | null
           completion_rate?: number | null
+          created_at?: string | null
+          description?: string | null
+          discount_percentage?: number | null
           duration_hours?: number | null
           id?: string
+          image_url?: string | null
+          instructor_id?: string | null
+          is_active?: boolean | null
           level_count?: number | null
+          original_price?: number | null
+          price?: number | null
+          promo_video_url?: string | null
+          rating?: number | null
+          students_count?: number | null
           total_lessons?: number | null
+          updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "formations_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "formations_id_fkey"
             columns: ["id"]
             isOneToOne: true
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "formations_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

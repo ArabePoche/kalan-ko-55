@@ -46,7 +46,20 @@ const AdminDashboard = () => {
     categoryId: '', // Ajouté
     videoType: 'promo', // Ajouté
   });
-  const [newFormation, setNewFormation] = useState({ title: '', description: '', price: '', promoVideoUrl: '' });
+  const [newFormation, setNewFormation] = useState({
+    title: '',
+    description: '',
+    price: '',
+    original_price: '',
+    promoVideoUrl: '',
+    badge: '',
+    image_url: '',
+    rating: '',
+    students_count: '',
+    instructor_id: '',
+    category_id: '',
+    discount_percentage: '',
+  });
   const [isCreatingFormation, setIsCreatingFormation] = useState(false);
 
   const { data: categories, isLoading: loadingCategories, error: categoryError } = useQuery({
@@ -104,18 +117,22 @@ const AdminDashboard = () => {
         setIsCreatingFormation(false);
         return;
       }
-      // Insère la formation dans Supabase
-      const { data, error } = await supabase
-        .from('products')
-        .insert([
-          {
-            title: newFormation.title,
-            description: newFormation.description,
-            price: Number(newFormation.price),
-            product_type: 'formation',
-            promo_video_url: newFormation.promoVideoUrl || null,
-          }
-        ]);
+      const toInsert: Record<string, any> = {
+        title: newFormation.title,
+        description: newFormation.description,
+        promo_video_url: newFormation.promoVideoUrl || null,
+        badge: newFormation.badge || null,
+        image_url: newFormation.image_url || null,
+        rating: newFormation.rating ? parseFloat(newFormation.rating) : 0,
+        students_count: newFormation.students_count ? parseInt(newFormation.students_count) : 0,
+        instructor_id: newFormation.instructor_id || null,
+        category_id: newFormation.category_id || null,
+        price: parseFloat(newFormation.price),
+        original_price: newFormation.original_price ? parseFloat(newFormation.original_price) : null,
+        discount_percentage: newFormation.discount_percentage ? parseInt(newFormation.discount_percentage) : null,
+        is_active: true
+      };
+      const { error } = await supabase.from('formations').insert([toInsert]);
       if (error) {
         toast({
           title: "Erreur",
@@ -127,7 +144,20 @@ const AdminDashboard = () => {
           title: "Formation créée",
           description: "La formation a bien été ajoutée.",
         });
-        setNewFormation({ title: '', description: '', price: '', promoVideoUrl: '' });
+        setNewFormation({
+          title: '',
+          description: '',
+          price: '',
+          original_price: '',
+          promoVideoUrl: '',
+          badge: '',
+          image_url: '',
+          rating: '',
+          students_count: '',
+          instructor_id: '',
+          category_id: '',
+          discount_percentage: ''
+        });
       }
     } catch (e: any) {
       toast({
@@ -418,6 +448,68 @@ const AdminDashboard = () => {
                 type="number"
                 value={newFormation.price}
                 onChange={(e) => setNewFormation({ ...newFormation, price: e.target.value })}
+                disabled={isCreatingFormation}
+              />
+              <Input
+                placeholder="Prix original (€) (optionnel)"
+                type="number"
+                value={newFormation.original_price}
+                onChange={(e) => setNewFormation({ ...newFormation, original_price: e.target.value })}
+                disabled={isCreatingFormation}
+              />
+              {/* Sélecteur de catégorie */}
+              <Select
+                value={newFormation.category_id}
+                onValueChange={v => setNewFormation({ ...newFormation, category_id: v })}
+                disabled={isCreatingFormation || !categories}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Catégorie" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories && categories.map((cat: any) => (
+                    <SelectItem value={cat.id} key={cat.id}>{cat.label ?? cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                placeholder="ID formateur (optionnel)"
+                value={newFormation.instructor_id}
+                onChange={(e) => setNewFormation({ ...newFormation, instructor_id: e.target.value })}
+                disabled={isCreatingFormation}
+              />
+              <Input
+                placeholder="URL de l’image de formation (optionnel)"
+                value={newFormation.image_url}
+                onChange={(e) => setNewFormation({ ...newFormation, image_url: e.target.value })}
+                disabled={isCreatingFormation}
+              />
+              <Input
+                placeholder="Badge spécial (ex : Nouveau, Bestseller) (optionnel)"
+                value={newFormation.badge}
+                onChange={(e) => setNewFormation({ ...newFormation, badge: e.target.value })}
+                disabled={isCreatingFormation}
+              />
+              <Input
+                placeholder="Note moyenne (ex : 4.7) (optionnel)"
+                type="number"
+                step="0.01"
+                value={newFormation.rating}
+                onChange={(e) => setNewFormation({ ...newFormation, rating: e.target.value })}
+                disabled={isCreatingFormation}
+              />
+              <Input
+                placeholder="Nombre d’étudiants (optionnel)"
+                type="number"
+                value={newFormation.students_count}
+                onChange={(e) => setNewFormation({ ...newFormation, students_count: e.target.value })}
+                disabled={isCreatingFormation}
+              />
+              <Input
+                placeholder="Pourcentage de réduction (optionnel)"
+                type="number"
+                value={newFormation.discount_percentage}
+                onChange={(e) => setNewFormation({ ...newFormation, discount_percentage: e.target.value })}
                 disabled={isCreatingFormation}
               />
               <div className="relative flex items-center">
