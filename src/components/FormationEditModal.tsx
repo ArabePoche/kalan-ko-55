@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Dialog,
@@ -54,7 +53,11 @@ export default function FormationEditModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateFormation(formation, form, onUpdated, () => onOpenChange(false));
+
+    // On fusionne les niveaux/leçons dans le formulaire juste avant update
+    const fullForm = { ...form, levels };
+
+    await updateFormation(formation, fullForm, onUpdated, () => onOpenChange(false));
   };
 
   return (
