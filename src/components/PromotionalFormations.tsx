@@ -83,12 +83,12 @@ const PromotionalFormations = ({ onBuyClick }: PromotionalFormationsProps) => {
       <h2 className="text-xl font-bold mb-4 text-white">Formations en vedette</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {formations.map((formation) => (
-          <Card key={formation.id} className="overflow-hidden bg-white/10 backdrop-blur-sm border-white/20 shadow-lg">
-            <CardContent className="p-0">
+          <Card key={formation.id} className="overflow-hidden bg-white/10 backdrop-blur-sm border-white/20 shadow-lg h-96 flex flex-col">
+            <CardContent className="p-0 flex flex-col h-full">
               <div className="relative">
                 {/* Video promotional */}
                 {formation.promo_video_url && (
-                  <div className="relative h-48 bg-black rounded-t-lg overflow-hidden">
+                  <div className="relative h-32 bg-black rounded-t-lg overflow-hidden">
                     <iframe
                       src={formation.promo_video_url}
                       className="w-full h-full object-cover"
@@ -97,7 +97,7 @@ const PromotionalFormations = ({ onBuyClick }: PromotionalFormationsProps) => {
                       title={`Vidéo promotionnelle - ${formation.title}`}
                     />
                     <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                      <Play className="w-12 h-12 text-white" />
+                      <Play className="w-8 h-8 text-white" />
                     </div>
                   </div>
                 )}
@@ -110,39 +110,40 @@ const PromotionalFormations = ({ onBuyClick }: PromotionalFormationsProps) => {
                 )}
               </div>
 
-              <div className="p-4 bg-white/5 backdrop-blur">
-                <h3 className="font-semibold text-white text-lg mb-2 line-clamp-2">
+              <div className="p-3 bg-white/5 backdrop-blur flex flex-col flex-1">
+                <h3 className="font-semibold text-white text-base mb-1 line-clamp-2">
                   {formation.title}
                 </h3>
                 
-                <p className="text-gray-200 text-sm mb-2">{formation.instructor}</p>
+                <p className="text-gray-200 text-xs mb-2">{formation.instructor}</p>
                 
-                {formation.description && (
-                  <p className="text-gray-300 text-sm mb-3 line-clamp-2">
-                    {formation.description}
-                  </p>
-                )}
-
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-2">
-                    <span className="text-xl font-bold text-green-400">{formation.price}€</span>
+                    <span className="text-lg font-bold text-green-400">{formation.price}€</span>
                     {formation.rating && (
-                      <span className="text-sm text-gray-300">
-                        ⭐ {formation.rating} ({formation.students_count || 0})
+                      <span className="text-xs text-gray-300">
+                        ⭐ {formation.rating}
                       </span>
                     )}
                   </div>
                 </div>
 
-                {/* Bouton acheter bien visible */}
+                {/* Bouton acheter repositionné plus haut */}
                 <Button
                   onClick={() => onBuyClick(formation)}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 shadow-lg border-0"
-                  size="lg"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 shadow-lg border-0 mb-2"
+                  size="sm"
                 >
-                  <ShoppingCart className="w-5 h-5 mr-2" />
-                  Acheter maintenant - {formation.price}€
+                  <ShoppingCart className="w-4 h-4 mr-1" />
+                  Acheter - {formation.price}€
                 </Button>
+
+                {/* Description en bas, optionnelle */}
+                {formation.description && (
+                  <p className="text-gray-300 text-xs line-clamp-2 flex-1">
+                    {formation.description}
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
