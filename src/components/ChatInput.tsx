@@ -15,7 +15,6 @@ interface ChatInputProps {
   onVoiceRecord: () => void;
   setIsRecording: (rec: boolean) => void;
   fileInputRef: React.RefObject<HTMLInputElement>;
-  // Ajout d'une nouvelle prop pour capturer la photo/vidéo caméra
   onCameraCapture: (event: React.ChangeEvent<HTMLInputElement>) => void;
   cameraInputRef: React.RefObject<HTMLInputElement>;
   onCameraButton: () => void;
@@ -126,6 +125,14 @@ const ChatInput = ({
       type="file"
       accept="image/*,video/*"
       onChange={onFileSelect}
+      className="hidden"
+    />
+    <input
+      ref={cameraInputRef}
+      type="file"
+      accept="image/*,video/*"
+      capture
+      onChange={onCameraCapture}
       className="hidden"
     />
   </div>

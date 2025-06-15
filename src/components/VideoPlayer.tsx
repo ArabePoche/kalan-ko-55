@@ -51,6 +51,7 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [showCameraModal, setShowCameraModal] = useState(false);
+  const [cameraMode, setCameraMode] = useState<"menu" | "photo" | "video">("menu");
 
   const [privateChatMessages, setPrivateChatMessages] = useState([
     {
@@ -212,11 +213,13 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
     }
   };
 
+  // Handler Caméra bouton : ouvre le menu photo/vidéo dans la modale
   const handleCameraButton = () => {
+    setCameraMode("menu");
     setShowCameraModal(true);
   };
 
-  // Handler quand la photo est prise et validée
+  // Handler pour prise photo
   const handleCameraPhotoCaptured = (imageData: string) => {
     const newMessage = {
       id: Date.now().toString(),
@@ -226,7 +229,22 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
       isStudent: true,
       type: "image",
       avatar: "/placeholder.svg",
-      imageData // contient le base64
+      imageData // base64
+    };
+    setPrivateChatMessages((prev) => [...prev, newMessage]);
+  };
+
+  // Handler pour vidéo
+  const handleCameraVideoCaptured = (videoUrl: string) => {
+    const newMessage = {
+      id: Date.now().toString(),
+      user: "Vous",
+      message: "📹 Vidéo envoyée",
+      time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      isStudent: true,
+      type: "video",
+      avatar: "/placeholder.svg",
+      videoUrl // blob url
     };
     setPrivateChatMessages((prev) => [...prev, newMessage]);
   };
@@ -280,18 +298,26 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
           onVoiceRecord={handleVoiceRecord}
           setIsRecording={setIsRecording}
           fileInputRef={fileInputRef}
-          // Remplacer la props caméra par un handler dédié (ouvre la modale)
+          // Props pour gestion caméra dans input
+          onCameraCapture={() => null}
+          cameraInputRef={cameraInputRef}
           onCameraButton={handleCameraButton}
         />
         <AvailableTeachers teachers={availableTeachers} />
       </div>
-      {/* Modale caméra */}
+      {/* Modale caméra avancée */}
       <CameraCaptureModal
         open={showCameraModal}
         onClose={() => setShowCameraModal(false)}
         onCapture={handleCameraPhotoCaptured}
+        onVideoCapture={handleCameraVideoCaptured}
+        mode={cameraMode}
+        setMode={setCameraMode}
       />
     </div>
   );
 };
 export default VideoPlayer;
+
+// 
+// ⚠️ Ce fichier commence à être long (près de 300 lignes), pense à demander une refacto dès que possible !
