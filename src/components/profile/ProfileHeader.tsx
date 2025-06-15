@@ -1,7 +1,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Edit } from 'lucide-react';
+import { Edit, LayoutDashboard } from 'lucide-react';
 import { useState } from 'react';
 import {
   Dialog,
@@ -18,6 +18,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { Tables } from '@/integrations/supabase/types';
 import { User } from '@supabase/supabase-js';
+import { useNavigate } from 'react-router-dom';
 
 interface ProfileHeaderProps {
   profile: Tables<'profiles'>;
@@ -30,6 +31,7 @@ export const ProfileHeader = ({ profile, user, signOut }: ProfileHeaderProps) =>
   const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const userInitials = `${profile?.first_name?.[0] || ''}${profile?.last_name?.[0] || ''}`;
 
@@ -77,6 +79,12 @@ export const ProfileHeader = ({ profile, user, signOut }: ProfileHeaderProps) =>
         <p className="text-muted-foreground">@{profile?.username || user.email}</p>
       </div>
       <div className="flex gap-2 md:ml-auto">
+        {profile?.role === 'admin' && (
+          <Button onClick={() => navigate('/admin')}>
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            Dashboard
+          </Button>
+        )}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="outline">
