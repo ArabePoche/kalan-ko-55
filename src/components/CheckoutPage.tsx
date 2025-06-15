@@ -5,13 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCart } from '@/hooks/useCart';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
 
 const CheckoutPage = () => {
   const { items, getTotalPrice, clearCart } = useCart();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (items.length === 0) {
@@ -74,6 +75,10 @@ const CheckoutPage = () => {
       
       // Vider le panier immédiatement après succès
       clearCart();
+      
+      // Invalider les requêtes pour forcer la mise à jour
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       
       toast({
         title: "Commande passée avec succès !",

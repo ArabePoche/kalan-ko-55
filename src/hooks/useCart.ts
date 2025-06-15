@@ -86,9 +86,15 @@ export const useCart = () => {
   };
 
   const clearCart = () => {
-    console.log('Clearing cart - current items:', localItems.length);
+    console.log('Clearing cart - forcing complete clear');
+    
+    // Vider immédiatement le state local
     setLocalItems([]);
+    
+    // Vider le localStorage immédiatement
     localStorage.removeItem('cart');
+    
+    // Vider la base de données
     clearCartMutation.mutate();
   };
 
