@@ -5,6 +5,7 @@ import ExerciseSection from './ExerciseSection';
 import ChatMessages from './ChatMessages';
 import ChatInput from './ChatInput';
 import AvailableTeachers from './AvailableTeachers';
+import CameraCaptureModal from "./CameraCaptureModal";
 
 interface Lesson {
   id: string;
@@ -49,6 +50,7 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
   const [showExercise, setShowExercise] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [showCameraModal, setShowCameraModal] = useState(false);
 
   const [privateChatMessages, setPrivateChatMessages] = useState([
     {
@@ -210,6 +212,25 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
     }
   };
 
+  const handleCameraButton = () => {
+    setShowCameraModal(true);
+  };
+
+  // Handler quand la photo est prise et validée
+  const handleCameraPhotoCaptured = (imageData: string) => {
+    const newMessage = {
+      id: Date.now().toString(),
+      user: "Vous",
+      message: "📷 Photo prise",
+      time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      isStudent: true,
+      type: "image",
+      avatar: "/placeholder.svg",
+      imageData // contient le base64
+    };
+    setPrivateChatMessages((prev) => [...prev, newMessage]);
+  };
+
   return (
     <div className="flex flex-col h-full bg-[#0b141a] overflow-hidden">
       <div className="flex-shrink-0">
@@ -245,7 +266,6 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
           onVoicePlay={handleVoicePlay}
         />
       </div>
-      
       <div className="flex-shrink-0">
         <ChatInput
           privateMessage={privateMessage}
@@ -260,13 +280,18 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
           onVoiceRecord={handleVoiceRecord}
           setIsRecording={setIsRecording}
           fileInputRef={fileInputRef}
-          onCameraCapture={handleCameraCapture}
-          cameraInputRef={cameraInputRef}
+          // Remplacer la props caméra par un handler dédié (ouvre la modale)
+          onCameraButton={handleCameraButton}
         />
         <AvailableTeachers teachers={availableTeachers} />
       </div>
+      {/* Modale caméra */}
+      <CameraCaptureModal
+        open={showCameraModal}
+        onClose={() => setShowCameraModal(false)}
+        onCapture={handleCameraPhotoCaptured}
+      />
     </div>
   );
 };
-
 export default VideoPlayer;
