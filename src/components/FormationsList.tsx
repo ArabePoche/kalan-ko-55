@@ -1,12 +1,20 @@
+
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import FormationEditModal from "./FormationEditModal";
 
 interface FormationsListProps {
   formations: any[];
   loading?: boolean;
   error?: Error | null;
+  // Optionnel : refresher appelé après update
+  onUpdated?: () => void;
 }
 
-const FormationsList = ({ formations, loading, error }: FormationsListProps) => {
+const FormationsList = ({ formations, loading, error, onUpdated }: FormationsListProps) => {
+  const [editOpen, setEditOpen] = useState(false);
+  const [formationToEdit, setFormationToEdit] = useState<any>(null);
+
   if (loading) {
     return <p>Chargement…</p>;
   }
@@ -30,13 +38,26 @@ const FormationsList = ({ formations, loading, error }: FormationsListProps) => 
             <Button
               variant="outline"
               size="sm"
-              // Bouton maintenant actif
+              onClick={() => {
+                setFormationToEdit(formation);
+                setEditOpen(true);
+              }}
             >
               Modifier
             </Button>
           </div>
         </div>
       ))}
+      <FormationEditModal
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        formation={formationToEdit}
+        onUpdated={() => {
+          setEditOpen(false);
+          setFormationToEdit(null);
+          onUpdated && onUpdated();
+        }}
+      />
     </div>
   );
 };
