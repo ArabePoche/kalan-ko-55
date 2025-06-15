@@ -1,11 +1,10 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { CartItem } from '@/types/cart';
 
 export const useOrderMutation = (
-  clearCart: () => void, 
+  clearCart: () => Promise<void>, 
   navigate: (path: string) => void
 ) => {
   const queryClient = useQueryClient();
@@ -91,11 +90,11 @@ export const useOrderMutation = (
 
       return order;
     },
-    onSuccess: (order) => {
+    onSuccess: async (order) => {
       console.log('Order process completed successfully:', order);
       
-      // Vider le panier immédiatement après succès
-      clearCart();
+      // Vider le panier en attendant que l'opération soit terminée
+      await clearCart();
       
       // Invalider les requêtes pour forcer la mise à jour
       queryClient.invalidateQueries({ queryKey: ['cart'] });

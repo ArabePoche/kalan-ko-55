@@ -96,9 +96,9 @@ export const useCart = () => {
     }
   };
 
-  const clearCart = () => {
+  const clearCart = async () => {
     if (user) {
-      clearCartMutation.mutate();
+      await clearCartMutation.mutateAsync();
     } else {
       setItems([]);
     }
