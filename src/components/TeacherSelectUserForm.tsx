@@ -13,7 +13,7 @@ interface Profile {
   id: string;
   first_name?: string;
   last_name?: string;
-  email?: string;
+  username?: string;
   avatar_url?: string;
 }
 
@@ -30,11 +30,13 @@ const TeacherSelectUserForm = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Charger les utilisateurs
+    // Charger les utilisateurs (ajusté : email n’existe pas sur profiles !)
     supabase
       .from("profiles")
-      .select("id, first_name, last_name, username, email, avatar_url")
-      .then(({ data }) => setProfiles(data || []));
+      .select("id, first_name, last_name, username, avatar_url")
+      .then(({ data }) => {
+        setProfiles(data || []);
+      });
     // Charger les formations
     supabase
       .from("formations")
@@ -57,12 +59,12 @@ const TeacherSelectUserForm = ({
       setLoading(false);
       return;
     }
-    // On crée le prof dans la table teachers
+    // Création du prof (l'email n'est pas stocké dans profiles, on met 'inconnu')
     const { error: insertError } = await supabase.from("teachers").insert([
       {
         first_name: user.first_name ?? "",
         last_name: user.last_name ?? "",
-        email: user.email ?? "",
+        email: user.username ?? "inconnu", // Utilise username à la place d'un email si existant
         avatar_url: user.avatar_url ?? "",
         formation_id: selectedFormation,
       },
@@ -84,9 +86,10 @@ const TeacherSelectUserForm = ({
             <SelectValue placeholder="Sélectionner un utilisateur" />
           </SelectTrigger>
           <SelectContent>
+            {profiles.length === 0 && <SelectItem value="" disabled>Aucun utilisateur trouvé</SelectItem>}
             {profiles.map((u) => (
               <SelectItem value={u.id} key={u.id}>
-                {u.first_name} {u.last_name} ({u.email})
+                {u.first_name} {u.last_name} ({u.username ?? u.id})
               </SelectItem>
             ))}
           </SelectContent>
@@ -99,6 +102,7 @@ const TeacherSelectUserForm = ({
             <SelectValue placeholder="Sélectionner une formation" />
           </SelectTrigger>
           <SelectContent>
+            {formations.length === 0 && <SelectItem value="" disabled>Aucune formation</SelectItem>}
             {formations.map((f) => (
               <SelectItem value={f.id} key={f.id}>
                 {f.title}
