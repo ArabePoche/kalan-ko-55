@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -282,31 +283,9 @@ const AdminDashboard = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Dashboard Administrateur</h1>
-        <p className="text-muted-foreground">Gérez vos contenus et suivez vos performances</p>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <stat.icon className={`h-8 w-8 ${stat.color}`} />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Main Content Tabs */}
+      {/* Déplacement de la barre d'onglets en tout début de page */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
-        <TabsList>
+        <TabsList className="mb-6">
           <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
           <TabsTrigger value="videos">Gestion Vidéos</TabsTrigger>
           <TabsTrigger value="formations">Gestion Formations</TabsTrigger>
@@ -314,6 +293,29 @@ const AdminDashboard = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
+          {/* Le header et les stats sont maintenant à l'intérieur du tab "Vue d'ensemble" */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-foreground">Dashboard Administrateur</h1>
+            <p className="text-muted-foreground">Gérez vos contenus et suivez vos performances</p>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {stats.map((stat) => (
+              <Card key={stat.title}>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <stat.icon className={`h-8 w-8 ${stat.color}`} />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                      <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
