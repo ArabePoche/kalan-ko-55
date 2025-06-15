@@ -1,9 +1,9 @@
+
 import React, { forwardRef } from 'react';
 import { Heart, MessageCircle, Share2, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Video } from '@/types/video';
-import { VideoFeedbackButton } from './VideoFeedbackButton';
 import { useVideoViewTracking } from '@/hooks/useVideoViewTracking';
 import { getEmbedUrl } from '@/utils/videoUtils';
 
@@ -15,7 +15,6 @@ interface VideoItemProps {
   onLike: (videoId: string) => void;
   onComment: (videoId: string) => void;
   onShare: (videoId: string) => void;
-  onFeedback: (video: Video) => void;
   onBuyClick: (video: Video) => void;
   onViewCountIncrement: (videoId: string) => void;
 }
@@ -28,7 +27,6 @@ const VideoItem = forwardRef<HTMLDivElement, VideoItemProps>(({
   onLike,
   onComment,
   onShare,
-  onFeedback,
   onBuyClick,
   onViewCountIncrement
 }, ref) => {
@@ -42,7 +40,6 @@ const VideoItem = forwardRef<HTMLDivElement, VideoItemProps>(({
   const handleLike = () => onLike(video.id);
   const handleComment = () => onComment(video.id);
   const handleShare = () => onShare(video.id);
-  const handleFeedback = () => onFeedback(video);
   const handleBuy = () => onBuyClick(video);
 
   return (
@@ -124,12 +121,6 @@ const VideoItem = forwardRef<HTMLDivElement, VideoItemProps>(({
               <MessageCircle className="w-8 h-8 mb-1" />
               <span className="text-sm">{video.comments_count || 0}</span>
             </Button>
-
-            <VideoFeedbackButton
-              videoId={video.id}
-              videoTitle={video.title}
-              className="flex-col h-auto py-3 px-3"
-            />
 
             <Button
               variant="ghost"

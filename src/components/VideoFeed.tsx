@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { useVideoPlayback } from '@/hooks/useVideoPlayback';
 import { useVideoFeed } from '@/hooks/useVideoFeed';
@@ -40,10 +39,6 @@ const VideoFeed = () => {
   const handleComment = (videoId: string) => {
     setCurrentVideoId(videoId);
     setCommentsOpen(true);
-  };
-
-  const handleFeedback = (video: any) => {
-    console.log('Feedback pour la vidéo:', video.id);
   };
 
   const handleCommentAdded = () => {
@@ -99,7 +94,6 @@ const VideoFeed = () => {
             onLike={handleLike}
             onComment={handleComment}
             onShare={handleShare}
-            onFeedback={handleFeedback}
             onBuyClick={handleBuyClick}
             onViewCountIncrement={handleViewCountIncrement}
           />

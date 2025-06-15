@@ -1,4 +1,3 @@
-
 import { 
   Sheet, 
   SheetContent, 
@@ -17,7 +16,6 @@ import {
   useLikeFeedback,
   FeedbackSubmissionWithReview 
 } from '@/hooks/useFeedbackData';
-import { FeedbackStats } from './FeedbackStats';
 import { FeedbackItem } from './FeedbackItem';
 import { FeedbackInput } from './FeedbackInput';
 import { Clock, CheckCircle, AlertTriangle, X } from 'lucide-react';
@@ -159,7 +157,6 @@ export const VideoFeedbackModal = ({ isOpen, onClose, videoId, videoTitle }: Vid
           <SheetDescription className="text-left">
             Partagez et évaluez les feedbacks de cette vidéo
           </SheetDescription>
-          <FeedbackStats feedbacks={feedbacks} />
         </SheetHeader>
 
         <div className="flex flex-col h-[calc(100vh-200px)]">

@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useVideoLikes } from '@/hooks/useVideoLikes';
@@ -63,11 +62,6 @@ export const useVideoActions = (onLikeUpdate: (videoId: string, isLiked: boolean
     }
   };
 
-  const handleFeedback = (videoId: string) => {
-    console.log('Feedback pour la vidéo:', videoId);
-    navigate('/admin/feedback');
-  };
-
   const handleBuyClick = (video: any) => {
     console.log('Buy button clicked for video:', video);
     
@@ -103,7 +97,6 @@ export const useVideoActions = (onLikeUpdate: (videoId: string, isLiked: boolean
   return {
     handleLike,
     handleShare,
-    handleFeedback,
     handleBuyClick
   };
 };

@@ -1,5 +1,5 @@
 
-import { Heart, MessageCircle, Share, Flag, Users } from 'lucide-react';
+import { Heart, MessageCircle, Share, Users } from 'lucide-react';
 import { Video } from '@/types/video';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useNavigate } from 'react-router-dom';
@@ -10,7 +10,6 @@ interface VideoActionButtonsProps {
   onLike: (videoId: string) => void;
   onComment: (videoId: string) => void;
   onShare: (videoId: string) => void;
-  onFeedback: (videoId: string) => void;
 }
 
 const VideoActionButtons = ({ 
@@ -18,7 +17,6 @@ const VideoActionButtons = ({
   onLike, 
   onComment, 
   onShare, 
-  onFeedback 
 }: VideoActionButtonsProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -64,16 +62,6 @@ const VideoActionButtons = ({
           <Users className="w-6 h-6 text-white" />
         </div>
         <span className="text-xs text-white mt-1 font-medium">{video.views_count}</span>
-      </button>
-
-      <button 
-        className="flex flex-col items-center"
-        onClick={() => handleAction(onFeedback)}
-      >
-        <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-          <Flag className="w-6 h-6 text-white" />
-        </div>
-        <span className="text-xs text-white mt-1 font-medium">Report</span>
       </button>
 
       <button 

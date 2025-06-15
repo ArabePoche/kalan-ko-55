@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,8 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import FormationPage from "./components/FormationPage";
-import AdminDashboard from "./components/AdminDashboard";
-import FeedbackSystem from "./components/FeedbackSystem";
 import OrderPage from "./components/OrderPage";
 import Cart from "./components/Cart";
 import CheckoutPage from "./components/CheckoutPage";
@@ -74,24 +71,6 @@ const App = () => (
                 <GlobalNavigation />
                 <div className="pt-16">
                   <CheckoutPage />
-                </div>
-              </div>
-            } />
-            
-            <Route path="/admin" element={
-              <div className="min-h-screen bg-background">
-                <GlobalNavigation />
-                <div className="pt-16">
-                  <AdminDashboard />
-                </div>
-              </div>
-            } />
-            
-            <Route path="/admin/feedback" element={
-              <div className="min-h-screen bg-background">
-                <GlobalNavigation />
-                <div className="pt-16">
-                  <FeedbackSystem />
                 </div>
               </div>
             } />
