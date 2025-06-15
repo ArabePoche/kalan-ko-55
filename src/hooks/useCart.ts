@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from '@/hooks/use-toast';
 
 export interface CartItem {
   id: string;
@@ -21,7 +22,13 @@ export const useCart = () => {
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
-      setLocalItems(JSON.parse(savedCart));
+      try {
+        const parsedCart = JSON.parse(savedCart);
+        setLocalItems(parsedCart);
+      } catch (error) {
+        console.error('Error parsing cart from localStorage:', error);
+        localStorage.removeItem('cart');
+      }
     }
   }, []);
 
@@ -73,7 +80,60 @@ export const useCart = () => {
     enabled: false // Désactivé par défaut, sera activé quand l'utilisateur se connecte
   });
 
+  const addToCartMutation = useMutation({
+    mutationFn: async (item: Omit<CartItem, 'quantity'>) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Si utilisateur connecté, ajouter à la base de données
+        const { data: existingItem } = await supabase
+          .from('cart_items')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('product_id', item.id)
+          .single();
+
+        if (existingItem) {
+          // Augmenter la quantité
+          const { error } = await supabase
+            .from('cart_items')
+            .update({ quantity: existingItem.quantity + 1 })
+            .eq('id', existingItem.id);
+          
+          if (error) throw error;
+        } else {
+          // Créer un nouvel item
+          const { error } = await supabase
+            .from('cart_items')
+            .insert({
+              user_id: user.id,
+              product_id: item.id,
+              quantity: 1
+            });
+          
+          if (error) throw error;
+        }
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      toast({
+        title: "Produit ajouté",
+        description: "Le produit a été ajouté à votre panier.",
+      });
+    },
+    onError: (error) => {
+      console.error('Error adding to cart:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter le produit au panier.",
+        variant: "destructive"
+      });
+    }
+  });
+
   const addToCart = (item: Omit<CartItem, 'quantity'>) => {
+    // Toujours ajouter au panier local
     setLocalItems(prev => {
       const existingItem = prev.find(i => i.id === item.id);
       if (existingItem) {
@@ -85,6 +145,9 @@ export const useCart = () => {
       }
       return [...prev, { ...item, quantity: 1 }];
     });
+
+    // Essayer d'ajouter à la base de données si connecté
+    addToCartMutation.mutate(item);
   };
 
   const removeFromCart = (id: string) => {

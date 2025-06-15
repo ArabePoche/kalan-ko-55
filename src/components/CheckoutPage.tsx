@@ -5,25 +5,79 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCart } from '@/hooks/useCart';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
+import { useMutation } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
 
 const CheckoutPage = () => {
   const { items, getTotalPrice, clearCart } = useCart();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (items.length === 0) {
+      navigate('/cart');
+    }
+  }, [items.length, navigate]);
+
+  const createOrderMutation = useMutation({
+    mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Utilisateur non connecté');
+
+      // Créer la commande
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user.id,
+          total_amount: getTotalPrice(),
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Créer les items de commande
+      const orderItems = items.map(item => ({
+        order_id: order.id,
+        product_id: item.id,
+        quantity: item.quantity,
+        price: item.price
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
+
+      return order;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Commande passée avec succès !",
+        description: "Votre commande a été soumise et sera examinée par un administrateur.",
+      });
+      clearCart();
+      setTimeout(() => {
+        navigate('/');
+      }, 2000);
+    },
+    onError: (error) => {
+      console.error('Error creating order:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de passer la commande. Veuillez réessayer.",
+        variant: "destructive"
+      });
+    }
+  });
+
   const handlePlaceOrder = () => {
-    // Simuler la commande
-    toast({
-      title: "Commande passée avec succès !",
-      description: "Votre commande a été soumise et sera examinée par un administrateur.",
-    });
-    clearCart();
-    setTimeout(() => {
-      navigate('/');
-    }, 2000);
+    createOrderMutation.mutate();
   };
 
   if (items.length === 0) {
-    navigate('/cart');
     return null;
   }
 
@@ -152,8 +206,13 @@ const CheckoutPage = () => {
                 En passant cette commande, vous acceptez nos conditions de vente. 
                 Votre commande sera examinée et vous recevrez une confirmation.
               </p>
-              <Button onClick={handlePlaceOrder} className="w-full bg-[#FF9900] hover:bg-[#FF9900]/90 text-black" size="lg">
-                Passer la commande - {getTotalPrice().toFixed(2)}€
+              <Button 
+                onClick={handlePlaceOrder} 
+                className="w-full bg-[#FF9900] hover:bg-[#FF9900]/90 text-black" 
+                size="lg"
+                disabled={createOrderMutation.isPending}
+              >
+                {createOrderMutation.isPending ? 'Traitement...' : `Passer la commande - ${getTotalPrice().toFixed(2)}€`}
               </Button>
             </div>
           </CardContent>
