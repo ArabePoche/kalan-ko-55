@@ -1002,6 +1002,10 @@ export type Database = {
           product_type: Database["public"]["Enums"]["product_type"]
         }[]
       }
+      has_role: {
+        Args: { user_id: string; role: string }
+        Returns: boolean
+      }
     }
     Enums: {
       lesson_status: "locked" | "available" | "completed"
