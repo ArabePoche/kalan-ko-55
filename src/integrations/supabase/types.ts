@@ -214,12 +214,15 @@ export type Database = {
       }
       formations: {
         Row: {
+          author_id: string | null
           badge: string | null
+          category: string | null
           category_id: string | null
           completion_rate: number | null
           created_at: string | null
           description: string | null
           discount_percentage: number | null
+          duration: number | null
           duration_hours: number | null
           id: string
           image_url: string | null
@@ -231,16 +234,22 @@ export type Database = {
           promo_video_url: string | null
           rating: number | null
           students_count: number | null
+          thumbnail_url: string | null
+          title: string | null
           total_lessons: number | null
           updated_at: string | null
+          video_promo_id: string | null
         }
         Insert: {
+          author_id?: string | null
           badge?: string | null
+          category?: string | null
           category_id?: string | null
           completion_rate?: number | null
           created_at?: string | null
           description?: string | null
           discount_percentage?: number | null
+          duration?: number | null
           duration_hours?: number | null
           id: string
           image_url?: string | null
@@ -252,16 +261,22 @@ export type Database = {
           promo_video_url?: string | null
           rating?: number | null
           students_count?: number | null
+          thumbnail_url?: string | null
+          title?: string | null
           total_lessons?: number | null
           updated_at?: string | null
+          video_promo_id?: string | null
         }
         Update: {
+          author_id?: string | null
           badge?: string | null
+          category?: string | null
           category_id?: string | null
           completion_rate?: number | null
           created_at?: string | null
           description?: string | null
           discount_percentage?: number | null
+          duration?: number | null
           duration_hours?: number | null
           id?: string
           image_url?: string | null
@@ -273,10 +288,27 @@ export type Database = {
           promo_video_url?: string | null
           rating?: number | null
           students_count?: number | null
+          thumbnail_url?: string | null
+          title?: string | null
           total_lessons?: number | null
           updated_at?: string | null
+          video_promo_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "formations_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "formations_category_fkey"
+            columns: ["category"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "formations_category_id_fkey"
             columns: ["category_id"]

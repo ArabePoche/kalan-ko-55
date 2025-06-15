@@ -59,6 +59,7 @@ const AdminDashboard = () => {
     instructor_id: '',
     category_id: '',
     discount_percentage: '',
+    duration: ''
   });
   const [isCreatingFormation, setIsCreatingFormation] = useState(false);
 
@@ -123,14 +124,19 @@ const AdminDashboard = () => {
         id,
         title: newFormation.title,
         description: newFormation.description,
-        promo_video_url: newFormation.promoVideoUrl || null,
+        price: newFormation.price ? parseFloat(newFormation.price) : null,
+        author_id: newFormation.instructor_id || null,
+        thumbnail_url: newFormation.image_url || null,
+        video_promo_id: newFormation.promoVideoUrl || null,
+        category: newFormation.category_id || null,
+        duration: newFormation.duration ? parseInt(newFormation.duration) : null,
+        // Pour compatibilité avec anciens champs
         badge: newFormation.badge || null,
+        category_id: newFormation.category_id || null,
+        promo_video_url: newFormation.promoVideoUrl || null,
         image_url: newFormation.image_url || null,
         rating: newFormation.rating ? parseFloat(newFormation.rating) : 0,
         students_count: newFormation.students_count ? parseInt(newFormation.students_count) : 0,
-        instructor_id: newFormation.instructor_id || null,
-        category_id: newFormation.category_id || null,
-        price: newFormation.price ? parseFloat(newFormation.price) : null,
         original_price: newFormation.original_price ? parseFloat(newFormation.original_price) : null,
         discount_percentage: newFormation.discount_percentage ? parseInt(newFormation.discount_percentage) : null,
         is_active: true
@@ -159,7 +165,8 @@ const AdminDashboard = () => {
           students_count: '',
           instructor_id: '',
           category_id: '',
-          discount_percentage: ''
+          discount_percentage: '',
+          duration: ''
         });
       }
     } catch (e: any) {
@@ -517,6 +524,13 @@ const AdminDashboard = () => {
                 type="number"
                 value={newFormation.discount_percentage}
                 onChange={(e) => setNewFormation({ ...newFormation, discount_percentage: e.target.value })}
+                disabled={isCreatingFormation}
+              />
+              <Input
+                placeholder="Durée (en minutes) (optionnel)"
+                type="number"
+                value={newFormation.duration}
+                onChange={(e) => setNewFormation({ ...newFormation, duration: e.target.value })}
                 disabled={isCreatingFormation}
               />
               <div className="relative flex items-center">
