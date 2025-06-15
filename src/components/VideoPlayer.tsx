@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import ChatHeader from './ChatHeader';
 import VideoSection from './VideoSection';
@@ -49,6 +48,7 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const [showExercise, setShowExercise] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const [privateChatMessages, setPrivateChatMessages] = useState([
     {
@@ -187,6 +187,29 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
     console.log(`Initiating ${type} call with teacher`);
   };
 
+  // ==> Nouveau handler pour capture caméra (photo/vidéo)
+  const handleCameraCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+      let label = 'Photo';
+      if (isVideo) label = 'Vidéo';
+      if (isImage) label = 'Photo';
+      // On affiche un message spécifique selon le type 
+      const newMessage = {
+        id: Date.now().toString(),
+        user: 'Vous',
+        message: `📷 ${label} prise`,
+        time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        isStudent: true,
+        type: isImage ? 'image' : 'video',
+        avatar: '/placeholder.svg'
+      };
+      setPrivateChatMessages([...privateChatMessages, newMessage]);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-[#0b141a] overflow-hidden">
       <div className="flex-shrink-0">
@@ -237,6 +260,8 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
           onVoiceRecord={handleVoiceRecord}
           setIsRecording={setIsRecording}
           fileInputRef={fileInputRef}
+          onCameraCapture={handleCameraCapture}
+          cameraInputRef={cameraInputRef}
         />
         <AvailableTeachers teachers={availableTeachers} />
       </div>

@@ -16,6 +16,9 @@ interface ChatInputProps {
   onVoiceRecord: () => void;
   setIsRecording: (rec: boolean) => void;
   fileInputRef: React.RefObject<HTMLInputElement>;
+  // Ajout d'une nouvelle prop pour capturer la photo/vidéo caméra
+  onCameraCapture: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  cameraInputRef: React.RefObject<HTMLInputElement>;
 }
 
 const ChatInput = ({
@@ -29,7 +32,10 @@ const ChatInput = ({
   onFileAttachment,
   onFileSelect,
   onVoiceRecord,
+  setIsRecording,
   fileInputRef,
+  onCameraCapture,
+  cameraInputRef,
 }: ChatInputProps) => (
   <div className="bg-[#202c33] border-t border-[#313d44] p-4">
     {showEmojiPicker && (
@@ -90,6 +96,7 @@ const ChatInput = ({
       <Button 
         variant="ghost" 
         size="sm"
+        onClick={() => cameraInputRef.current && cameraInputRef.current.click()}
         className="rounded-full p-2 h-auto text-[#8696a0] hover:text-white hover:bg-[#202c33]"
       >
         <Camera className="w-5 h-5" />
@@ -120,7 +127,16 @@ const ChatInput = ({
       onChange={onFileSelect}
       className="hidden"
     />
+    <input
+      ref={cameraInputRef}
+      type="file"
+      accept="image/*,video/*"
+      capture
+      onChange={onCameraCapture}
+      className="hidden"
+    />
   </div>
 );
 
 export default ChatInput;
+
