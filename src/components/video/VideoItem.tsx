@@ -48,8 +48,8 @@ const VideoItem = forwardRef<HTMLDivElement, VideoItemProps>(({
       className="relative h-screen w-full snap-start flex items-center justify-center bg-black overflow-hidden"
       style={{ scrollSnapAlign: 'start' }}
     >
-      {/* Video */}
-      <div className="relative w-full h-full flex items-center justify-center">
+      {/* Video - Plein écran vertical */}
+      <div className="absolute inset-0 w-full h-full">
         {embedUrl ? (
           <iframe
             ref={iframeRef}
@@ -66,11 +66,11 @@ const VideoItem = forwardRef<HTMLDivElement, VideoItemProps>(({
         )}
       </div>
 
-      {/* Video Info Overlay */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-        <div className="flex justify-between items-end">
-          {/* Left side - Video info */}
-          <div className="flex-1 mr-4">
+      {/* Overlay avec informations - Position TikTok */}
+      <div className="absolute inset-0 flex">
+        {/* Côté gauche - Informations vidéo */}
+        <div className="flex-1 flex items-end p-4">
+          <div className="max-w-xs">
             <h3 className="text-white text-lg font-semibold mb-2 line-clamp-2">
               {video.title}
             </h3>
@@ -81,7 +81,7 @@ const VideoItem = forwardRef<HTMLDivElement, VideoItemProps>(({
               </p>
             )}
 
-            {/* Buy button with price under description */}
+            {/* Bouton d'achat si disponible */}
             {video.product && (
               <Button
                 onClick={handleBuy}
@@ -92,50 +92,50 @@ const VideoItem = forwardRef<HTMLDivElement, VideoItemProps>(({
               </Button>
             )}
 
-            {/* Stats - Only views */}
+            {/* Stats - Vues uniquement */}
             <div className="flex items-center space-x-4 text-white text-sm">
               <span>{video.views_count || 0} vues</span>
             </div>
           </div>
+        </div>
 
-          {/* Right side - Action buttons (larger size) */}
-          <div className="flex flex-col space-y-6">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLike}
-              className="text-white hover:bg-white/20 flex-col h-auto py-3 px-3"
-            >
-              <Heart 
-                className={`w-8 h-8 mb-1 ${video.isLiked ? 'text-red-500 fill-red-500' : 'text-white'}`} 
-              />
-              <span className="text-sm">{video.likes_count || 0}</span>
-            </Button>
+        {/* Côté droit - Boutons d'action (style TikTok) */}
+        <div className="w-16 flex flex-col justify-end items-center pb-24 space-y-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLike}
+            className="text-white hover:bg-white/20 flex-col h-auto py-3 px-3"
+          >
+            <Heart 
+              className={`w-8 h-8 mb-1 ${video.isLiked ? 'text-red-500 fill-red-500' : 'text-white'}`} 
+            />
+            <span className="text-xs">{video.likes_count || 0}</span>
+          </Button>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleComment}
-              className="text-white hover:bg-white/20 flex-col h-auto py-3 px-3"
-            >
-              <MessageCircle className="w-8 h-8 mb-1" />
-              <span className="text-sm">{video.comments_count || 0}</span>
-            </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleComment}
+            className="text-white hover:bg-white/20 flex-col h-auto py-3 px-3"
+          >
+            <MessageCircle className="w-8 h-8 mb-1" />
+            <span className="text-xs">{video.comments_count || 0}</span>
+          </Button>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleShare}
-              className="text-white hover:bg-white/20 flex-col h-auto py-3 px-3"
-            >
-              <Share2 className="w-8 h-8 mb-1" />
-              <span className="text-sm">Partager</span>
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleShare}
+            className="text-white hover:bg-white/20 flex-col h-auto py-3 px-3"
+          >
+            <Share2 className="w-8 h-8 mb-1" />
+            <span className="text-xs">Partager</span>
+          </Button>
         </div>
       </div>
 
-      {/* Video type badge */}
+      {/* Badge type de vidéo */}
       {video.video_type && (
         <div className="absolute top-4 left-4">
           <Badge variant="secondary" className="bg-black/50 text-white">
