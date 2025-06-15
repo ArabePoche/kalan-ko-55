@@ -1,6 +1,9 @@
 
 import { Heart, MessageCircle, Share, Flag, Users } from 'lucide-react';
 import { Video } from '@/types/video';
+import { useAuth } from '@/contexts/AuthProvider';
+import { useNavigate } from 'react-router-dom';
+import { toast } from '@/hooks/use-toast';
 
 interface VideoActionButtonsProps {
   video: Video;
@@ -17,11 +20,26 @@ const VideoActionButtons = ({
   onShare, 
   onFeedback 
 }: VideoActionButtonsProps) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleAction = (action: (videoId: string) => void) => {
+    if (!user) {
+      toast({
+        title: "Connexion requise",
+        description: "Vous devez être connecté pour effectuer cette action.",
+      });
+      navigate('/auth');
+    } else {
+      action(video.id);
+    }
+  };
+
   return (
     <div className="w-16 flex flex-col justify-end items-center pb-20 space-y-6 z-10">
       <button 
         className="flex flex-col items-center"
-        onClick={() => onLike(video.id)}
+        onClick={() => handleAction(onLike)}
       >
         <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
           <Heart className={`w-6 h-6 ${video.isLiked ? 'text-red-500 fill-current' : 'text-white'}`} />
@@ -33,7 +51,7 @@ const VideoActionButtons = ({
 
       <button 
         className="flex flex-col items-center"
-        onClick={() => onComment(video.id)}
+        onClick={() => handleAction(onComment)}
       >
         <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
           <MessageCircle className="w-6 h-6 text-white" />
@@ -50,7 +68,7 @@ const VideoActionButtons = ({
 
       <button 
         className="flex flex-col items-center"
-        onClick={() => onFeedback(video.id)}
+        onClick={() => handleAction(onFeedback)}
       >
         <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
           <Flag className="w-6 h-6 text-white" />
@@ -60,7 +78,7 @@ const VideoActionButtons = ({
 
       <button 
         className="flex flex-col items-center"
-        onClick={() => onShare(video.id)}
+        onClick={() => handleAction(onShare)}
       >
         <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
           <Share className="w-6 h-6 text-white" />

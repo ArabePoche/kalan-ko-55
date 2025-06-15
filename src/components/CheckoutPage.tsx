@@ -1,4 +1,3 @@
-
 import { useCart } from '@/hooks/useCart';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
@@ -10,16 +9,31 @@ import PaymentInfo from './checkout/PaymentInfo';
 import OrderItems from './checkout/OrderItems';
 import OrderSummary from './checkout/OrderSummary';
 import PlaceOrderSection from './checkout/PlaceOrderSection';
+import { useAuth } from '@/contexts/AuthProvider';
 
 const CheckoutPage = () => {
   const { items, getTotalPrice, clearCart } = useCart();
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
     if (items.length === 0) {
       navigate('/cart');
+      return;
     }
-  }, [items.length, navigate]);
+
+    if (!user) {
+      toast({
+        title: "Connexion requise",
+        description: "Veuillez vous connecter pour passer votre commande.",
+      });
+      navigate('/auth');
+    }
+  }, [items, user, authLoading, navigate]);
 
   const createOrderMutation = useOrderMutation(items, getTotalPrice, clearCart, navigate);
 
@@ -41,6 +55,10 @@ const CheckoutPage = () => {
     console.log('Starting order mutation...');
     createOrderMutation.mutate();
   };
+
+  if (authLoading || (!user && items.length > 0)) {
+    return null; // Or a loading spinner while we check auth and redirect
+  }
 
   if (items.length === 0) {
     return null;

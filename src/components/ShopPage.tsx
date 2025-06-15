@@ -6,12 +6,25 @@ import ShopHeader from './shop/ShopHeader';
 import CategoryFilter from './shop/CategoryFilter';
 import ProductGrid from './shop/ProductGrid';
 import { Product } from '@/hooks/useProducts';
+import { useAuth } from '@/contexts/AuthProvider';
+import { useNavigate } from 'react-router-dom';
 
 const ShopPage = () => {
   const { addToCart } = useCart();
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const handleAddToCart = (product: Product) => {
+    if (!user) {
+      toast({
+        title: "Connexion requise",
+        description: "Vous devez vous connecter pour ajouter des articles au panier.",
+      });
+      navigate('/auth');
+      return;
+    }
+
     addToCart({
       id: product.id,
       title: product.title,
@@ -19,11 +32,6 @@ const ShopPage = () => {
       instructor: product.instructor,
       image: product.image,
       type: product.type
-    });
-    
-    toast({
-      title: "Ajouté au panier !",
-      description: `${product.title} a été ajouté à votre panier.`,
     });
   };
 
