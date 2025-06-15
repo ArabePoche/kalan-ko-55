@@ -13,6 +13,8 @@ export interface UserActivity {
   last_sign_in_at: string | null;
   is_online: boolean;
   activity_score: number;
+  total_session_time: number;
+  sessions_today: number;
 }
 
 export const useUserActivity = () => {
@@ -27,29 +29,58 @@ export const useUserActivity = () => {
 
       if (profilesError) throw profilesError;
 
-      // Pour chaque utilisateur, calculer un score d'activité basé sur des métriques simples
-      const usersWithActivity = profiles.map(profile => {
-        // Simuler un score d'activité basé sur la date de création et une activité récente simulée
+      // Pour chaque utilisateur, récupérer les données de session
+      const usersWithActivity = await Promise.all(profiles.map(async (profile) => {
+        // Récupérer les sessions de l'utilisateur
+        const { data: sessions } = await supabase
+          .from('user_sessions')
+          .select('*')
+          .eq('user_id', profile.id)
+          .order('started_at', { ascending: false });
+
+        // Calculer les métriques d'activité
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        
+        // Sessions aujourd'hui
+        const sessionsToday = sessions?.filter(s => 
+          new Date(s.started_at) >= today
+        ).length || 0;
+
+        // Temps total de session (en minutes)
+        const totalSessionTime = sessions?.reduce((total, session) => {
+          return total + (session.duration_minutes || 0);
+        }, 0) || 0;
+
+        // Dernière connexion réelle
+        const lastSignInAt = sessions?.[0]?.started_at || profile.created_at;
+
+        // Utilisateur en ligne (session active dans les 5 dernières minutes)
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+        const isOnline = sessions?.some(session => 
+          !session.ended_at && new Date(session.started_at) > fiveMinutesAgo
+        ) || false;
+
+        // Score d'activité basé sur les données réelles
         const daysSinceCreation = profile.created_at 
           ? Math.floor((Date.now() - new Date(profile.created_at).getTime()) / (1000 * 60 * 60 * 24))
           : 0;
         
-        // Score basé sur l'ancienneté (plus récent = plus actif) et un facteur aléatoire pour simuler l'activité
-        const activityScore = Math.max(0, 100 - daysSinceCreation + Math.floor(Math.random() * 50));
-        
-        // Simuler le statut en ligne (en réalité, ceci devrait venir d'un système de présence)
-        const isOnline = Math.random() > 0.7; // 30% de chance d'être en ligne
-        
-        // Simuler la dernière connexion
-        const lastSignInAt = new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString();
+        const recentActivity = sessions?.filter(s => 
+          new Date(s.started_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        ).length || 0;
+
+        const activityScore = Math.min(100, (recentActivity * 20) + (totalSessionTime / 10) + (sessionsToday * 15));
 
         return {
           ...profile,
           last_sign_in_at: lastSignInAt,
           is_online: isOnline,
-          activity_score: activityScore,
+          activity_score: Math.round(activityScore),
+          total_session_time: totalSessionTime,
+          sessions_today: sessionsToday,
         } as UserActivity;
-      });
+      }));
 
       // Trier par score d'activité décroissant
       return usersWithActivity.sort((a, b) => b.activity_score - a.activity_score);

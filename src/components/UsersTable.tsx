@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Circle } from 'lucide-react';
+import { MoreHorizontal, Circle, Clock, Activity } from 'lucide-react';
 import { UserActivity } from '@/hooks/useUserActivity';
 
 interface UsersTableProps {
@@ -28,6 +28,13 @@ export default function UsersTable({ users, loading }: UsersTableProps) {
     return `Il y a ${diffInDays} jour${diffInDays > 1 ? 's' : ''}`;
   };
 
+  const formatSessionTime = (minutes: number) => {
+    if (minutes < 60) return `${Math.round(minutes)}min`;
+    const hours = Math.floor(minutes / 60);
+    const mins = Math.round(minutes % 60);
+    return `${hours}h ${mins}min`;
+  };
+
   const getActivityLevel = (score: number) => {
     if (score >= 80) return { label: 'Très actif', color: 'bg-green-500' };
     if (score >= 60) return { label: 'Actif', color: 'bg-blue-500' };
@@ -42,8 +49,9 @@ export default function UsersTable({ users, loading }: UsersTableProps) {
           <TableHead>Utilisateur</TableHead>
           <TableHead>Statut</TableHead>
           <TableHead>Activité</TableHead>
+          <TableHead className="hidden md:table-cell">Sessions aujourd'hui</TableHead>
+          <TableHead className="hidden md:table-cell">Temps total</TableHead>
           <TableHead className="hidden md:table-cell">Dernière connexion</TableHead>
-          <TableHead className="hidden md:table-cell">Inscrit le</TableHead>
           <TableHead>
             <span className="sr-only">Actions</span>
           </TableHead>
@@ -93,12 +101,21 @@ export default function UsersTable({ users, loading }: UsersTableProps) {
                 </div>
               </TableCell>
               <TableCell className="hidden md:table-cell">
+                <div className="flex items-center gap-1">
+                  <Activity className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{user.sessions_today}</span>
+                </div>
+              </TableCell>
+              <TableCell className="hidden md:table-cell">
+                <div className="flex items-center gap-1">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{formatSessionTime(user.total_session_time)}</span>
+                </div>
+              </TableCell>
+              <TableCell className="hidden md:table-cell">
                 <span className="text-sm">
                   {user.last_sign_in_at ? formatLastSeen(user.last_sign_in_at) : 'Jamais'}
                 </span>
-              </TableCell>
-              <TableCell className="hidden md:table-cell">
-                {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
               </TableCell>
               <TableCell>
                 <DropdownMenu>
@@ -110,6 +127,7 @@ export default function UsersTable({ users, loading }: UsersTableProps) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem>Voir le profil</DropdownMenuItem>
+                    <DropdownMenuItem>Voir les sessions</DropdownMenuItem>
                     <DropdownMenuItem>Changer le rôle</DropdownMenuItem>
                     <DropdownMenuItem className="text-destructive">
                       Suspendre l'utilisateur

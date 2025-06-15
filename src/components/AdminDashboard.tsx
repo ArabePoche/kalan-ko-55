@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Video, BookOpen, Users, Upload, Eye, TrendingUp, DollarSign, MoreHorizontal, Youtube } from 'lucide-react';
+import { Plus, Video, BookOpen, Users, Upload, Eye, TrendingUp, DollarSign, MoreHorizontal, Youtube, Clock, Activity } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -16,9 +16,13 @@ import FormationsList from "./FormationsList";
 import FormationCreateForm from "./FormationCreateForm";
 import VideoCreateForm from "./VideoCreateForm";
 import UsersTable from "./UsersTable";
+import UserSessionsTable from "./UserSessionsTable";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import UserActivityStats from "./UserActivityStats";
 import { useUserActivity } from "@/hooks/useUserActivity";
+import { useAdminStats } from "@/hooks/useAdminStats";
+import { useRecentActivity } from "@/hooks/useRecentActivity";
+import { useUserSessions, useUserSessionStats } from "@/hooks/useUserSessions";
 
 // Charger les catégories depuis Supabase
 const fetchCategories = async () => {
@@ -90,11 +94,38 @@ const AdminDashboard = () => {
     queryFn: fetchFormations
   });
 
+  // Nouveaux hooks pour les données réelles
+  const { data: adminStats, isLoading: loadingStats } = useAdminStats();
+  const { data: recentActivity, isLoading: loadingActivity } = useRecentActivity();
+  const { data: userSessions, isLoading: loadingSessions } = useUserSessions();
+  const { data: sessionStats, isLoading: loadingSessionStats } = useUserSessionStats();
+
+  // Stats avec données réelles
   const stats = [
-    { title: 'Total Vidéos', value: '124', icon: Video, color: 'text-blue-600' },
-    { title: 'Total Formations', value: '18', icon: BookOpen, color: 'text-green-600' },
-    { title: 'Utilisateurs Actifs', value: '2,847', icon: Users, color: 'text-purple-600' },
-    { title: 'Revenus ce mois', value: '12,450€', icon: DollarSign, color: 'text-orange-600' }
+    { 
+      title: 'Total Vidéos', 
+      value: loadingStats ? '...' : adminStats?.videosCount?.toString() || '0', 
+      icon: Video, 
+      color: 'text-blue-600' 
+    },
+    { 
+      title: 'Total Formations', 
+      value: loadingStats ? '...' : adminStats?.formationsCount?.toString() || '0', 
+      icon: BookOpen, 
+      color: 'text-green-600' 
+    },
+    { 
+      title: 'Utilisateurs Actifs', 
+      value: loadingStats ? '...' : adminStats?.activeUsersCount?.toString() || '0', 
+      icon: Users, 
+      color: 'text-purple-600' 
+    },
+    { 
+      title: 'Revenus ce mois', 
+      value: loadingStats ? '...' : `${adminStats?.monthlyRevenue?.toFixed(0) || '0'}€`, 
+      icon: DollarSign, 
+      color: 'text-orange-600' 
+    }
   ];
 
   const videos = [
@@ -293,6 +324,7 @@ const AdminDashboard = () => {
           <TabsTrigger value="videos">Gestion Vidéos</TabsTrigger>
           <TabsTrigger value="formations">Gestion Formations</TabsTrigger>
           <TabsTrigger value="users">Gestion Utilisateurs</TabsTrigger>
+          <TabsTrigger value="sessions">Sessions Utilisateurs</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -302,7 +334,7 @@ const AdminDashboard = () => {
             <p className="text-muted-foreground">Gérez vos contenus et suivez vos performances</p>
           </div>
 
-          {/* Stats Cards */}
+          {/* Stats Cards avec données réelles */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {stats.map((stat) => (
               <Card key={stat.title}>
@@ -319,6 +351,49 @@ const AdminDashboard = () => {
             ))}
           </div>
 
+          {/* Stats de sessions */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <Activity className="h-8 w-8 text-green-600" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-muted-foreground">Sessions actives</p>
+                    <p className="text-2xl font-bold text-foreground">
+                      {loadingSessionStats ? '...' : sessionStats?.activeSessions || 0}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <Clock className="h-8 w-8 text-blue-600" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-muted-foreground">Temps moyen/session</p>
+                    <p className="text-2xl font-bold text-foreground">
+                      {loadingSessionStats ? '...' : `${sessionStats?.avgSessionTime || 0}min`}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <TrendingUp className="h-8 w-8 text-purple-600" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-muted-foreground">Sessions aujourd'hui</p>
+                    <p className="text-2xl font-bold text-foreground">
+                      {loadingSessionStats ? '...' : sessionStats?.todaySessionsCount || 0}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
@@ -327,16 +402,22 @@ const AdminDashboard = () => {
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3">
-                    <Eye className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm">Nouvelle vidéo visionnée 1,234 fois</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
                     <Users className="w-4 h-4 text-green-600" />
-                    <span className="text-sm">15 nouveaux étudiants inscrits</span>
+                    <span className="text-sm">
+                      {loadingActivity ? 'Chargement...' : `${recentActivity?.newUsersToday || 0} nouveaux utilisateurs aujourd'hui`}
+                    </span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <TrendingUp className="w-4 h-4 text-purple-600" />
-                    <span className="text-sm">Revenus en hausse de 12%</span>
+                    <span className="text-sm">
+                      {loadingActivity ? 'Chargement...' : `${recentActivity?.recentOrders || 0} commandes dans les dernières 24h`}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Activity className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm">
+                      {loadingSessionStats ? 'Chargement...' : `${sessionStats?.activeSessions || 0} utilisateurs en ligne`}
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -348,12 +429,16 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {videos.slice(0, 3).map((video) => (
-                    <div key={video.id} className="flex justify-between items-center">
-                      <span className="text-sm font-medium">{video.title}</span>
-                      <Badge variant="secondary">{video.views} vues</Badge>
-                    </div>
-                  ))}
+                  {loadingActivity ? (
+                    <p className="text-sm text-muted-foreground">Chargement...</p>
+                  ) : (
+                    recentActivity?.popularVideos.map((video) => (
+                      <div key={video.id} className="flex justify-between items-center">
+                        <span className="text-sm font-medium">{video.title}</span>
+                        <Badge variant="secondary">{video.views_count} vues</Badge>
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -457,6 +542,24 @@ const AdminDashboard = () => {
               {isLoadingUsers && <p>Chargement des utilisateurs...</p>}
               {usersError instanceof Error && <p className="text-destructive">Erreur: {usersError.message}</p>}
               {users && <UsersTable users={users} loading={isLoadingUsers} />}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="sessions" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Sessions Utilisateurs</h2>
+          </div>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Sessions utilisateurs en temps réel</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Suivez les connexions et la durée des sessions de vos utilisateurs.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <UserSessionsTable sessions={userSessions || []} loading={loadingSessions} />
             </CardContent>
           </Card>
         </TabsContent>
