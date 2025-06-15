@@ -27,7 +27,7 @@ const fetchUsers = async () => {
 const AdminDashboard = () => {
   const [selectedTab, setSelectedTab] = useState('overview');
   const [newVideo, setNewVideo] = useState({ title: '', description: '', price: '', url: '' });
-  const [newFormation, setNewFormation] = useState({ title: '', description: '', price: '' });
+  const [newFormation, setNewFormation] = useState({ title: '', description: '', price: '', promoVideoUrl: '' });
   const [isCreatingFormation, setIsCreatingFormation] = useState(false);
 
   const { data: users, isLoading: isLoadingUsers, error: usersError } = useQuery({
@@ -74,7 +74,7 @@ const AdminDashboard = () => {
       if (!newFormation.title || !newFormation.description || !newFormation.price) {
         toast({
           title: "Champs manquants",
-          description: "Veuillez renseigner tous les champs.",
+          description: "Veuillez renseigner tous les champs obligatoires.",
           variant: "destructive"
         });
         setIsCreatingFormation(false);
@@ -88,8 +88,8 @@ const AdminDashboard = () => {
             title: newFormation.title,
             description: newFormation.description,
             price: Number(newFormation.price),
-            product_type: 'formation', // à adapter selon votre enum
-            // ajouter d'autres champs si nécessaires, ex: image_url
+            product_type: 'formation',
+            promo_video_url: newFormation.promoVideoUrl || null,
           }
         ]);
       if (error) {
@@ -103,8 +103,7 @@ const AdminDashboard = () => {
           title: "Formation créée",
           description: "La formation a bien été ajoutée.",
         });
-        setNewFormation({ title: '', description: '', price: '' });
-        // TODO: mettre à jour la liste des formations sans reload
+        setNewFormation({ title: '', description: '', price: '', promoVideoUrl: '' });
       }
     } catch (e: any) {
       toast({
@@ -308,6 +307,18 @@ const AdminDashboard = () => {
                 onChange={(e) => setNewFormation({ ...newFormation, price: e.target.value })}
                 disabled={isCreatingFormation}
               />
+              <div className="relative flex items-center">
+                <span className="absolute left-3 z-10">
+                  <Video className="h-5 w-5 text-muted-foreground" />
+                </span>
+                <Input
+                  placeholder="URL de la vidéo promotionnelle (optionnel)"
+                  value={newFormation.promoVideoUrl}
+                  onChange={(e) => setNewFormation({ ...newFormation, promoVideoUrl: e.target.value })}
+                  disabled={isCreatingFormation}
+                  className="pl-10"
+                />
+              </div>
               <Button
                 className="w-full"
                 onClick={handleCreateFormation}

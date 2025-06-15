@@ -455,6 +455,7 @@ export type Database = {
           original_price: number | null
           price: number
           product_type: Database["public"]["Enums"]["product_type"]
+          promo_video_url: string | null
           rating: number | null
           students_count: number | null
           title: string
@@ -473,6 +474,7 @@ export type Database = {
           original_price?: number | null
           price: number
           product_type: Database["public"]["Enums"]["product_type"]
+          promo_video_url?: string | null
           rating?: number | null
           students_count?: number | null
           title: string
@@ -491,6 +493,7 @@ export type Database = {
           original_price?: number | null
           price?: number
           product_type?: Database["public"]["Enums"]["product_type"]
+          promo_video_url?: string | null
           rating?: number | null
           students_count?: number | null
           title?: string

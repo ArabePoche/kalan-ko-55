@@ -4,15 +4,34 @@ import { cn } from '@/lib/utils';
 import VideoFeed from './VideoFeed';
 import PostsFeed from './PostsFeed';
 import SearchFeed from './SearchFeed';
+import PromotionalFormations from './PromotionalFormations';
+import { useCart } from '@/hooks/useCart';
+import { toast } from '@/components/ui/use-toast';
 
 const HomePage = () => {
   const [activeTab, setActiveTab] = useState<'videos' | 'posts' | 'search'>('videos');
+  const { addToCart } = useCart();
 
   const tabs = [
     { id: 'videos', label: 'Vidéos' },
     { id: 'posts', label: 'Posts' },
     { id: 'search', label: 'Recherche' },
   ];
+
+  const handleBuyFormation = (formation: any) => {
+    addToCart({
+      id: formation.id,
+      title: formation.title,
+      price: formation.price,
+      image: formation.image_url || '/placeholder.svg',
+      type: 'formation'
+    });
+    
+    toast({
+      title: "Formation ajoutée au panier",
+      description: `${formation.title} a été ajoutée à votre panier.`,
+    });
+  };
 
   return (
     <div className="h-screen bg-background">
@@ -40,7 +59,15 @@ const HomePage = () => {
 
       {/* Content */}
       <div className="h-full">
-        {activeTab === 'videos' && <VideoFeed />}
+        {activeTab === 'videos' && (
+          <>
+            <VideoFeed />
+            {/* Formations promotionnelles en overlay */}
+            <div className="absolute bottom-0 left-0 right-0 z-40">
+              <PromotionalFormations onBuyClick={handleBuyFormation} />
+            </div>
+          </>
+        )}
         {activeTab === 'posts' && (
           <div className="pt-24">
             <PostsFeed />
