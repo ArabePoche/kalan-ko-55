@@ -40,37 +40,110 @@ const AuthPage = () => {
 
   const handleSignUp = async (values: z.infer<typeof signUpSchema>) => {
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email: values.email,
-      password: values.password,
-      options: {
-        data: {
-          first_name: values.firstName,
-          last_name: values.lastName,
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            first_name: values.firstName,
+            last_name: values.lastName,
+          },
+          emailRedirectTo: `${window.location.origin}/`,
         },
-        emailRedirectTo: `${window.location.origin}/`,
-      },
-    });
-    setLoading(false);
-    if (error) {
-      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: 'Succès', description: 'Veuillez vérifier votre e-mail pour confirmer votre inscription.' });
+      });
+
+      if (error) {
+        console.error('Erreur d\'inscription:', error);
+        if (error.message.includes('User already registered')) {
+          toast({ 
+            title: 'Compte existant', 
+            description: 'Un compte avec cet email existe déjà. Essayez de vous connecter.',
+            variant: 'destructive' 
+          });
+        } else if (error.message.includes('Email not confirmed')) {
+          toast({ 
+            title: 'Email non confirmé', 
+            description: 'Veuillez vérifier votre boîte email et cliquer sur le lien de confirmation.',
+            variant: 'destructive' 
+          });
+        } else {
+          toast({ 
+            title: 'Erreur d\'inscription', 
+            description: error.message,
+            variant: 'destructive' 
+          });
+        }
+      } else if (data?.user && !data.user.email_confirmed_at) {
+        toast({ 
+          title: 'Vérification requise', 
+          description: 'Un email de confirmation a été envoyé à votre adresse. Veuillez vérifier votre boîte email et cliquer sur le lien pour activer votre compte.',
+          duration: 6000
+        });
+      } else if (data?.user?.email_confirmed_at) {
+        toast({ 
+          title: 'Inscription réussie', 
+          description: 'Votre compte a été créé avec succès !',
+        });
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Erreur inattendue:', error);
+      toast({ 
+        title: 'Erreur', 
+        description: 'Une erreur inattendue s\'est produite. Veuillez réessayer.',
+        variant: 'destructive' 
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSignIn = async (values: z.infer<typeof signInSchema>) => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: values.email,
-      password: values.password,
-    });
-    setLoading(false);
-    if (error) {
-      toast({ title: 'Erreur de connexion', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: 'Connexion réussie', description: 'Bienvenue !' });
-      navigate('/');
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
+
+      if (error) {
+        console.error('Erreur de connexion:', error);
+        if (error.message.includes('Email not confirmed')) {
+          toast({ 
+            title: 'Email non confirmé', 
+            description: 'Veuillez vérifier votre boîte email et cliquer sur le lien de confirmation avant de vous connecter.',
+            variant: 'destructive' 
+          });
+        } else if (error.message.includes('Invalid login credentials')) {
+          toast({ 
+            title: 'Identifiants incorrects', 
+            description: 'Email ou mot de passe incorrect. Veuillez vérifier vos informations.',
+            variant: 'destructive' 
+          });
+        } else {
+          toast({ 
+            title: 'Erreur de connexion', 
+            description: error.message,
+            variant: 'destructive' 
+          });
+        }
+      } else if (data?.user) {
+        toast({ 
+          title: 'Connexion réussie', 
+          description: 'Bienvenue !',
+        });
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Erreur inattendue:', error);
+      toast({ 
+        title: 'Erreur', 
+        description: 'Une erreur inattendue s\'est produite. Veuillez réessayer.',
+        variant: 'destructive' 
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -103,7 +176,9 @@ const AuthPage = () => {
                       <FormMessage />
                     </FormItem>
                   )} />
-                  <Button type="submit" className="w-full" disabled={loading}>{loading ? 'Chargement...' : 'Se connecter'}</Button>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? 'Connexion en cours...' : 'Se connecter'}
+                  </Button>
                 </form>
               </Form>
             </CardContent>
@@ -131,7 +206,7 @@ const AuthPage = () => {
                       <FormMessage />
                     </FormItem>
                   )} />
-                   <FormField control={signUpForm.control} name="email" render={({ field }) => (
+                  <FormField control={signUpForm.control} name="email" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl><Input placeholder="votre@email.com" {...field} /></FormControl>
@@ -145,7 +220,9 @@ const AuthPage = () => {
                       <FormMessage />
                     </FormItem>
                   )} />
-                  <Button type="submit" className="w-full" disabled={loading}>{loading ? 'Chargement...' : 'S\'inscrire'}</Button>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? 'Inscription en cours...' : 'S\'inscrire'}
+                  </Button>
                 </form>
               </Form>
             </CardContent>
