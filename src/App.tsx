@@ -10,6 +10,7 @@ import FormationPage from "./components/FormationPage";
 import OrderPage from "./components/OrderPage";
 import Cart from "./components/Cart";
 import CheckoutPage from "./components/CheckoutPage";
+import AdminPage from "./pages/AdminPage";
 import { AuthProvider } from "./contexts/AuthProvider";
 import AuthPage from "./pages/AuthPage";
 import HomePage from "./components/HomePage";
@@ -38,6 +39,13 @@ const App = () => (
             </Route>
 
             <Route path="/auth" element={<AuthPage />} />
+            
+            {/* Page admin */}
+            <Route path="/admin" element={
+              <div className="min-h-screen bg-background">
+                <AdminPage />
+              </div>
+            } />
             
             {/* Pages avec navigation globale */}
             <Route path="/formation/:id" element={
