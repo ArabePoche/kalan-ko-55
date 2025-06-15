@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { useVideoPlayback } from '@/hooks/useVideoPlayback';
 import { useVideoFeed } from '@/hooks/useVideoFeed';
@@ -82,7 +81,7 @@ const VideoFeed = () => {
         <div 
           ref={containerRef}
           className="h-screen overflow-y-scroll snap-y snap-mandatory bg-black"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', scrollBehavior: 'smooth' }}
         >
           <style>
             {`
@@ -96,19 +95,13 @@ const VideoFeed = () => {
             <VideoItem
               key={video.id}
               video={video}
-              index={index}
-              currentVideoIndex={currentVideoIndex}
-              iframeRef={(el) => (iframeRefs.current[index] = el)}
-              onLike={handleLike}
-              onComment={handleComment}
-              onShare={handleShare}
+              onLikeUpdate={updateVideoLike}
               onBuyClick={handleBuyClick}
-              onViewCountIncrement={handleViewCountIncrement}
             />
           ))}
         </div>
       ) : (
-        <div className="h-screen bg-black">
+        <div className="h-screen bg-black" style={{ scrollBehavior: 'smooth' }}>
           <PostsFeed />
         </div>
       )}

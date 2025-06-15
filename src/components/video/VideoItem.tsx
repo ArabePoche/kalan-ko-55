@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Heart, Share2, ShoppingCart } from 'lucide-react';
 import { useVideoActions } from '@/hooks/useVideoActions';
@@ -5,6 +6,7 @@ import { useVideoActions } from '@/hooks/useVideoActions';
 interface VideoItemProps {
   video: any;
   onLikeUpdate: (videoId: string, isLiked: boolean, newCount: number) => void;
+  onBuyClick?: (video: any) => void;
 }
 
 const VideoItem = ({ video, onLikeUpdate, onBuyClick }: VideoItemProps) => {
@@ -19,7 +21,6 @@ const VideoItem = ({ video, onLikeUpdate, onBuyClick }: VideoItemProps) => {
 
   const getAuthorAvatar = () => {
     if (video.author && typeof video.author === 'object') {
-      // Use a placeholder avatar since avatar_url doesn't exist in the type
       return '/placeholder.svg';
     }
     return '/placeholder.svg';
@@ -89,7 +90,7 @@ const VideoItem = ({ video, onLikeUpdate, onBuyClick }: VideoItemProps) => {
               <span>Partager</span>
             </button>
           </div>
-          {video.product && (
+          {video.product && onBuyClick && (
             <button
               onClick={() => onBuyClick(video)}
               className="bg-primary text-white rounded-md py-2 px-4 hover:bg-primary/90 flex items-center space-x-2"

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 // Import de composants refactorisés
 import SidebarLevels from './SidebarLevels';
@@ -176,7 +175,7 @@ const FormationPage = () => {
   if (isMobile) {
     // Version mobile améliorée
     return (
-      <div className="h-screen bg-background flex flex-col overflow-hidden">
+      <div className="h-screen bg-background flex flex-col overflow-hidden" style={{ scrollBehavior: 'smooth' }}>
         <div className="flex-shrink-0 p-3 border-b border-border bg-[#075e54] safe-area-top">
           <div className="flex items-center space-x-3">
             <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="text-white p-2">
@@ -197,7 +196,7 @@ const FormationPage = () => {
           </div>
         </div>
 
-        <div className="p-4">
+        <div className="p-4" style={{ scrollBehavior: 'smooth' }}>
           {/* Bannière d'accès temporaire */}
           {hasAccess && (
             <TemporaryAccessBanner 
@@ -229,7 +228,7 @@ const FormationPage = () => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden" style={{ scrollBehavior: 'smooth' }}>
           {hasAccess ? (
             selectedLesson ? (
               <VideoPlayer 
@@ -276,7 +275,7 @@ const FormationPage = () => {
 
   // Version desktop
   return (
-    <div className="h-screen bg-[#111b21] flex">
+    <div className="h-screen bg-[#111b21] flex" style={{ scrollBehavior: 'smooth' }}>
       <SidebarLevels
         levels={levels}
         selectedLesson={selectedLesson}
@@ -286,7 +285,7 @@ const FormationPage = () => {
         formation={formation}
         hasAccess={hasAccess}
       />
-      <div className="flex-1 flex flex-col bg-[#0b141a]">
+      <div className="flex-1 flex flex-col bg-[#0b141a]" style={{ scrollBehavior: 'smooth' }}>
         {/* Desktop Formation Header with Order Button */}
         <div className="bg-[#202c33] border-b border-[#313d44] p-4">
           {hasAccess && (
