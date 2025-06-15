@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from '@/components/ui/use-toast';
+import FormationsList from "./FormationsList";
 // Ajout : Select shadcn
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -100,26 +101,6 @@ const AdminDashboard = () => {
     { id: '2', title: 'Règles de Tajwid', views: 856, status: 'En révision' }
   ];
 
-  // const formations = [
-  //   {
-  //     id: '1',
-  //     title: 'Formation Coran Complet',
-  //     students: 45,
-  //     levels: [
-  //       {
-  //         id: '1',
-  //         title: 'Niveau 1 - Bases',
-  //         lessons: ['Introduction', 'Alphabet arabe', 'Première sourate']
-  //       },
-  //       {
-  //         id: '2',
-  //         title: 'Niveau 2 - Intermédiaire',
-  //         lessons: ['Règles de lecture', 'Tajwid débutant']
-  //       }
-  //     ]
-  //   }
-  // ];
-
   // Nouvelle fonction pour ajouter une formation (corrigée pour FK products)
   const handleCreateFormation = async () => {
     setIsCreatingFormation(true);
@@ -136,27 +117,35 @@ const AdminDashboard = () => {
       // Génération d'un id unique partagé
       const id = crypto.randomUUID();
 
-      // Étape 1 : création du produit
+      // Étape 1 : création du produit (typage correct !)
       const productInsert = {
         id,
         title: newFormation.title,
         description: newFormation.description,
         price: newFormation.price ? parseFloat(newFormation.price) : 0,
-        original_price: newFormation.original_price ? parseFloat(newFormation.original_price) : null,
+        original_price: newFormation.original_price
+          ? parseFloat(newFormation.original_price)
+          : null,
         badge: newFormation.badge || null,
         image_url: newFormation.image_url || null,
         rating: newFormation.rating ? parseFloat(newFormation.rating) : 0,
-        students_count: newFormation.students_count ? parseInt(newFormation.students_count) : 0,
+        students_count: newFormation.students_count
+          ? parseInt(newFormation.students_count)
+          : 0,
         instructor_id: newFormation.instructor_id || null,
         category_id: newFormation.category_id || null,
-        discount_percentage: newFormation.discount_percentage ? parseInt(newFormation.discount_percentage) : null,
+        discount_percentage: newFormation.discount_percentage
+          ? parseInt(newFormation.discount_percentage)
+          : null,
         promo_video_url: newFormation.promoVideoUrl || null,
-        // Ajouts nécessaires
-        product_type: "formation", // obligatoire
-        is_active: true
+        // Correction ici : respecter l’enum du type Supabase
+        product_type: "formation" as "formation",
+        is_active: true,
       };
 
-      const { error: productError } = await supabase.from('products').insert([productInsert]);
+      const { error: productError } = await supabase
+        .from('products')
+        .insert([productInsert]);
       if (productError) {
         toast({
           title: "Erreur création produit",
@@ -166,10 +155,10 @@ const AdminDashboard = () => {
         setIsCreatingFormation(false);
         return;
       }
-      
-      // Étape 2 : création de la formation, sur le même id
+
+      // Étape 2 : création de la formation, sur le même id
       const toInsert = {
-        id, // même id que pour products
+        id,
         title: newFormation.title,
         description: newFormation.description,
         price: newFormation.price ? parseFloat(newFormation.price) : null,
@@ -184,9 +173,13 @@ const AdminDashboard = () => {
         image_url: newFormation.image_url || null,
         rating: newFormation.rating ? parseFloat(newFormation.rating) : 0,
         students_count: newFormation.students_count ? parseInt(newFormation.students_count) : 0,
-        original_price: newFormation.original_price ? parseFloat(newFormation.original_price) : null,
-        discount_percentage: newFormation.discount_percentage ? parseInt(newFormation.discount_percentage) : null,
-        is_active: true
+        original_price: newFormation.original_price
+          ? parseFloat(newFormation.original_price)
+          : null,
+        discount_percentage: newFormation.discount_percentage
+          ? parseInt(newFormation.discount_percentage)
+          : null,
+        is_active: true,
       };
 
       const { error } = await supabase.from('formations').insert([toInsert]);
@@ -218,7 +211,6 @@ const AdminDashboard = () => {
         discount_percentage: '',
         duration: ''
       });
-      // Après succès, refetch la liste des formations dynamiques
       await refetchFormations();
     } catch (e: any) {
       toast({
@@ -611,32 +603,11 @@ const AdminDashboard = () => {
               <CardTitle>Formations Existantes</CardTitle>
             </CardHeader>
             <CardContent>
-              {loadingFormations && <p>Chargement…</p>}
-              {formationError && <p className="text-destructive">Erreur: {formationError.message}</p>}
-              {formations && (
-                <div className="space-y-4">
-                  {(formations as any[]).map((formation) => (
-                    <div key={formation.id} className="border rounded-lg p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3 className="font-medium">{formation.title ?? "Sans titre"}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {formation.students_count ?? 0} étudiants
-                          </p>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled
-                          className="opacity-50 cursor-not-allowed"
-                        >
-                          Modifier
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <FormationsList
+                formations={formations as any[]}
+                loading={loadingFormations}
+                error={formationError instanceof Error ? formationError : null}
+              />
             </CardContent>
           </Card>
         </TabsContent>
