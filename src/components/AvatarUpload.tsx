@@ -13,10 +13,41 @@ interface AvatarUploadProps {
   userInitials: string;
 }
 
+// Formats d'images autorisés pour les avatars
+const ALLOWED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/jpg', 
+  'image/png',
+  'image/webp'
+];
+
+const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
+
 export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, userInitials }: AvatarUploadProps) => {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+
+  const validateImageFile = (file: File): string | null => {
+    // Vérifier le type MIME
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      return `Format non autorisé. Formats acceptés : ${ALLOWED_EXTENSIONS.join(', ').toUpperCase()}`;
+    }
+
+    // Vérifier l'extension du fichier
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    if (!fileExtension || !ALLOWED_EXTENSIONS.includes(fileExtension)) {
+      return `Extension de fichier non autorisée. Extensions acceptées : ${ALLOWED_EXTENSIONS.join(', ').toUpperCase()}`;
+    }
+
+    // Vérifier la taille (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB en bytes
+    if (file.size > maxSize) {
+      return 'La taille du fichier ne doit pas dépasser 5MB.';
+    }
+
+    return null; // Pas d'erreur
+  };
 
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -34,14 +65,10 @@ export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, userInitials }:
       const file = event.target.files[0];
       console.log('Selected file:', file.name, file.type, file.size);
       
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        throw new Error('Veuillez sélectionner un fichier image valide.');
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        throw new Error('La taille du fichier ne doit pas dépasser 5MB.');
+      // Valider le fichier image
+      const validationError = validateImageFile(file);
+      if (validationError) {
+        throw new Error(validationError);
       }
 
       const fileExt = file.name.split('.').pop();
@@ -160,6 +187,9 @@ export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, userInitials }:
     document.getElementById('avatar-upload')?.click();
   };
 
+  // Créer la liste des types acceptés pour l'attribut accept
+  const acceptTypes = ALLOWED_IMAGE_TYPES.join(',');
+
   return (
     <div className="flex flex-col items-center space-y-4">
       <div className="relative">
@@ -185,7 +215,7 @@ export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, userInitials }:
       <input
         id="avatar-upload"
         type="file"
-        accept="image/*"
+        accept={acceptTypes}
         onChange={uploadAvatar}
         disabled={uploading}
         className="hidden"
@@ -201,6 +231,10 @@ export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, userInitials }:
         <Upload className="mr-2 h-4 w-4" />
         {uploading ? "Téléchargement..." : "Changer la photo"}
       </Button>
+      
+      <p className="text-xs text-muted-foreground text-center">
+        Formats acceptés : {ALLOWED_EXTENSIONS.join(', ').toUpperCase()} (max 5MB)
+      </p>
     </div>
   );
 };
