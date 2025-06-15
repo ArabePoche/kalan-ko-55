@@ -1,4 +1,3 @@
-
 import React, { forwardRef } from 'react';
 import { Heart, MessageCircle, Share2, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Video } from '@/types/video';
 import { VideoFeedbackButton } from './VideoFeedbackButton';
 import { useVideoViewTracking } from '@/hooks/useVideoViewTracking';
+import { getEmbedUrl } from '@/utils/videoUtils';
 
 interface VideoItemProps {
   video: Video;
@@ -36,6 +36,8 @@ const VideoItem = forwardRef<HTMLDivElement, VideoItemProps>(({
   
   // Track view time and increment count after 10 seconds
   useVideoViewTracking(video.id, isCurrentVideo, onViewCountIncrement);
+  
+  const embedUrl = getEmbedUrl(video.video_url);
 
   const handleLike = () => onLike(video.id);
   const handleComment = () => onComment(video.id);
@@ -51,10 +53,10 @@ const VideoItem = forwardRef<HTMLDivElement, VideoItemProps>(({
     >
       {/* Video */}
       <div className="relative w-full h-full flex items-center justify-center">
-        {video.video_url ? (
+        {embedUrl ? (
           <iframe
             ref={iframeRef}
-            src={video.video_url}
+            src={embedUrl}
             className="w-full h-full object-cover"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
