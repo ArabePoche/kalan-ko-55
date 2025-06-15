@@ -1,86 +1,52 @@
-
-import { useState } from 'react';
-import { cn } from '@/lib/utils';
-import VideoFeed from './VideoFeed';
-import PostsFeed from './PostsFeed';
-import SearchFeed from './SearchFeed';
-import PromotionalFormations from './PromotionalFormations';
 import { useCart } from '@/hooks/useCart';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
+import { useState } from 'react';
+import ShopHeader from './shop/ShopHeader';
+import CategoryFilter from './shop/CategoryFilter';
+import ProductGrid from './shop/ProductGrid';
+import { Product } from '@/hooks/useProducts';
+import { useAuth } from '@/contexts/AuthProvider';
+import { useNavigate } from 'react-router-dom';
 
-const HomePage = () => {
-  const [activeTab, setActiveTab] = useState<'videos' | 'posts' | 'search'>('videos');
+const ShopPage = () => {
   const { addToCart } = useCart();
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
-  const tabs = [
-    { id: 'videos', label: 'Vidéos' },
-    { id: 'posts', label: 'Posts' },
-    { id: 'search', label: 'Recherche' },
-  ];
+  const handleAddToCart = (product: Product) => {
+    if (!user) {
+      toast({
+        title: "Connexion requise",
+        description: "Vous devez vous connecter pour ajouter des articles au panier.",
+      });
+      navigate('/auth');
+      return;
+    }
 
-  const handleBuyFormation = (formation: any) => {
     addToCart({
-      id: formation.id,
-      title: formation.title,
-      price: formation.price,
-      image: formation.image_url || '/placeholder.svg',
-      type: 'formation'
-    });
-    
-    toast({
-      title: "Formation ajoutée au panier",
-      description: `${formation.title} a été ajoutée à votre panier.`,
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      instructor: product.instructor,
+      image: product.image,
+      type: product.type
     });
   };
 
   return (
-    <div className="h-screen bg-background">
-      {/* Transparent Tab Bar */}
-      <div className="absolute top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-sm">
-        <div className="flex items-center justify-center pt-12 pb-4">
-          <div className="flex bg-black/30 rounded-full p-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={cn(
-                  "px-4 py-2 rounded-full text-sm font-medium transition-all",
-                  activeTab === tab.id
-                    ? "bg-white text-black"
-                    : "text-white hover:bg-white/20"
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="h-full">
-        {activeTab === 'videos' && (
-          <>
-            <VideoFeed />
-            {/* Formations promotionnelles en overlay */}
-            <div className="absolute bottom-0 left-0 right-0 z-40">
-              <PromotionalFormations onBuyClick={handleBuyFormation} />
-            </div>
-          </>
-        )}
-        {activeTab === 'posts' && (
-          <div className="pt-24">
-            <PostsFeed />
-          </div>
-        )}
-        {activeTab === 'search' && (
-          <div className="pt-24">
-            <SearchFeed />
-          </div>
-        )}
-      </div>
+    <div className="max-w-7xl mx-auto bg-background min-h-screen">
+      <ShopHeader />
+      <CategoryFilter 
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+      />
+      <ProductGrid 
+        onAddToCart={handleAddToCart}
+        selectedCategory={selectedCategory}
+      />
     </div>
   );
 };
 
-export default HomePage;
+export default ShopPage;

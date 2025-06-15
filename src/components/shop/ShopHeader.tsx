@@ -1,8 +1,10 @@
+
 import { Filter, Search, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/hooks/useCart';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+// FIX: Import from contexts since there is no useAuth in hooks.
+import { useAuth } from '@/contexts/AuthProvider';
 
 const ShopHeader = () => {
   const { getTotalItems } = useCart();
