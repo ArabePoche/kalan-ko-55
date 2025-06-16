@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from 'react';
 // Import de composants refactorisés
 import SidebarLevels from './SidebarLevels';
 import LessonSelectorMobile from './LessonSelectorMobile';
 import TemporaryAccessBanner from './TemporaryAccessBanner';
 import TeachersList from './TeachersList'; // ← AJOUT
-import { ArrowLeft, Play, MessageCircle, ShoppingCart, Clock } from 'lucide-react';
+import { ArrowLeft, Play, MessageCircle, ShoppingCart, Clock, BookOpen, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useParams } from 'react-router-dom';
 import VideoPlayer from './VideoPlayer';
@@ -176,6 +177,8 @@ const FormationPage = () => {
     description: `Cette leçon couvre les bases fondamentales de la récitation coranique.`
   };
 
+  const totalUnreadMessages = levels.reduce((total, level) => total + level.unreadMessages, 0);
+
   if (isMobile) {
     // Version mobile améliorée
     return (
@@ -243,7 +246,7 @@ const FormationPage = () => {
 
   // Version desktop
   return (
-    <div className="h-screen bg-[#111b21] flex" style={{ scrollBehavior: 'smooth' }}>
+    <div className="h-screen bg-[#111b21] flex relative" style={{ scrollBehavior: 'smooth' }}>
       <SidebarLevels
         levels={levels}
         selectedLesson={selectedLesson}
@@ -253,6 +256,30 @@ const FormationPage = () => {
         formation={formation}
         hasAccess={hasAccess}
       />
+      
+      {/* Bouton flottant pour les leçons quand la sidebar est réduite */}
+      {sidebarCollapsed && (
+        <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-50">
+          <Button
+            onClick={() => setSidebarCollapsed(false)}
+            className="bg-primary hover:bg-primary/90 text-white shadow-lg rounded-full p-3 transition-all duration-300 hover:scale-110 animate-pulse"
+            size="icon"
+          >
+            <BookOpen className="w-5 h-5" />
+            {totalUnreadMessages > 0 && (
+              <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-bounce">
+                {totalUnreadMessages > 9 ? '9+' : totalUnreadMessages}
+              </div>
+            )}
+          </Button>
+          <div className="mt-2 text-center">
+            <div className="bg-black/70 text-white text-xs px-2 py-1 rounded opacity-0 hover:opacity-100 transition-opacity duration-200">
+              Leçons
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 flex flex-col bg-[#0b141a]" style={{ scrollBehavior: 'smooth' }}>
         {/* Header desktop factorisé */}
         <FormationDesktopHeader
