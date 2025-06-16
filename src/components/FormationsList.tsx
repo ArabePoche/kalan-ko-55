@@ -2,18 +2,21 @@
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import FormationEditModal from "./FormationEditModal";
+import FormationDeleteModal from "./FormationDeleteModal";
 
 interface FormationsListProps {
   formations: any[];
   loading?: boolean;
   error?: Error | null;
-  // Optionnel : refresher appelé après update
+  // Optionnel : refresher appelé après update
   onUpdated?: () => void;
 }
 
 const FormationsList = ({ formations, loading, error, onUpdated }: FormationsListProps) => {
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [formationToEdit, setFormationToEdit] = useState<any>(null);
+  const [formationToDelete, setFormationToDelete] = useState<any>(null);
 
   if (loading) {
     return <p>Chargement…</p>;
@@ -22,7 +25,7 @@ const FormationsList = ({ formations, loading, error, onUpdated }: FormationsLis
     return <p className="text-destructive">Erreur: {error.message}</p>;
   }
   if (!formations || formations.length === 0) {
-    return <p>Aucune formation n’a été trouvée.</p>;
+    return <p>Aucune formation n'a été trouvée.</p>;
   }
   return (
     <div className="space-y-4">
@@ -35,16 +38,29 @@ const FormationsList = ({ formations, loading, error, onUpdated }: FormationsLis
                 {formation.students_count ?? 0} étudiants
               </p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setFormationToEdit(formation);
-                setEditOpen(true);
-              }}
-            >
-              Modifier
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setFormationToEdit(formation);
+                  setEditOpen(true);
+                }}
+              >
+                Modifier
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={() => {
+                  setFormationToDelete(formation);
+                  setDeleteOpen(true);
+                }}
+              >
+                Supprimer
+              </Button>
+            </div>
           </div>
         </div>
       ))}
@@ -55,6 +71,16 @@ const FormationsList = ({ formations, loading, error, onUpdated }: FormationsLis
         onUpdated={() => {
           setEditOpen(false);
           setFormationToEdit(null);
+          onUpdated && onUpdated();
+        }}
+      />
+      <FormationDeleteModal
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        formation={formationToDelete}
+        onDeleted={() => {
+          setDeleteOpen(false);
+          setFormationToDelete(null);
           onUpdated && onUpdated();
         }}
       />
