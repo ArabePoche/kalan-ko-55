@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,7 @@ const TeacherSelectUserForm = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Charger les utilisateurs (ajusté : email n’existe pas sur profiles !)
+    // Charger les utilisateurs (ajusté : email n'existe pas sur profiles !)
     supabase
       .from("profiles")
       .select("id, first_name, last_name, username, avatar_url")
@@ -69,7 +70,7 @@ const TeacherSelectUserForm = ({
       },
     ]);
     if (insertError) {
-      setError("Erreur lors de l’ajout du prof : " + insertError.message);
+      setError("Erreur lors de l'ajout du prof : " + insertError.message);
     } else {
       if (onAdded) onAdded();
     }
@@ -85,16 +86,17 @@ const TeacherSelectUserForm = ({
             <SelectValue placeholder="Sélectionner un utilisateur" />
           </SelectTrigger>
           <SelectContent>
-            {profiles.length === 0 && (
-              <SelectItem value="__none" disabled>
+            {profiles.length === 0 ? (
+              <div className="px-8 py-2 text-sm text-muted-foreground">
                 Aucun utilisateur trouvé
-              </SelectItem>
+              </div>
+            ) : (
+              profiles.map((u) => (
+                <SelectItem value={u.id} key={u.id}>
+                  {u.first_name} {u.last_name} ({u.username ?? u.id})
+                </SelectItem>
+              ))
             )}
-            {profiles.map((u) => (
-              <SelectItem value={u.id} key={u.id}>
-                {u.first_name} {u.last_name} ({u.username ?? u.id})
-              </SelectItem>
-            ))}
           </SelectContent>
         </Select>
       </div>
@@ -105,16 +107,17 @@ const TeacherSelectUserForm = ({
             <SelectValue placeholder="Sélectionner une formation" />
           </SelectTrigger>
           <SelectContent>
-            {formations.length === 0 && (
-              <SelectItem value="__none" disabled>
+            {formations.length === 0 ? (
+              <div className="px-8 py-2 text-sm text-muted-foreground">
                 Aucune formation
-              </SelectItem>
+              </div>
+            ) : (
+              formations.map((f) => (
+                <SelectItem value={f.id} key={f.id}>
+                  {f.title}
+                </SelectItem>
+              ))
             )}
-            {formations.map((f) => (
-              <SelectItem value={f.id} key={f.id}>
-                {f.title}
-              </SelectItem>
-            ))}
           </SelectContent>
         </Select>
       </div>

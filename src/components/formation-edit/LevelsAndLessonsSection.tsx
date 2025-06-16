@@ -39,14 +39,20 @@ export default function LevelsAndLessonsSection({ levels, setLevels, loading }: 
   };
 
   const handleVideoSelection = (levelIdx: number, lessonIdx: number, videoId: string) => {
+    if (videoId === "__none") {
+      const updated = [...levels];
+      updated[levelIdx].lessons[lessonIdx].selected_video_id = undefined;
+      updated[levelIdx].lessons[lessonIdx].video_url = "";
+      setLevels(updated);
+      return;
+    }
+
     const selectedVideo = videos.find(v => v.id === videoId);
     const updated = [...levels];
     
     if (selectedVideo) {
       updated[levelIdx].lessons[lessonIdx].selected_video_id = videoId;
       updated[levelIdx].lessons[lessonIdx].video_url = selectedVideo.video_url || "";
-    } else {
-      updated[levelIdx].lessons[lessonIdx].selected_video_id = undefined;
     }
     
     setLevels(updated);
@@ -207,7 +213,7 @@ export default function LevelsAndLessonsSection({ levels, setLevels, loading }: 
                         <div>
                           <label className="block text-sm font-medium mb-1">Sélectionner une vidéo</label>
                           <Select
-                            value={lesson.selected_video_id ?? ""}
+                            value={lesson.selected_video_id ?? "__none"}
                             onValueChange={(value) => handleVideoSelection(li, lesIdx, value)}
                             disabled={loading || videosLoading}
                           >
@@ -215,7 +221,7 @@ export default function LevelsAndLessonsSection({ levels, setLevels, loading }: 
                               <SelectValue placeholder={videosLoading ? "Chargement..." : "Choisir une vidéo"} />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">Aucune vidéo</SelectItem>
+                              <SelectItem value="__none">Aucune vidéo</SelectItem>
                               {videos.map((video) => (
                                 <SelectItem key={video.id} value={video.id}>
                                   {video.title} ({video.video_type})
@@ -236,7 +242,7 @@ export default function LevelsAndLessonsSection({ levels, setLevels, loading }: 
                         </div>
                       </div>
                       
-                      {lesson.selected_video_id && (
+                      {lesson.selected_video_id && lesson.selected_video_id !== "__none" && (
                         <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 p-2 rounded">
                           <Check className="w-3 h-3" />
                           Vidéo sélectionnée : {videos.find(v => v.id === lesson.selected_video_id)?.title}

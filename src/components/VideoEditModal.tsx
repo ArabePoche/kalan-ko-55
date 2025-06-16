@@ -134,7 +134,7 @@ const VideoEditModal = ({ open, onOpenChange, video, onUpdated }: VideoEditModal
           />
 
           <Select
-            value={form.video_type}
+            value={form.video_type || ""}
             onValueChange={(value: 'promo' | 'educational' | 'testimonial') => setForm({ ...form, video_type: value })}
             disabled={loading}
           >
@@ -179,5 +179,3 @@ const VideoEditModal = ({ open, onOpenChange, video, onUpdated }: VideoEditModal
 };
 
 export default VideoEditModal;
-
-// As above: only valid values, never an empty string used for value
