@@ -27,8 +27,8 @@ export const useMyCourses = () => {
         id: course.id,
         title: course.title,
         image: course.image_url || '/placeholder.svg',
-        totalLessons: course.total_lessons,
-        completedLessons: Number(course.completed_lessons),
+        totalLessons: course.total_lessons || 0,
+        completedLessons: Number(course.completed_lessons) || 0,
         progress: course.total_lessons > 0 ? (Number(course.completed_lessons) / course.total_lessons) * 100 : 0,
       }));
     },

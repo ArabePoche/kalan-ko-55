@@ -999,7 +999,7 @@ export type Database = {
           image_url: string
           total_lessons: number
           completed_lessons: number
-          product_type: Database["public"]["Enums"]["product_type"]
+          product_type: string
         }[]
       }
       has_role: {

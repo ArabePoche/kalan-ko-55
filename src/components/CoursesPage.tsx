@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 const CoursesPage = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { data: myCourses, isLoading: coursesLoading } = useMyCourses();
+  const { data: myCourses, isLoading: coursesLoading, error } = useMyCourses();
 
   const handleContinueCourse = (courseId: string) => {
     navigate(`/formation/${courseId}`);
@@ -48,6 +48,18 @@ const CoursesPage = () => {
           <Button asChild>
             <Link to="/auth">Se connecter / S'inscrire</Link>
           </Button>
+        </div>
+      );
+    }
+
+    if (error) {
+      console.error('Error loading courses:', error);
+      return (
+        <div className="text-center py-12 px-4">
+          <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">Erreur de chargement</h3>
+          <p className="text-muted-foreground mb-4">Impossible de charger vos formations. Veuillez réessayer.</p>
+          <Button onClick={() => window.location.reload()}>Réessayer</Button>
         </div>
       );
     }

@@ -27,6 +27,7 @@ const FormationsList = ({ formations, loading, error, onUpdated }: FormationsLis
   if (!formations || formations.length === 0) {
     return <p>Aucune formation n'a été trouvée.</p>;
   }
+
   return (
     <div className="space-y-4">
       {formations.map((formation) => (
@@ -37,6 +38,16 @@ const FormationsList = ({ formations, loading, error, onUpdated }: FormationsLis
               <p className="text-sm text-muted-foreground">
                 {formation.students_count ?? 0} étudiants
               </p>
+              {formation.instructor_id && (
+                <p className="text-xs text-muted-foreground">
+                  Instructeur: {formation.instructor_id}
+                </p>
+              )}
+              {formation.price && (
+                <p className="text-sm font-semibold text-primary">
+                  {formation.price}€
+                </p>
+              )}
             </div>
             <div className="flex gap-2">
               <Button
