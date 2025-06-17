@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,10 +8,10 @@ import FormationCreateForm from "./FormationCreateForm";
 import VideoCreateForm from "./VideoCreateForm";
 import FormationsList from "./FormationsList";
 import VideosList from "./VideosList";
+import TeachersAdminPanel from "./TeachersAdminPanel";
 import { useCategories } from "@/hooks/useCategories";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import TeachersAdminPanel from "./TeachersAdminPanel";
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState<'create' | 'list'>('create');
@@ -58,7 +59,7 @@ const AdminDashboard = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Administrateur</h1>
-          <p className="text-gray-600">Gérez vos formations et vidéos</p>
+          <p className="text-gray-600">Gérez vos formations, vidéos et professeurs</p>
         </div>
 
         {/* Navigation des sections */}
@@ -88,7 +89,7 @@ const AdminDashboard = () => {
           <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="formations" className="flex items-center space-x-2">
               <GraduationCap className="w-4 h-4" />
-              <span>Formations</span>
+              <span>Formations & Profs</span>
             </TabsTrigger>
             <TabsTrigger value="videos" className="flex items-center space-x-2">
               <Video className="w-4 h-4" />
@@ -96,28 +97,43 @@ const AdminDashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="teachers" className="flex items-center space-x-2">
               <Users className="w-4 h-4" />
-              <span>Profs</span>
+              <span>Gestion Profs</span>
             </TabsTrigger>
           </TabsList>
 
-          {/* Section Formations */}
+          {/* Section Formations avec gestion des professeurs intégrée */}
           <TabsContent value="formations">
             {activeSection === 'create' ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <GraduationCap className="w-5 h-5" />
-                    <span>Créer une nouvelle formation</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <FormationCreateForm
-                    categories={categories}
-                    loadingCategories={loadingCategories}
-                    onCreated={handleFormationCreated}
-                  />
-                </CardContent>
-              </Card>
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <GraduationCap className="w-5 h-5" />
+                      <span>Créer une nouvelle formation</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <FormationCreateForm
+                      categories={categories}
+                      loadingCategories={loadingCategories}
+                      onCreated={handleFormationCreated}
+                    />
+                  </CardContent>
+                </Card>
+                
+                {/* Section intégrée pour ajouter des professeurs */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Users className="w-5 h-5" />
+                      <span>Associer des professeurs aux formations</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <TeachersAdminPanel />
+                  </CardContent>
+                </Card>
+              </div>
             ) : (
               <Card>
                 <CardHeader>
@@ -172,7 +188,7 @@ const AdminDashboard = () => {
             )}
           </TabsContent>
 
-          {/* Section Profs */}
+          {/* Section Profs - Vue d'ensemble globale */}
           <TabsContent value="teachers">
             <TeachersAdminPanel />
           </TabsContent>
