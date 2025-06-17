@@ -8,6 +8,8 @@ import AvailableTeachers from './AvailableTeachers';
 import CameraCaptureModal from "./CameraCaptureModal";
 import CallModal from './CallModal';
 import LessonCallHandler from './LessonCallHandler';
+import { Button } from '@/components/ui/button';
+import { ArrowUp } from 'lucide-react';
 
 interface Lesson {
   id: string;
@@ -42,7 +44,7 @@ interface VideoPlayerProps {
   videoCollapsed: boolean;
   setVideoCollapsed: (collapsed: boolean) => void;
   selectedLesson: Lesson;
-  timeLeft?: number; // Ajout: pour le timer
+  timeLeft?: number;
 }
 
 const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson, timeLeft }: VideoPlayerProps) => {
@@ -51,8 +53,11 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const [showExercise, setShowExercise] = useState(false);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const videoSectionRef = useRef<HTMLDivElement>(null);
   const [showCameraModal, setShowCameraModal] = useState(false);
   const [cameraMode, setCameraMode] = useState<"menu" | "photo" | "video">("menu");
   const [callModal, setCallModal] = useState<{ open: boolean; type: "voice" | "video" } | null>(null);
@@ -60,6 +65,36 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
   // Handler to open voice or video call
   const handleCall = (type: "voice" | "video") => {
     setCallModal({ open: true, type });
+  };
+
+  // Surveiller le défilement pour afficher/masquer le bouton "remonter"
+  useEffect(() => {
+    const handleScroll = () => {
+      if (chatContainerRef.current && videoSectionRef.current) {
+        const chatContainer = chatContainerRef.current;
+        const videoSection = videoSectionRef.current;
+        const videoBottom = videoSection.offsetTop + videoSection.offsetHeight;
+        
+        // Afficher le bouton si on a défilé au-delà de la vidéo
+        setShowScrollToTop(chatContainer.scrollTop > videoBottom);
+      }
+    };
+
+    const chatContainer = chatContainerRef.current;
+    if (chatContainer) {
+      chatContainer.addEventListener('scroll', handleScroll);
+      return () => chatContainer.removeEventListener('scroll', handleScroll);
+    }
+  }, []);
+
+  // Fonction pour remonter à la vidéo
+  const scrollToVideo = () => {
+    if (videoSectionRef.current) {
+      videoSectionRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    }
   };
 
   const [privateChatMessages, setPrivateChatMessages] = useState([
@@ -174,7 +209,7 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
     if (typeof localTimeLeft !== "number" || localTimeLeft <= 0) return;
     const interval = setInterval(() => {
       setLocalTimeLeft((t) => {
-        if (t <= 0.02) { // ~1s de marge
+        if (t <= 0.02) {
           clearInterval(interval);
           return 0;
         }
@@ -184,11 +219,9 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
     return () => clearInterval(interval);
   }, [localTimeLeft]);
 
-  // -- Limite le temps d'enregistrement vocal à 3 minutes
   const handleVoiceRecord = () => {
     if (!isRecording) {
       setIsRecording(true);
-      // Timer fixé à 3 minutes (180000 ms)
       const recordTimeout = setTimeout(() => {
         setIsRecording(false);
         const newMessage = {
@@ -199,16 +232,9 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
           isStudent: true,
           type: 'voice',
           avatar: '/placeholder.svg',
-          // Pour la vraie implémentation, ajouter le blob d’audio ici
         };
         setPrivateChatMessages(prev => [...prev, newMessage]);
-      }, 180000); // 3 minutes
-
-      // Clean-up si interruption manuelle
-      const stopEarly = () => {
-        clearTimeout(recordTimeout);
-        setIsRecording(false);
-      };
+      }, 180000);
     } else {
       setIsRecording(false);
     }
@@ -225,7 +251,6 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
     }
   };
 
-  // ==> Nouveau handler pour capture caméra (photo/vidéo)
   const handleCameraCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -234,7 +259,6 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
       let label = 'Photo';
       if (isVideo) label = 'Vidéo';
       if (isImage) label = 'Photo';
-      // On affiche un message spécifique selon le type 
       const newMessage = {
         id: Date.now().toString(),
         user: 'Vous',
@@ -248,13 +272,11 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
     }
   };
 
-  // Handler Caméra bouton : ouvre le menu photo/vidéo dans la modale
   const handleCameraButton = () => {
     setCameraMode("menu");
     setShowCameraModal(true);
   };
 
-  // Handler pour prise photo
   const handleCameraPhotoCaptured = (imageData: string) => {
     const newMessage = {
       id: Date.now().toString(),
@@ -264,12 +286,11 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
       isStudent: true,
       type: "image",
       avatar: "/placeholder.svg",
-      imageData // base64
+      imageData
     };
     setPrivateChatMessages((prev) => [...prev, newMessage]);
   };
 
-  // Handler pour vidéo
   const handleCameraVideoCaptured = (videoUrl: string) => {
     const newMessage = {
       id: Date.now().toString(),
@@ -279,7 +300,7 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
       isStudent: true,
       type: "video",
       avatar: "/placeholder.svg",
-      videoUrl // blob url
+      videoUrl
     };
     setPrivateChatMessages((prev) => [...prev, newMessage]);
   };
@@ -308,40 +329,58 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
         onClose={() => setCallModal(null)}
       />
       {timerElement}
-      <div className="flex-shrink-0">
-        <ChatHeader
-          lessonTitle={lesson.title}
-          lessonDuration={lesson.duration}
-          instructor={lesson.instructor}
-          onCall={handleCall}
-        />
-        <VideoSection
-          visible={!videoCollapsed}
-          onToggle={() => setVideoCollapsed(!videoCollapsed)}
-          lessonTitle={lesson.title}
-          lessonDuration={lesson.duration}
-        />
-        <ExerciseSection
-          hasExercise={selectedLesson.hasExercise}
-          exerciseCompleted={selectedLesson.exerciseCompleted}
-          showExercise={showExercise}
-          onToggle={() => setShowExercise(!showExercise)}
-          onComplete={() => {
-            console.log('Exercise completed for lesson:', selectedLesson.id);
-            setShowExercise(false);
-          }}
-          lesson={selectedLesson}
-        />
-      </div>
       
-      <div className="flex-1 overflow-y-auto bg-[#0b141a] p-3 md:p-4">
-        <ChatMessages
-          messages={privateChatMessages}
-          playingVoiceId={playingVoiceId}
-          onVoicePlay={handleVoicePlay}
-        />
+      {/* Container principal avec défilement */}
+      <div ref={chatContainerRef} className="flex-1 overflow-y-auto bg-[#0b141a]">
+        {/* Header fixe */}
+        <div className="sticky top-0 z-20 bg-[#0b141a]">
+          <ChatHeader
+            lessonTitle={lesson.title}
+            lessonDuration={lesson.duration}
+            instructor={lesson.instructor}
+            onCall={handleCall}
+          />
+        </div>
+
+        {/* Section vidéo intégrée en haut du chat */}
+        <div ref={videoSectionRef} className="flex-shrink-0">
+          <VideoSection
+            visible={true}
+            onToggle={() => {}} // Pas de toggle, toujours visible
+            lessonTitle={lesson.title}
+            lessonDuration={lesson.duration}
+          />
+        </div>
+
+        {/* Section exercices si applicable */}
+        {selectedLesson.hasExercise && (
+          <div className="flex-shrink-0">
+            <ExerciseSection
+              hasExercise={selectedLesson.hasExercise}
+              exerciseCompleted={selectedLesson.exerciseCompleted}
+              showExercise={showExercise}
+              onToggle={() => setShowExercise(!showExercise)}
+              onComplete={() => {
+                console.log('Exercise completed for lesson:', selectedLesson.id);
+                setShowExercise(false);
+              }}
+              lesson={selectedLesson}
+            />
+          </div>
+        )}
+        
+        {/* Messages du chat */}
+        <div className="flex-1 p-3 md:p-4 min-h-96">
+          <ChatMessages
+            messages={privateChatMessages}
+            playingVoiceId={playingVoiceId}
+            onVoicePlay={handleVoicePlay}
+          />
+        </div>
       </div>
-      <div className="flex-shrink-0">
+
+      {/* Input de chat fixe en bas */}
+      <div className="flex-shrink-0 sticky bottom-0 bg-[#0b141a]">
         <ChatInput
           privateMessage={privateMessage}
           setPrivateMessage={setPrivateMessage}
@@ -355,13 +394,24 @@ const VideoPlayer = ({ lesson, videoCollapsed, setVideoCollapsed, selectedLesson
           onVoiceRecord={handleVoiceRecord}
           setIsRecording={setIsRecording}
           fileInputRef={fileInputRef}
-          // Props pour gestion caméra dans input
           onCameraCapture={() => null}
           cameraInputRef={cameraInputRef}
           onCameraButton={handleCameraButton}
         />
         <AvailableTeachers teachers={availableTeachers} />
       </div>
+
+      {/* Bouton flottant pour remonter à la vidéo */}
+      {showScrollToTop && (
+        <Button
+          onClick={scrollToVideo}
+          className="fixed bottom-24 right-6 z-40 bg-primary hover:bg-primary/90 text-white shadow-lg rounded-full p-3 transition-all duration-300 hover:scale-110 animate-fade-in"
+          size="icon"
+        >
+          <ArrowUp className="w-5 h-5" />
+        </Button>
+      )}
+
       {/* Modale caméra avancée */}
       <CameraCaptureModal
         open={showCameraModal}
