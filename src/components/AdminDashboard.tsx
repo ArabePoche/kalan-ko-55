@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,17 +16,41 @@ const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState<'create' | 'list'>('create');
   const { data: categories = [], isLoading: loadingCategories } = useCategories();
 
-  // Hook pour récupérer les formations
+  // Hook pour récupérer les formations avec leurs niveaux et leçons
   const { data: formations = [], isLoading: loadingFormations, refetch: refetchFormations } = useQuery({
     queryKey: ['admin-formations'],
     queryFn: async () => {
+      console.log('Fetching formations with levels and lessons...');
+      
       const { data, error } = await supabase
         .from('formations')
-        .select('*')
+        .select(`
+          *,
+          levels:levels(
+            *,
+            lessons:lessons(*)
+          )
+        `)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Error fetching formations:', error);
+        throw error;
+      }
+
+      // Trier les niveaux et leçons par order_index
+      const formationsWithSortedData = data?.map(formation => ({
+        ...formation,
+        levels: formation.levels
+          ?.sort((a, b) => a.order_index - b.order_index)
+          ?.map(level => ({
+            ...level,
+            lessons: level.lessons?.sort((a, b) => a.order_index - b.order_index) || []
+          })) || []
+      })) || [];
+
+      console.log('Formations with levels and lessons:', formationsWithSortedData);
+      return formationsWithSortedData;
     }
   });
 
