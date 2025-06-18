@@ -36,28 +36,46 @@ export const useFormationUpdate = () => {
       if (levels && Array.isArray(levels)) {
         console.log('Processing levels...');
         
-        // Supprimer tous les anciens niveaux et leçons pour cette formation
-        const { error: deleteLessonsError } = await supabase
-          .from('lessons')
-          .delete()
-          .in('level_id', 
-            supabase
-              .from('levels')
-              .select('id')
-              .eq('formation_id', formation.id)
-          );
-
-        if (deleteLessonsError) {
-          console.error('Error deleting old lessons:', deleteLessonsError);
-        }
-
-        const { error: deleteLevelsError } = await supabase
+        // D'abord, récupérer tous les IDs des niveaux existants pour cette formation
+        const { data: existingLevels, error: fetchLevelsError } = await supabase
           .from('levels')
-          .delete()
+          .select('id')
           .eq('formation_id', formation.id);
 
-        if (deleteLevelsError) {
-          console.error('Error deleting old levels:', deleteLevelsError);
+        if (fetchLevelsError) {
+          console.error('Error fetching existing levels:', fetchLevelsError);
+          throw fetchLevelsError;
+        }
+
+        const levelIds = existingLevels?.map(level => level.id) || [];
+        console.log('Existing level IDs to delete:', levelIds);
+
+        // Supprimer toutes les leçons associées aux niveaux existants
+        if (levelIds.length > 0) {
+          const { error: deleteLessonsError } = await supabase
+            .from('lessons')
+            .delete()
+            .in('level_id', levelIds);
+
+          if (deleteLessonsError) {
+            console.error('Error deleting old lessons:', deleteLessonsError);
+            throw deleteLessonsError;
+          }
+
+          console.log('Old lessons deleted successfully');
+
+          // Supprimer tous les anciens niveaux
+          const { error: deleteLevelsError } = await supabase
+            .from('levels')
+            .delete()
+            .eq('formation_id', formation.id);
+
+          if (deleteLevelsError) {
+            console.error('Error deleting old levels:', deleteLevelsError);
+            throw deleteLevelsError;
+          }
+
+          console.log('Old levels deleted successfully');
         }
 
         // Créer les nouveaux niveaux
