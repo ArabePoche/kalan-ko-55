@@ -188,7 +188,7 @@ const AuthPage = () => {
     <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
       <Tabs defaultValue="signin" className="w-[400px]">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="signin">Se connecter AVEC NTRAE</TabsTrigger>
+          <TabsTrigger value="signin">Se connecter avec trae</TabsTrigger>
           <TabsTrigger value="signup">S'inscrire</TabsTrigger>
         </TabsList>
         <TabsContent value="signin">
